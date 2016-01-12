@@ -1,26 +1,26 @@
 package org.gooru.nucleus.handlers.courses.bootstrap;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.bootstrap.shutdown.Finalizer;
 import org.gooru.nucleus.handlers.courses.bootstrap.shutdown.Finalizers;
 import org.gooru.nucleus.handlers.courses.bootstrap.startup.Initializer;
 import org.gooru.nucleus.handlers.courses.bootstrap.startup.Initializers;
-import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.constants.MessagebusEndpoints;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorBuilder;
+import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Created by ashish on 25/12/15.
  */
 public class CourseVerticle extends AbstractVerticle {
 
-  static final Logger LOGGER = LoggerFactory.getLogger(CourseVerticle.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CourseVerticle.class);
 
   @Override
   public void start(Future<Void> voidFuture) throws Exception {
@@ -43,18 +43,17 @@ public class CourseVerticle extends AbstractVerticle {
       LOGGER.debug("Received message: " + message.body());
 
       vertx.executeBlocking(future -> {
-        JsonObject result = new ProcessorBuilder(message).build().process();
+        MessageResponse result = new ProcessorBuilder(message).build().process();
+        LOGGER.info("got response :" + result.reply());
         future.complete(result);
       }, res -> {
-        JsonObject result = (JsonObject) res.result();
-        DeliveryOptions options = new DeliveryOptions().addHeader(MessageConstants.MSG_OP_STATUS, result.getString(MessageConstants.MSG_OP_STATUS));
-        message.reply(result.getJsonObject(MessageConstants.RESP_CONTAINER_MBUS), options);
+        MessageResponse result = (MessageResponse) res.result();
+        message.reply(result.reply(), result.deliveryOptions());
 
-        JsonObject eventData = result.getJsonObject(MessageConstants.RESP_CONTAINER_EVENT);
+        JsonObject eventData = result.event();
         if (eventData != null) {
           eb.publish(MessagebusEndpoints.MBEP_EVENT, eventData);
         }
-
       });
 
 

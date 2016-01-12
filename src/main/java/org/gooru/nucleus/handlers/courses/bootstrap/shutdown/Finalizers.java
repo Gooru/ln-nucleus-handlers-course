@@ -10,11 +10,11 @@ public class Finalizers implements Iterable<Finalizer> {
 
 
   private List<Finalizer> finalizers = null;
-  private Iterator<Finalizer> internalIterator;
+  private final Iterator<Finalizer> internalIterator;
   
   @Override
   public Iterator<Finalizer> iterator() {
-    Iterator<Finalizer> iterator = new Iterator<Finalizer>() {
+    return new Iterator<Finalizer>() {
 
       @Override
       public boolean hasNext() {
@@ -25,13 +25,12 @@ public class Finalizers implements Iterable<Finalizer> {
       public Finalizer next() {
         return internalIterator.next();
       }
-      
+
     };
-    return iterator;
   }
   
   public Finalizers() {
-    finalizers = new ArrayList<Finalizer>();
+    finalizers = new ArrayList<>();
     finalizers.add(DataSourceRegistry.getInstance());    
     internalIterator = finalizers.iterator();
   }
