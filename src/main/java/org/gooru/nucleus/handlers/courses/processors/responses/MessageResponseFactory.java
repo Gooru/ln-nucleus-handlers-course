@@ -1,7 +1,9 @@
 package org.gooru.nucleus.handlers.courses.processors.responses;
 
-import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
+import java.util.Set;
+
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
+import org.javalite.activejdbc.Errors;
 
 import io.vertx.core.json.JsonObject;
 
@@ -41,5 +43,19 @@ public class MessageResponseFactory {
   
   public static MessageResponse createPostResponse(String location) {
     return new MessageResponse.Builder().successful().setHeader("Location", location).setStatusCreated().build();
+  }
+  
+  public static MessageResponse createPutReponse(String location) {
+    return new MessageResponse.Builder().successful().setHeader("Location", location).setStatusNoOutput().build();
+  }
+  
+  public static MessageResponse createValidationErrorResponse(Errors errors) {
+    JsonObject errJson = new JsonObject();
+    Set<String> errKeys = errors.keySet();
+    for(String key : errKeys) {
+      errJson.put(key, errors.get(key));
+    }
+    
+    return new MessageResponse.Builder().validationFailed().setStatusNoOutput().setContentTypeJson().setResponseBody(errJson).build();
   }
 }

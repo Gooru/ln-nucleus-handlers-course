@@ -30,19 +30,16 @@ public class AJCourseRepo implements CourseRepo {
 
   @Override
   public MessageResponse deleteCourse() {
-    // TODO Auto-generated method stub
-    return null;
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildDeleteCourseHandler(context));
   }
 
   @Override
   public MessageResponse copyCourse() {
-    // TODO Auto-generated method stub
-    return null;
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildCopyCourseHandler(context));
   }
 
   @Override
   public MessageResponse reorderUnitInCourse() {
-    // TODO Auto-generated method stub
-    return null;
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildReorderUnitInCourseHandler(context));
   }
 }

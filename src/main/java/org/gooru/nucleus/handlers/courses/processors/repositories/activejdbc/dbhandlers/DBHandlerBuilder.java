@@ -20,27 +20,22 @@ public class DBHandlerBuilder {
   }
   
   public DBHandler buildDeleteCourseHandler(ProcessorContext context) {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new DeleteCourseHandler(context);
   }
   
   public DBHandler buildCopyCourseHandler(ProcessorContext context) {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new CopyCourseHandler(context);
   }
   
   public DBHandler buildReorderUnitInCourseHandler(ProcessorContext context) {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new ReorderUnitInCourseHandler(context);
   }
   
   public DBHandler buildFetchCollaboratorHandler(ProcessorContext context) {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new FetchCollaboratorHandler(context);
   }
   
   public DBHandler buildUpdateCollaboratorHandler(ProcessorContext context) {
-    // TODO: Provide a concrete implementation
-    throw new IllegalStateException("Not implemented yet");
+    return new UpdateCollaboratorHandler(context);
   }
 }

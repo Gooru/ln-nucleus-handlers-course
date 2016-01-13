@@ -5,23 +5,24 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.CourseRepo;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.AJResponseJsonTransformer;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
-import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.LazyList;
+import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
-public class FetchCourseHandler implements DBHandler {
+public class FetchCollaboratorHandler implements DBHandler {
 
   private final ProcessorContext context;
-  private static final Logger LOGGER = LoggerFactory.getLogger(FetchCourseHandler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(FetchCollaboratorHandler.class);
   
-  public FetchCourseHandler(ProcessorContext context) {
+  public FetchCollaboratorHandler(ProcessorContext context) {
     this.context = context;
   }
-
+  
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if(context.courseId() == null || context.courseId().isEmpty()) {
@@ -38,17 +39,20 @@ public class FetchCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    AJEntityCourse ajEntityCourse = AJEntityCourse.findById(context.courseId());
-    JsonObject body = null;
-    if (ajEntityCourse != null) {
+    String courseId = context.courseId();
+    String sql = "SELECT " + CourseRepo.COLLABORATOR + " FROM COURSE WHERE " + CourseRepo.ID + " = ?";
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, courseId);
+    JsonObject body = new JsonObject();
+    if (ajEntityCourse != null && !ajEntityCourse.isEmpty()) {
+      LOGGER.debug("collaborator found for course {}", courseId);
       body = new AJResponseJsonTransformer()
-              .transform(ajEntityCourse.toJson(false, CourseRepo.ALL_FIELDS));
-      //TODO: Need to include unit summary of the course
-      LOGGER.debug("found course for id {} : " + context.courseId());
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createGetResponse(body), ExecutionStatus.SUCCESSFUL);
+              .transform(ajEntityCourse.get(0).toJson(false, CourseRepo.COLLABORATOR));
     } else {
+      LOGGER.debug("no collaborator found for course {}", courseId);
       return new ExecutionResult<MessageResponse>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
+    LOGGER.debug("returning body : " + body.toString());
+    return new ExecutionResult<MessageResponse>(MessageResponseFactory.createGetResponse(body), ExecutionStatus.SUCCESSFUL);
   }
 
   @Override

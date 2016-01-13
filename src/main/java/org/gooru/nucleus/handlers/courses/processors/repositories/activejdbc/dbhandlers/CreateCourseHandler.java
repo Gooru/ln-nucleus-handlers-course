@@ -31,11 +31,6 @@ public class CreateCourseHandler implements DBHandler {
               ExecutionStatus.FAILED);
     }
 
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
-  }
-
-  @Override
-  public ExecutionResult<MessageResponse> validateRequest() {
     JsonObject request = context.request();
     /*
      * Validations to create course 1. course title is not null
@@ -46,7 +41,12 @@ public class CreateCourseHandler implements DBHandler {
                 MessageResponseFactory.createInvalidRequestResponse("mandatory field '" + fieldName + "' is missing"), ExecutionStatus.FAILED);
       }
     }
+    
+    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+  }
 
+  @Override
+  public ExecutionResult<MessageResponse> validateRequest() {
     return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
@@ -73,20 +73,22 @@ public class CreateCourseHandler implements DBHandler {
       //generate UUID and set as id
       String id = UUID.randomUUID().toString();
       course.setId(id);
-      //creator_id character varying(36) NOT NULL,
       course.set(CourseRepo.CREATOR_ID, context.userId());
-      //original_creator_id character varying(36) NOT NULL,
       course.set(CourseRepo.ORIGINAL_CREATOR_ID, context.userId());
       
-      if(course.insert()) {
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createPostResponse(id), ExecutionStatus.SUCCESSFUL);
+      if(course.isValid()) { 
+        if(course.insert()) {
+          return new ExecutionResult<MessageResponse>(MessageResponseFactory.createPostResponse(id), ExecutionStatus.SUCCESSFUL);
+        } else {
+          throw new Exception("Something went wrong, unable to save course. Try Again!");
+        }
       } else {
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse("Not able to save course. try again!"), ExecutionStatus.FAILED);
+        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(course.errors()), ExecutionStatus.FAILED);
       }
     } catch (SQLException sqle) {
       return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(sqle.getMessage()), ExecutionStatus.FAILED);
-    } catch (Exception e) {
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionStatus.FAILED);
+    } catch (Throwable t) {
+      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
     }
   }
 

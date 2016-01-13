@@ -74,45 +74,114 @@ class MessageProcessor implements Processor {
 
     return null;
   }
+  
+  private boolean checkCourseId(ProcessorContext context) {
+    return (context.courseId() == null || context.courseId().isEmpty());
+  }
+  
+  private boolean checkRequest(ProcessorContext context) {
+    return (context.request() == null || context.request().isEmpty());
+  }
 
   private MessageResponse processCourseCollaboratorUpdate() {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.error("Invalid request, course id not available. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      if(checkRequest(context)) {
+        LOGGER.error("Invalid input data, Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
+      }
+
+      LOGGER.debug("updating collaborators for course {}", context.courseId());
+      return new RepoBuilder().buildCourseCollaboratorRepo(context).updateCollaborator();
+    } catch (Throwable t) {
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
   }
 
   private MessageResponse processCourseCollaboratorGet() {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.error("Invalid request, course id not available. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+
+      LOGGER.debug("getting collaborators for course {}", context.courseId());
+      return new RepoBuilder().buildCourseCollaboratorRepo(context).fetchCollaborator();
+    } catch (Throwable t) {
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
   }
 
   private MessageResponse processCourseUnitReorder() {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.error("Invalid request, course id not available. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      if(checkRequest(context)) {
+        LOGGER.error("Invalid input data, Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
+      }
+
+      LOGGER.debug("reordering units in course {}", context.courseId());
+      return new RepoBuilder().buildCourseRepo(context).reorderUnitInCourse();
+    } catch (Throwable t) {
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
   }
 
   private MessageResponse processCourseDelete() {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.error("Invalid request, course id not available. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      LOGGER.debug("deleting course {}", context.courseId());
+      return new RepoBuilder().buildCourseRepo(context).deleteCourse();
+    } catch (Throwable t) {
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
   }
 
   private MessageResponse processCourseCopy() {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      ProcessorContext context = createContext();
+      
+      if(checkRequest(context)) {
+        LOGGER.error("Invalid input data, Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
+      }
+
+      LOGGER.debug("copying course");
+      return new RepoBuilder().buildCourseRepo(context).copyCourse();
+    } catch (Throwable t) {
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
   }
 
   private MessageResponse processCourseUpdate() {
     try {
       ProcessorContext context = createContext();
-      if(context.courseId() == null || context.courseId().isEmpty()) {
+      if(checkCourseId(context)) {
         LOGGER.error("Invalid request, course id not available. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
       
-      if(context.request() == null || context.request().isEmpty()) {
+      if(checkRequest(context)) {
         LOGGER.error("Invalid input data, Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
       }
-      LOGGER.debug("updating resource {}", context.courseId());
+      LOGGER.debug("updating course {}", context.courseId());
       return new RepoBuilder().buildCourseRepo(context).updateCourse();
     } catch (Throwable t) {
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
@@ -122,7 +191,7 @@ class MessageProcessor implements Processor {
   private MessageResponse processCourseGet() {
     LOGGER.debug("request to get course");
     ProcessorContext context = createContext();
-    if (context.courseId() == null || context.courseId().isEmpty()) {
+    if (checkCourseId(context)) {
       LOGGER.error("Invalid request, course id not available. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
     }
@@ -134,7 +203,7 @@ class MessageProcessor implements Processor {
     try {
       LOGGER.debug("creating new course");
       ProcessorContext context = createContext();
-      if(context.request() == null || context.request().isEmpty()) {
+      if(checkRequest(context)) {
         LOGGER.error("Invalid input data, Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
       }
