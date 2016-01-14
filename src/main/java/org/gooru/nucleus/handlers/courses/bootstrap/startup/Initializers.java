@@ -9,9 +9,15 @@ import java.util.List;
 public class Initializers implements Iterable<Initializer> {
 
 
-  private List<Initializer> initializers = null;
   private final Iterator<Initializer> internalIterator;
-  
+  private List<Initializer> initializers = null;
+
+  public Initializers() {
+    initializers = new ArrayList<>();
+    initializers.add(DataSourceRegistry.getInstance());
+    internalIterator = initializers.iterator();
+  }
+
   @Override
   public Iterator<Initializer> iterator() {
     return new Iterator<Initializer>() {
@@ -27,12 +33,6 @@ public class Initializers implements Iterable<Initializer> {
       }
 
     };
-  }
-  
-  public Initializers() {
-    initializers = new ArrayList<>();
-    initializers.add(DataSourceRegistry.getInstance());    
-    internalIterator = initializers.iterator();
   }
 
 

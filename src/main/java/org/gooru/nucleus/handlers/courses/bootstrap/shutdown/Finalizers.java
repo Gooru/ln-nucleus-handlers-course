@@ -9,9 +9,15 @@ import java.util.List;
 public class Finalizers implements Iterable<Finalizer> {
 
 
-  private List<Finalizer> finalizers = null;
   private final Iterator<Finalizer> internalIterator;
-  
+  private List<Finalizer> finalizers = null;
+
+  public Finalizers() {
+    finalizers = new ArrayList<>();
+    finalizers.add(DataSourceRegistry.getInstance());
+    internalIterator = finalizers.iterator();
+  }
+
   @Override
   public Iterator<Finalizer> iterator() {
     return new Iterator<Finalizer>() {
@@ -27,12 +33,6 @@ public class Finalizers implements Iterable<Finalizer> {
       }
 
     };
-  }
-  
-  public Finalizers() {
-    finalizers = new ArrayList<>();
-    finalizers.add(DataSourceRegistry.getInstance());    
-    internalIterator = finalizers.iterator();
   }
 
 

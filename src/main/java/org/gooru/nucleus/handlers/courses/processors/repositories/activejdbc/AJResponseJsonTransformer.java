@@ -1,36 +1,35 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc;
 
-import java.util.Arrays;
-import java.util.Map;
-
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.CourseEntityConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.util.Arrays;
+import java.util.Map;
 
 public class AJResponseJsonTransformer {
   private static final Logger LOGGER = LoggerFactory.getLogger(AJResponseJsonTransformer.class);
-  
+
   public JsonObject transform(String ajResult) {
     LOGGER.debug("received string to transform in json:" + ajResult);
     JsonObject result = new JsonObject(ajResult);
     if (ajResult == null || ajResult.isEmpty()) {
       return result;
     }
-    
+
     String mapValue = null;
     for (Map.Entry<String, Object> entry : result) {
       mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-      if(mapValue != null && !mapValue.isEmpty()) {
-        if(Arrays.asList(CourseEntityConstants.JSON_OBJECT_FIELDS).contains(entry.getKey())) {
+      if (mapValue != null && !mapValue.isEmpty()) {
+        if (Arrays.asList(CourseEntityConstants.JSON_OBJECT_FIELDS).contains(entry.getKey())) {
           //result.remove(entry.getKey());
           result.put(entry.getKey(), new JsonObject(mapValue));
         } else if (Arrays.asList(CourseEntityConstants.JSON_ARRAY_FIELDS).contains(entry.getKey())) {
           //result.remove(entry.getKey());
           result.put(entry.getKey(), new JsonArray(mapValue));
-        } 
+        }
       }
     }
     

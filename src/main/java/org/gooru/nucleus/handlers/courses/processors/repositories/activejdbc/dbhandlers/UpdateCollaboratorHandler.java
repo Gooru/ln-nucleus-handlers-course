@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 
 public class UpdateCollaboratorHandler implements DBHandler {
 
-  private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollaboratorHandler.class);
+  private final ProcessorContext context;
 
   public UpdateCollaboratorHandler(ProcessorContext context) {
     this.context = context;
@@ -25,7 +25,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.info("invalid request received, aborting");
       return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided request"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -60,7 +60,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
       } else {
         LOGGER.info("error in update course, returning errors");
         return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(ajEntityCourse.errors()),
-                ExecutionStatus.FAILED);
+          ExecutionStatus.FAILED);
       }
     } catch (Throwable t) {
       LOGGER.error("exception while updating course", t);

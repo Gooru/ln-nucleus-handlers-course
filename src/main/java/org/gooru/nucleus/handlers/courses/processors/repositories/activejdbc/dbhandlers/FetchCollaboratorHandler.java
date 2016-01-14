@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.AJResponseJsonTransformer;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -12,12 +13,10 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonObject;
-
 public class FetchCollaboratorHandler implements DBHandler {
 
-  private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchCollaboratorHandler.class);
+  private final ProcessorContext context;
 
   public FetchCollaboratorHandler(ProcessorContext context) {
     this.context = context;
@@ -28,7 +27,7 @@ public class FetchCollaboratorHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id to fetch collaborator");
       return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id to fetch collaborator"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");

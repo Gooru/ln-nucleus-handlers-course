@@ -1,9 +1,6 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.UUID;
-
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.CourseEntityConstants;
@@ -15,12 +12,14 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonObject;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.UUID;
 
 public class CreateCourseHandler implements DBHandler {
 
-  private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateCourseHandler.class);
+  private final ProcessorContext context;
 
   public CreateCourseHandler(ProcessorContext context) {
     this.context = context;
@@ -31,7 +30,7 @@ public class CreateCourseHandler implements DBHandler {
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.info("invalid request received to create course");
       return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create course"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     JsonObject request = context.request();
@@ -46,8 +45,8 @@ public class CreateCourseHandler implements DBHandler {
     if (!missingFields.toString().isEmpty()) {
       LOGGER.info("request data validation failed for '{}'", missingFields.toString());
       return new ExecutionResult<MessageResponse>(
-              MessageResponseFactory.createInvalidRequestResponse("mandatory field(s) '" + missingFields.toString() + "' missing"),
-              ExecutionStatus.FAILED);
+        MessageResponseFactory.createInvalidRequestResponse("mandatory field(s) '" + missingFields.toString() + "' missing"),
+        ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -85,14 +84,14 @@ public class CreateCourseHandler implements DBHandler {
       // Probably need to revisit this logic again or need to move in separate utility
       String id = UUID.randomUUID().toString();
       boolean isDuplicate = true;
-      while(isDuplicate) {
-        if(AJEntityCourse.exists(id)) {
+      while (isDuplicate) {
+        if (AJEntityCourse.exists(id)) {
           id = UUID.randomUUID().toString();
         } else {
           isDuplicate = false;
         }
       }
-      
+
       course.setId(id);
       course.set(CourseEntityConstants.CREATOR_ID, context.userId());
       course.set(CourseEntityConstants.ORIGINAL_CREATOR_ID, context.userId());

@@ -27,14 +27,22 @@ public class DataSourceRegistry implements Initializer, Finalizer {
   private final List<String> datasources = Arrays.asList(DEFAULT_DATA_SOURCE);
   private final Map<String, DataSource> registry = new HashMap<>();
   private volatile boolean initialized = false;
-  
+
+  private DataSourceRegistry() {
+    // TODO Auto-generated constructor stub
+  }
+
+  public static DataSourceRegistry getInstance() {
+    return Holder.INSTANCE;
+  }
+
   @Override
   public void initializeComponent(Vertx vertx, JsonObject config) {
     // Skip if we are already initialized
     LOGGER.debug("Initialization called upon.");
     if (!initialized) {
       LOGGER.debug("May have to do initialization");
-      // We need to do initialization, however, we are running it via verticle instance which is going to run in 
+      // We need to do initialization, however, we are running it via verticle instance which is going to run in
       // multiple threads hence we need to be safe for this operation
       synchronized (Holder.INSTANCE) {
         LOGGER.debug("Will initialize after double checking");
@@ -42,7 +50,7 @@ public class DataSourceRegistry implements Initializer, Finalizer {
           LOGGER.debug("Initializing now");
           for (String datasource : datasources) {
             JsonObject dbConfig = config.getJsonObject(datasource);
-            if (dbConfig != null) {        
+            if (dbConfig != null) {
               DataSource ds = initializeDataSource(dbConfig);
               registry.put(datasource, ds);
             }
@@ -52,11 +60,11 @@ public class DataSourceRegistry implements Initializer, Finalizer {
       }
     }
   }
-  
+
   public DataSource getDefaultDataSource() {
     return registry.get(DEFAULT_DATA_SOURCE);
   }
-  
+
   public DataSource getDataSourceByName(String name) {
     if (name != null) {
       return registry.get(name);
@@ -168,22 +176,14 @@ public class DataSourceRegistry implements Initializer, Finalizer {
   public void finalizeComponent() {
     for (String datasource : datasources) {
       DataSource ds = registry.get(datasource);
-      if (ds != null) {        
+      if (ds != null) {
         if (ds instanceof HikariDataSource) {
           ((HikariDataSource) ds).close();
         }
       }
-    }     
-  }
-  
-  public static DataSourceRegistry getInstance() {
-    return Holder.INSTANCE;
+    }
   }
 
-  private DataSourceRegistry() {
-    // TODO Auto-generated constructor stub
-  }
-  
   private static class Holder {
     private static final DataSourceRegistry INSTANCE = new DataSourceRegistry();
   }

@@ -7,10 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CopyCourseHandler implements DBHandler {
-  
-  private final ProcessorContext context;
+
   private static final Logger LOGGER = LoggerFactory.getLogger(CopyCourseHandler.class);
-  
+  private final ProcessorContext context;
+
   public CopyCourseHandler(ProcessorContext context) {
     this.context = context;
   }

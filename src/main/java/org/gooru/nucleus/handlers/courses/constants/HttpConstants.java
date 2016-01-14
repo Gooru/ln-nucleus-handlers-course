@@ -9,11 +9,11 @@ public class HttpConstants {
   public static final String HEADER_CONTENT_LENGTH = "Content-Length";
   public static final String HEADER_CONTENT_TYPE = "Content-Type";
   public static final String HEADER_LOCATION = "Location";
-  
+
   public static final String CONTENT_TYPE_JSON = "application/json";
-  
+
   public enum HttpStatus {
-    
+
     SUCCESS(200, "Successful"),
     CREATED(201, "Created"),
     ACCEPTED(202, "Accepted"),
@@ -29,18 +29,19 @@ public class HttpConstants {
     TOO_LARGE(413, "Request Entity Too Large"),
     TOO_MANY_REQUESTS(429, "Too Many Requests"),
     ERROR(500, "Internal Server Error");
-    
+
     private final int code;
     private final String message;
+
     HttpStatus(int code, String message) {
       this.code = code;
       this.message = message;
     }
-    
+
     public int getCode() {
       return this.code;
     }
-    
+
     public String getMessage() {
       return this.message;
     }

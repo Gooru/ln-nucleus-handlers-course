@@ -2,12 +2,11 @@ package org.gooru.nucleus.handlers.courses.processors;
 
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
-
-import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidRequestException;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidUserException;
 import org.gooru.nucleus.handlers.courses.processors.repositories.RepoBuilder;
+import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.slf4j.Logger;
@@ -37,33 +36,33 @@ class MessageProcessor implements Processor {
 
       final String msgOp = message.headers().get(MessageConstants.MSG_HEADER_OP);
       switch (msgOp) {
-      case MessageConstants.MSG_OP_COURSE_CREATE:
-        result = processCourseCreate();
-        break;
-      case MessageConstants.MSG_OP_COURSE_GET:
-        result = processCourseGet();
-        break;
-      case MessageConstants.MSG_OP_COURSE_UPDATE:
-        result = processCourseUpdate();
-        break;
-      case MessageConstants.MSG_OP_COURSE_COPY:
-        result = processCourseCopy();
-        break;
-      case MessageConstants.MSG_OP_COURSE_DELETE:
-        result = processCourseDelete();
-        break;
-      case MessageConstants.MSG_OP_COURSE_CONTENT_REORDER:
-        result = processCourseUnitReorder();
-        break;
-      case MessageConstants.MSG_OP_COURSE_COLLABORATOR_GET:
-        result = processCourseCollaboratorGet();
-        break;
-      case MessageConstants.MSG_OP_COURSE_COLLABORATOR_UPDATE:
-        result = processCourseCollaboratorUpdate();
-        break;
-      default:
-        LOGGER.error("Invalid operation type passed in, not able to handle");
-        throw new InvalidRequestException();
+        case MessageConstants.MSG_OP_COURSE_CREATE:
+          result = processCourseCreate();
+          break;
+        case MessageConstants.MSG_OP_COURSE_GET:
+          result = processCourseGet();
+          break;
+        case MessageConstants.MSG_OP_COURSE_UPDATE:
+          result = processCourseUpdate();
+          break;
+        case MessageConstants.MSG_OP_COURSE_COPY:
+          result = processCourseCopy();
+          break;
+        case MessageConstants.MSG_OP_COURSE_DELETE:
+          result = processCourseDelete();
+          break;
+        case MessageConstants.MSG_OP_COURSE_CONTENT_REORDER:
+          result = processCourseUnitReorder();
+          break;
+        case MessageConstants.MSG_OP_COURSE_COLLABORATOR_GET:
+          result = processCourseCollaboratorGet();
+          break;
+        case MessageConstants.MSG_OP_COURSE_COLLABORATOR_UPDATE:
+          result = processCourseCollaboratorUpdate();
+          break;
+        default:
+          LOGGER.error("Invalid operation type passed in, not able to handle");
+          throw new InvalidRequestException();
       }
       return result;
     } catch (InvalidRequestException e) {
@@ -74,11 +73,11 @@ class MessageProcessor implements Processor {
 
     return null;
   }
-  
+
   private boolean checkCourseId(ProcessorContext context) {
     return (context.courseId() == null || context.courseId().isEmpty());
   }
-  
+
   private boolean checkRequest(ProcessorContext context) {
     return (context.request() == null || context.request().isEmpty());
   }
@@ -86,12 +85,12 @@ class MessageProcessor implements Processor {
   private MessageResponse processCourseCollaboratorUpdate() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Invalid request, course id not available. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkRequest(context)) {
+
+      if (checkRequest(context)) {
         LOGGER.error("Invalid input data, Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
       }
@@ -106,7 +105,7 @@ class MessageProcessor implements Processor {
   private MessageResponse processCourseCollaboratorGet() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Invalid request, course id not available. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
@@ -121,12 +120,12 @@ class MessageProcessor implements Processor {
   private MessageResponse processCourseUnitReorder() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Invalid request, course id not available. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkRequest(context)) {
+
+      if (checkRequest(context)) {
         LOGGER.error("Invalid input data, Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
       }
@@ -141,11 +140,11 @@ class MessageProcessor implements Processor {
   private MessageResponse processCourseDelete() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Invalid request, course id not available. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
+
       LOGGER.debug("deleting course {}", context.courseId());
       return new RepoBuilder().buildCourseRepo(context).deleteCourse();
     } catch (Throwable t) {
@@ -156,8 +155,8 @@ class MessageProcessor implements Processor {
   private MessageResponse processCourseCopy() {
     try {
       ProcessorContext context = createContext();
-      
-      if(checkRequest(context)) {
+
+      if (checkRequest(context)) {
         LOGGER.error("Invalid input data, Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
       }
@@ -172,12 +171,12 @@ class MessageProcessor implements Processor {
   private MessageResponse processCourseUpdate() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Invalid request, course id not available. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkRequest(context)) {
+
+      if (checkRequest(context)) {
         LOGGER.error("Invalid input data, Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
       }
@@ -203,11 +202,11 @@ class MessageProcessor implements Processor {
     try {
       LOGGER.debug("creating new course");
       ProcessorContext context = createContext();
-      if(checkRequest(context)) {
+      if (checkRequest(context)) {
         LOGGER.error("Invalid input data, Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
       }
-      
+
       return new RepoBuilder().buildCourseRepo(context).createCourse();
     } catch (Throwable t) {
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
@@ -218,7 +217,7 @@ class MessageProcessor implements Processor {
     String courseId = message.headers().get(MessageConstants.COURSE_ID);
     return new ProcessorContext(userId, prefs, request, courseId);
   }
-  
+
   private ExecutionResult<MessageResponse> validateAndInitialize() {
     if (message == null || !(message.body() instanceof JsonObject)) {
       LOGGER.error("Invalid message received, either null or body of message is not JsonObject ");

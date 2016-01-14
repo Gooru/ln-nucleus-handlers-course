@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 
 public class DeleteCourseHandler implements DBHandler {
 
-  private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(DeleteCourseHandler.class);
+  private final ProcessorContext context;
 
   public DeleteCourseHandler(ProcessorContext context) {
     this.context = context;
@@ -24,7 +24,7 @@ public class DeleteCourseHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id for delete");
       return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for delete"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -54,7 +54,7 @@ public class DeleteCourseHandler implements DBHandler {
       } else {
         LOGGER.info("error in delete course, returning errors");
         return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(ajEntityCourse.errors()),
-                ExecutionStatus.FAILED);
+          ExecutionStatus.FAILED);
       }
     } catch (Throwable t) {
       LOGGER.error("exception while delete course", t);

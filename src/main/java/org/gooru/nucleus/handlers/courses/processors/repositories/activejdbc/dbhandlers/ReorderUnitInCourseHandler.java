@@ -8,13 +8,13 @@ import org.slf4j.LoggerFactory;
 
 public class ReorderUnitInCourseHandler implements DBHandler {
 
-  private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(ReorderUnitInCourseHandler.class);
-  
+  private final ProcessorContext context;
+
   public ReorderUnitInCourseHandler(ProcessorContext context) {
     this.context = context;
   }
-  
+
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     // TODO Auto-generated method stub

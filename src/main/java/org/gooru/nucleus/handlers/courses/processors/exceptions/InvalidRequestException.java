@@ -25,6 +25,5 @@ public class InvalidRequestException extends RuntimeException {
     // TODO Auto-generated constructor stub
   }
 
-  
 
 }

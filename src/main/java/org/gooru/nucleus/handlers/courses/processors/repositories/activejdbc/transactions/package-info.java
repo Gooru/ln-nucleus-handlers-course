@@ -6,5 +6,4 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.tr
  * It provides try - catch handlers to make sure that handlers when run are either committed or rolled back,
  * and the connection is detached from current thread. In case there was an operation marking connection as
  * read only, it needs to be restored back to its value
- *
  */

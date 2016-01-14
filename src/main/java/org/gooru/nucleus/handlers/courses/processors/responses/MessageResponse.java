@@ -1,12 +1,11 @@
 package org.gooru.nucleus.handlers.courses.processors.responses;
 
+import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.HttpConstants;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.json.JsonObject;
 
 /**
  * Created by ashish on 6/1/16.
@@ -168,7 +167,7 @@ public class MessageResponse {
     private JsonObject buildResponseContainer() {
       JsonObject result = new JsonObject();
       result.put(MessageConstants.MSG_HTTP_STATUS, this.httpStatus.getCode()).put(MessageConstants.MSG_HTTP_HEADERS, this.headers)
-        .put(MessageConstants.MSG_HTTP_BODY, buildHttpBody());
+            .put(MessageConstants.MSG_HTTP_BODY, buildHttpBody());
       return result;
     }
 

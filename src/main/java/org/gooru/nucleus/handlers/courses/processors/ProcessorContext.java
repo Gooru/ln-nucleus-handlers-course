@@ -33,7 +33,7 @@ public class ProcessorContext {
   public JsonObject request() {
     return this.request;
   }
-  
+
   public String courseId() {
     return this.courseId;
   }

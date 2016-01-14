@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.AJResponseJsonTransformer;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -12,12 +13,10 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonObject;
-
 public class FetchCourseHandler implements DBHandler {
 
-  private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchCourseHandler.class);
+  private final ProcessorContext context;
 
   public FetchCourseHandler(ProcessorContext context) {
     this.context = context;
@@ -28,7 +27,7 @@ public class FetchCourseHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id for fetch course");
       return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to fetch course"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -44,8 +43,8 @@ public class FetchCourseHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     String sql = "SELECT id, title, created_at, updated_at, creator_id, original_creator_id, original_course_id, publish_date, thumbnail, audience,"
-            + " metadata, taxonomy, collaborator, class_list, visible_on_profile FROM course WHERE id = ? AND is_deleted = ?";
-    
+      + " metadata, taxonomy, collaborator, class_list, visible_on_profile FROM course WHERE id = ? AND is_deleted = ?";
+
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId(), false);
     JsonObject body = null;
     if (ajEntityCourse != null && !ajEntityCourse.isEmpty()) {

@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.transactions;
 
-import java.sql.SQLException;
-
 import org.gooru.nucleus.handlers.courses.app.components.DataSourceRegistry;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.DBHandler;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
@@ -10,6 +8,8 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.javalite.activejdbc.Base;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.SQLException;
 
 /**
  * Created by ashish on 11/1/16.
