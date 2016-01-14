@@ -26,23 +26,23 @@ public class FetchCollaboratorHandler implements DBHandler {
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id to fetch collaborator");
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id to fetch collaborator"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id to fetch collaborator"),
         ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
     if (!AJEntityCourse.exists(context.courseId())) {
       LOGGER.info("course {} not found to fetch collaborator, aborting", context.courseId());
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("validateRequest() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
@@ -50,15 +50,15 @@ public class FetchCollaboratorHandler implements DBHandler {
     String courseId = context.courseId();
     String sql = "SELECT " + CourseEntityConstants.COLLABORATOR + " FROM COURSE WHERE " + CourseEntityConstants.ID + " = ?";
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, courseId);
-    JsonObject body = new JsonObject();
+    JsonObject body;
     if (ajEntityCourse != null && !ajEntityCourse.isEmpty()) {
       LOGGER.info("collaborator found for course {}", courseId);
       body = new AJResponseJsonTransformer().transform(ajEntityCourse.get(0).toJson(false, CourseEntityConstants.COLLABORATOR));
     } else {
       LOGGER.info("no collaborator found for course {}", courseId);
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
-    return new ExecutionResult<MessageResponse>(MessageResponseFactory.createGetResponse(body), ExecutionStatus.SUCCESSFUL);
+    return new ExecutionResult<>(MessageResponseFactory.createGetResponse(body), ExecutionStatus.SUCCESSFUL);
   }
 
   @Override

@@ -29,41 +29,41 @@ public class CreateCourseHandler implements DBHandler {
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.info("invalid request received to create course");
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create course"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create course"),
         ExecutionStatus.FAILED);
     }
 
     JsonObject request = context.request();
-    StringBuffer missingFields = new StringBuffer();
+    StringBuilder missingFields = new StringBuilder();
     for (String fieldName : CourseEntityConstants.NOTNULL_FIELDS) {
       if (request.getString(fieldName) == null || request.getString(fieldName).isEmpty()) {
-        missingFields.append(fieldName + " ");
+        missingFields.append(fieldName).append(" ");
       }
     }
     // TODO: May be need to revisit this logic of validating fields and
     // returning error back for all validation failed in one go
     if (!missingFields.toString().isEmpty()) {
       LOGGER.info("request data validation failed for '{}'", missingFields.toString());
-      return new ExecutionResult<MessageResponse>(
+      return new ExecutionResult<>(
         MessageResponseFactory.createInvalidRequestResponse("mandatory field(s) '" + missingFields.toString() + "' missing"),
         ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
     LOGGER.debug("validateRequest() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     JsonObject request = context.request();
     AJEntityCourse course = new AJEntityCourse();
-    String mapValue = null;
+    String mapValue;
     try {
       for (Map.Entry<String, Object> entry : request) {
         mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
@@ -99,17 +99,17 @@ public class CreateCourseHandler implements DBHandler {
       if (course.isValid()) {
         if (course.insert()) {
           LOGGER.info("course created successfully : {}", id);
-          return new ExecutionResult<MessageResponse>(MessageResponseFactory.createPostResponse(id), ExecutionStatus.SUCCESSFUL);
+          return new ExecutionResult<>(MessageResponseFactory.createPostResponse(id), ExecutionStatus.SUCCESSFUL);
         } else {
           throw new Exception("Something went wrong, unable to save course. Try Again!");
         }
       } else {
         LOGGER.info("Error while creating course");
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(course.errors()), ExecutionStatus.FAILED);
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(course.errors()), ExecutionStatus.FAILED);
       }
     } catch (Throwable t) {
       LOGGER.error("Exception while creating course", t);
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
     }
   }
 

@@ -26,18 +26,18 @@ public class FetchCourseHandler implements DBHandler {
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id for fetch course");
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to fetch course"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to fetch course"),
         ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
     LOGGER.debug("validateRequest() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
@@ -46,15 +46,15 @@ public class FetchCourseHandler implements DBHandler {
       + " metadata, taxonomy, collaborator, class_list, visible_on_profile FROM course WHERE id = ? AND is_deleted = ?";
 
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId(), false);
-    JsonObject body = null;
+    JsonObject body;
     if (ajEntityCourse != null && !ajEntityCourse.isEmpty()) {
       body = new AJResponseJsonTransformer().transform(ajEntityCourse.get(0).toJson(false, CourseEntityConstants.ALL_FIELDS));
       // TODO: Need to include unit summary of the course
       LOGGER.info("found course for id {} : " + context.courseId());
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createGetResponse(body), ExecutionStatus.SUCCESSFUL);
+      return new ExecutionResult<>(MessageResponseFactory.createGetResponse(body), ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.info("course not found {}", context.courseId());
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
   }
 

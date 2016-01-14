@@ -24,23 +24,23 @@ public class UpdateCollaboratorHandler implements DBHandler {
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.info("invalid request received, aborting");
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided request"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided request"),
         ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
     if (!AJEntityCourse.exists(context.courseId())) {
       LOGGER.info("course {} not found to update, aborting", context.courseId());
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("validateRequest() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
@@ -56,15 +56,15 @@ public class UpdateCollaboratorHandler implements DBHandler {
       ajEntityCourse.set(CourseEntityConstants.COLLABORATOR, jsonbField);
       if (ajEntityCourse.save()) {
         LOGGER.info("updated course successfully");
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.info("error in update course, returning errors");
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(ajEntityCourse.errors()),
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(ajEntityCourse.errors()),
           ExecutionStatus.FAILED);
       }
     } catch (Throwable t) {
       LOGGER.error("exception while updating course", t);
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
     }
   }
 

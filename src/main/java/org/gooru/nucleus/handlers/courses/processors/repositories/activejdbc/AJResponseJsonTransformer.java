@@ -19,7 +19,7 @@ public class AJResponseJsonTransformer {
       return result;
     }
 
-    String mapValue = null;
+    String mapValue;
     for (Map.Entry<String, Object> entry : result) {
       mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
       if (mapValue != null && !mapValue.isEmpty()) {

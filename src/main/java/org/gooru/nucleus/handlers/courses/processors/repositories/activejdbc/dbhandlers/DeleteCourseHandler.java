@@ -23,23 +23,23 @@ public class DeleteCourseHandler implements DBHandler {
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id for delete");
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for delete"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for delete"),
         ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
     if (!AJEntityCourse.exists(context.courseId())) {
       LOGGER.info("course {} not found to delete, aborting", context.courseId());
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("validateRequest() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
@@ -50,15 +50,15 @@ public class DeleteCourseHandler implements DBHandler {
       ajEntityCourse.set(CourseEntityConstants.IS_DELETED, true);
       if (ajEntityCourse.save()) {
         LOGGER.info("course marked as deleted successfully");
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createDeleteResponse(), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory.createDeleteResponse(), ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.info("error in delete course, returning errors");
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(ajEntityCourse.errors()),
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(ajEntityCourse.errors()),
           ExecutionStatus.FAILED);
       }
     } catch (Throwable t) {
       LOGGER.error("exception while delete course", t);
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
     }
   }
 

@@ -29,18 +29,18 @@ public class UpdateCourseHandler implements DBHandler {
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id for update");
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for update"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for update"),
         ExecutionStatus.FAILED);
     }
 
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.info("invalid data provided to update course {}", context.courseId());
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to update course"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to update course"),
         ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
@@ -48,7 +48,7 @@ public class UpdateCourseHandler implements DBHandler {
     //Check if course is exists or not
     if (!AJEntityCourse.exists(context.courseId())) {
       LOGGER.info("course {} not found to update, aborting", context.courseId());
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
     // Check whether the course is not deleted
@@ -57,21 +57,21 @@ public class UpdateCourseHandler implements DBHandler {
     if (ajEntityCourse != null && !ajEntityCourse.isEmpty()) {
       if (ajEntityCourse.get(0).getBoolean(CourseEntityConstants.IS_DELETED)) {
         LOGGER.info("course {} is deleted, hence can't be updated. Aborting", context.courseId());
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createNotFoundResponse("Course your are trying to update is deleted"),
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course your are trying to update is deleted"),
           ExecutionStatus.FAILED);
       }
     }
 
     //TODO: check whether user is owner/collaborator of course
     LOGGER.debug("validateRequest() OK");
-    return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     JsonObject request = context.request();
     AJEntityCourse course = new AJEntityCourse();
-    String mapValue = null;
+    String mapValue;
     try {
       //TODO: Define list of updatable columns and only set those values
       for (Map.Entry<String, Object> entry : request) {
@@ -92,14 +92,14 @@ public class UpdateCourseHandler implements DBHandler {
 
       if (course.save()) {
         LOGGER.info("course {} updated successfully", context.courseId());
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.info("error in updating course");
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(course.errors()), ExecutionStatus.FAILED);
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(course.errors()), ExecutionStatus.FAILED);
       }
     } catch (Throwable t) {
       LOGGER.error("Exception while updating course", t);
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
     }
   }
 

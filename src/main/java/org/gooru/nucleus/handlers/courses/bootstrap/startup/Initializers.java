@@ -10,10 +10,9 @@ public class Initializers implements Iterable<Initializer> {
 
 
   private final Iterator<Initializer> internalIterator;
-  private List<Initializer> initializers = null;
 
   public Initializers() {
-    initializers = new ArrayList<>();
+    List<Initializer> initializers = new ArrayList<>();
     initializers.add(DataSourceRegistry.getInstance());
     internalIterator = initializers.iterator();
   }
