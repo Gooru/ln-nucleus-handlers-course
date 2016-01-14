@@ -30,9 +30,9 @@ public class HttpConstants {
     TOO_MANY_REQUESTS(429, "Too Many Requests"),
     ERROR(500, "Internal Server Error");
     
-    private int code;
-    private String message;
-    private HttpStatus(int code, String message) {
+    private final int code;
+    private final String message;
+    HttpStatus(int code, String message) {
       this.code = code;
       this.message = message;
     }

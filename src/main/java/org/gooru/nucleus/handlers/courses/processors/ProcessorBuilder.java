@@ -4,7 +4,7 @@ import io.vertx.core.eventbus.Message;
 
 public class ProcessorBuilder {
   
-  private Message<Object> message;
+  private final Message<Object> message;
 
   public ProcessorBuilder(Message<Object> message) {
     this.message = message;
