@@ -1,24 +1,26 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
-import org.gooru.nucleus.handlers.courses.processors.repositories.CourseRepo;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.CourseEntityConstants;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.postgresql.util.PGobject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
 public class CreateCourseHandler implements DBHandler {
 
   private final ProcessorContext context;
+  private static final Logger LOGGER = LoggerFactory.getLogger(CreateCourseHandler.class);
 
   public CreateCourseHandler(ProcessorContext context) {
     this.context = context;
@@ -27,26 +29,34 @@ public class CreateCourseHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.request() == null || context.request().isEmpty()) {
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided request"),
+      LOGGER.info("invalid request received to create course");
+      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create course"),
               ExecutionStatus.FAILED);
     }
 
     JsonObject request = context.request();
-    /*
-     * Validations to create course 1. course title is not null
-     */
-    for (String fieldName : CourseRepo.NOTNULL_FIELDS) {
+    StringBuffer missingFields = new StringBuffer();
+    for (String fieldName : CourseEntityConstants.NOTNULL_FIELDS) {
       if (request.getString(fieldName) == null || request.getString(fieldName).isEmpty()) {
-        return new ExecutionResult<MessageResponse>(
-                MessageResponseFactory.createInvalidRequestResponse("mandatory field '" + fieldName + "' is missing"), ExecutionStatus.FAILED);
+        missingFields.append(fieldName + " ");
       }
     }
-    
+    // TODO: May be need to revisit this logic of validating fields and
+    // returning error back for all validation failed in one go
+    if (!missingFields.toString().isEmpty()) {
+      LOGGER.info("request data validation failed for '{}'", missingFields.toString());
+      return new ExecutionResult<MessageResponse>(
+              MessageResponseFactory.createInvalidRequestResponse("mandatory field(s) '" + missingFields.toString() + "' missing"),
+              ExecutionStatus.FAILED);
+    }
+
+    LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
+    LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<MessageResponse>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
@@ -58,8 +68,8 @@ public class CreateCourseHandler implements DBHandler {
     try {
       for (Map.Entry<String, Object> entry : request) {
         mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-        if(mapValue != null && !mapValue.isEmpty()) {
-          if (Arrays.asList(CourseRepo.JSON_FIELDS).contains(entry.getKey())) {
+        if (mapValue != null && !mapValue.isEmpty()) {
+          if (Arrays.asList(CourseEntityConstants.JSON_FIELDS).contains(entry.getKey())) {
             PGobject jsonbField = new PGobject();
             jsonbField.setType("jsonb");
             jsonbField.setValue(mapValue);
@@ -69,25 +79,37 @@ public class CreateCourseHandler implements DBHandler {
           }
         }
       }
-      
-      //generate UUID and set as id
+
+      // TODO: UUID should be generated from separate utility
+      // Check for duplicate id, if its already exists in same table, generate new
+      // Probably need to revisit this logic again or need to move in separate utility
       String id = UUID.randomUUID().toString();
-      course.setId(id);
-      course.set(CourseRepo.CREATOR_ID, context.userId());
-      course.set(CourseRepo.ORIGINAL_CREATOR_ID, context.userId());
+      boolean isDuplicate = true;
+      while(isDuplicate) {
+        if(AJEntityCourse.exists(id)) {
+          id = UUID.randomUUID().toString();
+        } else {
+          isDuplicate = false;
+        }
+      }
       
-      if(course.isValid()) { 
-        if(course.insert()) {
+      course.setId(id);
+      course.set(CourseEntityConstants.CREATOR_ID, context.userId());
+      course.set(CourseEntityConstants.ORIGINAL_CREATOR_ID, context.userId());
+
+      if (course.isValid()) {
+        if (course.insert()) {
+          LOGGER.info("course created successfully : {}", id);
           return new ExecutionResult<MessageResponse>(MessageResponseFactory.createPostResponse(id), ExecutionStatus.SUCCESSFUL);
         } else {
           throw new Exception("Something went wrong, unable to save course. Try Again!");
         }
       } else {
+        LOGGER.info("Error while creating course");
         return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(course.errors()), ExecutionStatus.FAILED);
       }
-    } catch (SQLException sqle) {
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(sqle.getMessage()), ExecutionStatus.FAILED);
     } catch (Throwable t) {
+      LOGGER.error("Exception while creating course", t);
       return new ExecutionResult<MessageResponse>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
     }
   }

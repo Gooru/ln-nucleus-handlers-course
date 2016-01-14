@@ -216,7 +216,6 @@ class MessageProcessor implements Processor {
 
   private ProcessorContext createContext() {
     String courseId = message.headers().get(MessageConstants.COURSE_ID);
-    LOGGER.debug("received request to get course id : " + courseId);
     return new ProcessorContext(userId, prefs, request, courseId);
   }
   

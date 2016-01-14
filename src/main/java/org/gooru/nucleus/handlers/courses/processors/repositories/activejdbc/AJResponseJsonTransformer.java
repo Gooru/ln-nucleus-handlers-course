@@ -3,7 +3,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.gooru.nucleus.handlers.courses.processors.repositories.CourseRepo;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.CourseEntityConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +23,11 @@ public class AJResponseJsonTransformer {
     String mapValue = null;
     for (Map.Entry<String, Object> entry : result) {
       mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-      LOGGER.info("map value:" + mapValue);
       if(mapValue != null && !mapValue.isEmpty()) {
-        if(Arrays.asList(CourseRepo.JSON_OBJECT_FIELDS).contains(entry.getKey())) {
+        if(Arrays.asList(CourseEntityConstants.JSON_OBJECT_FIELDS).contains(entry.getKey())) {
           //result.remove(entry.getKey());
           result.put(entry.getKey(), new JsonObject(mapValue));
-        } else if (Arrays.asList(CourseRepo.JSON_ARRAY_FIELDS).contains(entry.getKey())) {
+        } else if (Arrays.asList(CourseEntityConstants.JSON_ARRAY_FIELDS).contains(entry.getKey())) {
           //result.remove(entry.getKey());
           result.put(entry.getKey(), new JsonArray(mapValue));
         } 
