@@ -5,6 +5,7 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.ent
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.CourseEntityConstants;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
+import org.javalite.activejdbc.LazyList;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.slf4j.Logger;
@@ -33,7 +34,23 @@ public class DeleteCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    if (!AJEntityCourse.exists(context.courseId())) {
+    String sql = "SELECT " + CourseEntityConstants.IS_DELETED + " FROM course WHERE " + CourseEntityConstants.ID + " = ?";
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
+    
+    if (!ajEntityCourse.isEmpty()) {
+      //irrespective of size, always get first 
+      if (ajEntityCourse.get(0).getBoolean(CourseEntityConstants.IS_DELETED)) {
+        LOGGER.info("course {} is already deleted. Aborting", context.courseId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course your are trying to delete is already deleted"),
+          ExecutionStatus.FAILED);
+      }
+      
+      //check whether user is owner, if anonymous or not owner, send unauthorized back;
+      if(!ajEntityCourse.get(0).getString(CourseEntityConstants.CREATOR_ID).equalsIgnoreCase(context.userId())) {
+        LOGGER.info("user is anonymous or not owner of course for delete. aborting");
+        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+      }
+    } else {
       LOGGER.info("course {} not found to delete, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }

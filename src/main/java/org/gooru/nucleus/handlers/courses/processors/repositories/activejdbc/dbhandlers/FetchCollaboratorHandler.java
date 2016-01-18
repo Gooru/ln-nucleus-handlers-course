@@ -36,8 +36,19 @@ public class FetchCollaboratorHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    if (!AJEntityCourse.exists(context.courseId())) {
-      LOGGER.info("course {} not found to fetch collaborator, aborting", context.courseId());
+    String sql = "SELECT " + CourseEntityConstants.IS_DELETED + " FROM course WHERE " + CourseEntityConstants.ID + " = ?";
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
+    
+    if (!ajEntityCourse.isEmpty()) {
+      //irrespective of size, always get first 
+      if (ajEntityCourse.get(0).getBoolean(CourseEntityConstants.IS_DELETED)) {
+        LOGGER.info("course {} is deleted. Aborting", context.courseId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which your are trying to fetch collaborators."),
+          ExecutionStatus.FAILED);
+      }
+
+    } else {
+      LOGGER.info("course {} not found to delete, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
