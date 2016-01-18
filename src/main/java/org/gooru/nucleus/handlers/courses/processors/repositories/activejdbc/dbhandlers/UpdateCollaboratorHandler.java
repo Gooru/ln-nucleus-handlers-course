@@ -5,6 +5,7 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.ent
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.CourseEntityConstants;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
+import org.javalite.activejdbc.LazyList;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.postgresql.util.PGobject;
@@ -34,8 +35,26 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    if (!AJEntityCourse.exists(context.courseId())) {
-      LOGGER.info("course {} not found to update, aborting", context.courseId());
+    //Check whether the course is deleted or not, which will also verify if course exists or not
+    String sql = "SELECT " + CourseEntityConstants.IS_DELETED + ", " + CourseEntityConstants.CREATOR_ID + " FROM course WHERE " + CourseEntityConstants.ID + " = ?";
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
+
+    if (!ajEntityCourse.isEmpty()) {
+
+      //irrespective of size, always get first 
+      if (ajEntityCourse.get(0).getBoolean(CourseEntityConstants.IS_DELETED)) {
+        LOGGER.info("course {} is deleted, hence collborators can't be updated. Aborting", context.courseId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which your are trying to update collaborators"),
+          ExecutionStatus.FAILED);
+      }
+      
+      //check whether user is owner, if anonymous or not owner, send unauthorized back;
+      if(!ajEntityCourse.get(0).getString(CourseEntityConstants.CREATOR_ID).equalsIgnoreCase(context.userId())) {
+        LOGGER.info("user is anonymous or not owner of course to update collaborators. aborting");
+        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+      }
+    } else {
+      LOGGER.info("course {} not found to update collaborators, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 

@@ -45,24 +45,34 @@ public class UpdateCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    //Check if course is exists or not
-    if (!AJEntityCourse.exists(context.courseId())) {
-      LOGGER.info("course {} not found to update, aborting", context.courseId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
-    }
 
-    // Check whether the course is not deleted
-    String sql = "SELECT is_deleted FROM course WHERE id = ?";
+    //Check whether the course is deleted or not, which will also verify if course exists or not
+    String sql = "SELECT " + CourseEntityConstants.IS_DELETED + ", " + CourseEntityConstants.CREATOR_ID + " FROM course WHERE " + CourseEntityConstants.ID + " = ?";
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
-    if (ajEntityCourse != null && !ajEntityCourse.isEmpty()) {
+
+    if (!ajEntityCourse.isEmpty()) {
+      if(ajEntityCourse.size() >= 2) {
+        //only log, if more than one course is found 
+        LOGGER.debug("more that 1 course found for id {}", context.courseId());
+      }
+      
+      //irrespective of size, always get first 
       if (ajEntityCourse.get(0).getBoolean(CourseEntityConstants.IS_DELETED)) {
         LOGGER.info("course {} is deleted, hence can't be updated. Aborting", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course your are trying to update is deleted"),
           ExecutionStatus.FAILED);
       }
+      
+      //check whether user is owner, if anonymous or not owner, send unauthorized back;
+      if(!ajEntityCourse.get(0).getString(CourseEntityConstants.CREATOR_ID).equalsIgnoreCase(context.userId())) {
+        LOGGER.info("user is anonymous or not owner of course for delete. aborting");
+        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+      }
+    } else {
+      LOGGER.info("course {} not found to update, aborting", context.courseId());
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    //TODO: check whether user is owner/collaborator of course
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
