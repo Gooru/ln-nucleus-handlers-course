@@ -28,13 +28,13 @@ public class UpdateCourseHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
-      LOGGER.info("invalid course id for update");
+      LOGGER.warn("invalid course id for update");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for update"),
         ExecutionStatus.FAILED);
     }
 
     if (context.request() == null || context.request().isEmpty()) {
-      LOGGER.info("invalid data provided to update course {}", context.courseId());
+      LOGGER.warn("invalid data provided to update course {}", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to update course"),
         ExecutionStatus.FAILED);
     }
@@ -106,8 +106,16 @@ public class UpdateCourseHandler implements DBHandler {
         LOGGER.info("course {} updated successfully", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.info("error in updating course");
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(course.errors()), ExecutionStatus.FAILED);
+        LOGGER.error("error in updating course");
+        if(course.hasErrors()) {
+          Map<String, String> errMap = course.errors();
+          JsonObject errors = new JsonObject();
+          errMap.forEach(errors::put);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+        } else {
+          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating course"), ExecutionStatus.FAILED);
+        }
+        
       }
     } catch (Throwable t) {
       LOGGER.error("Exception while updating course", t);

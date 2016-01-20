@@ -33,17 +33,17 @@ public class CourseValidator {
     if (!ajEntityCourse.isEmpty()) {
       if (ajEntityCourse.size() >= 2) {
         // only log, if more than one course is found
-        LOGGER.debug("more that 1 course found for id {}", context.courseId());
+        LOGGER.warn("more that 1 course found for id {}", context.courseId());
       }
 
       // irrespective of size, always get first
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.info("course {} is deleted. Aborting", context.courseId());
+        LOGGER.warn("course {} is deleted. Aborting", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted"), ExecutionStatus.FAILED);
       }
 
     } else {
-      LOGGER.info("course {} not found, aborting", context.courseId());
+      LOGGER.warn("course {} not found, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
@@ -59,23 +59,23 @@ public class CourseValidator {
     if (!ajEntityCourse.isEmpty()) {
       if (ajEntityCourse.size() >= 2) {
         // only log, if more than one course is found
-        LOGGER.debug("more that 1 course found for id {}", context.courseId());
+        LOGGER.warn("more that 1 course found for id {}", context.courseId());
       }
 
       // irrespective of size, always get first
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.info("course {} is deleted. Aborting", context.courseId());
+        LOGGER.warn("course {} is deleted. Aborting", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted"), ExecutionStatus.FAILED);
       }
 
       // check whether user is owner, if anonymous or not owner, send
       // unauthorized back;
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
-        LOGGER.info("user is anonymous or not owner of course. aborting");
+        LOGGER.warn("user is anonymous or not owner of course. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.info("course {} not found, aborting", context.courseId());
+      LOGGER.warn("course {} not found, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 

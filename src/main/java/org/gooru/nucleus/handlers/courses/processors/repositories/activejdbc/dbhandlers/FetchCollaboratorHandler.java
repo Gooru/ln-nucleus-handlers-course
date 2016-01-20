@@ -25,9 +25,9 @@ public class FetchCollaboratorHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
-      LOGGER.info("invalid course id to fetch collaborator");
+      LOGGER.warn("invalid course id to fetch collaborator");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id to fetch collaborator"),
-        ExecutionStatus.FAILED);
+              ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -38,17 +38,18 @@ public class FetchCollaboratorHandler implements DBHandler {
   public ExecutionResult<MessageResponse> validateRequest() {
     String sql = "SELECT " + AJEntityCourse.IS_DELETED + " FROM course WHERE " + AJEntityCourse.ID + " = ?";
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
-    
+
     if (!ajEntityCourse.isEmpty()) {
-      //irrespective of size, always get first 
+      // irrespective of size, always get first
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.info("course {} is deleted. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which your are trying to fetch collaborators."),
-          ExecutionStatus.FAILED);
+        LOGGER.warn("course {} is deleted. Aborting", context.courseId());
+        return new ExecutionResult<>(
+                MessageResponseFactory.createNotFoundResponse("Course is deleted for which your are trying to fetch collaborators."),
+                ExecutionStatus.FAILED);
       }
 
     } else {
-      LOGGER.info("course {} not found to delete, aborting", context.courseId());
+      LOGGER.warn("course {} not found to delete, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
@@ -66,7 +67,7 @@ public class FetchCollaboratorHandler implements DBHandler {
       LOGGER.info("collaborator found for course {}", courseId);
       body = new AJResponseJsonTransformer().transformCourse(ajEntityCourse.get(0).toJson(false, AJEntityCourse.COLLABORATOR));
     } else {
-      LOGGER.info("no collaborator found for course {}", courseId);
+      LOGGER.error("no collaborator found for course {}", courseId);
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
     return new ExecutionResult<>(MessageResponseFactory.createGetResponse(body), ExecutionStatus.SUCCESSFUL);

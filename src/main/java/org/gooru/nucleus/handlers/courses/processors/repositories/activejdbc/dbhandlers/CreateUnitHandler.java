@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 
 public class CreateUnitHandler implements DBHandler {
-  
+
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateUnitHandler.class);
 
@@ -33,9 +33,9 @@ public class CreateUnitHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.request() == null || context.request().isEmpty()) {
-      LOGGER.info("invalid request received to create unit");
+      LOGGER.warn("invalid request received to create unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create unit"),
-        ExecutionStatus.FAILED);
+              ExecutionStatus.FAILED);
     }
 
     JsonObject request = context.request();
@@ -48,11 +48,11 @@ public class CreateUnitHandler implements DBHandler {
 
     // TODO: May be need to revisit this logic of validating fields and
     // returning error back for all validation failed in one go
-    if(missingFields.size() > 0) {
-      LOGGER.info("request data validation failed for '{}'", String.join(",", missingFields));
+    if (missingFields.size() > 0) {
+      LOGGER.warn("request data validation failed for '{}'", String.join(",", missingFields));
       return new ExecutionResult<>(
-        MessageResponseFactory.createInvalidRequestResponse("mandatory field(s) '" + String.join(",", missingFields) + "' missing"),
-        ExecutionStatus.FAILED);
+              MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("missingFields", String.join(",", missingFields))),
+              ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -61,29 +61,31 @@ public class CreateUnitHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    //Check whether the course is deleted or not, which will also verify if course exists or not
+    // Check whether the course is deleted or not, which will also verify if
+    // course exists or not
     String sql = "SELECT " + AJEntityCourse.IS_DELETED + ", " + AJEntityCourse.CREATOR_ID + " FROM course WHERE " + AJEntityCourse.ID + " = ?";
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
 
     if (!ajEntityCourse.isEmpty()) {
 
-      //irrespective of size, always get first 
+      // irrespective of size, always get first
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.info("course {} is deleted, hence can't create unit. Aborting", context.courseId());
+        LOGGER.warn("course {} is deleted, hence can't create unit. Aborting", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which you are trying to create unit"),
-          ExecutionStatus.FAILED);
+                ExecutionStatus.FAILED);
       }
-      
-      //check whether user is owner, if anonymous or not owner, send unauthorized back;
-      if(!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
-        LOGGER.info("user is anonymous or not owner of course to create unit. aborting");
+
+      // check whether user is owner, if anonymous or not owner, send
+      // unauthorized back;
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
+        LOGGER.warn("user is anonymous or not owner of course to create unit. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.info("course {} not found to create unit, aborting", context.courseId());
+      LOGGER.warn("course {} not found to create unit, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
-    
+
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
@@ -109,8 +111,10 @@ public class CreateUnitHandler implements DBHandler {
       }
 
       // TODO: UUID should be generated from separate utility
-      // Check for duplicate id, if its already exists in same table, generate new
-      // Probably need to revisit this logic again or need to move in separate utility
+      // Check for duplicate id, if its already exists in same table, generate
+      // new
+      // Probably need to revisit this logic again or need to move in separate
+      // utility
       String id = UUID.randomUUID().toString();
       boolean isDuplicate = true;
       while (isDuplicate) {
@@ -120,7 +124,7 @@ public class CreateUnitHandler implements DBHandler {
           isDuplicate = false;
         }
       }
-      
+
       newUnit.setId(id);
       newUnit.set(AJEntityUnit.COURSE_ID, context.courseId());
       newUnit.set(AJEntityUnit.CREATOR_ID, context.userId());
@@ -128,26 +132,33 @@ public class CreateUnitHandler implements DBHandler {
       newUnit.set(AJEntityUnit.ORIGINAL_CREATOR_ID, context.userId());
       newUnit.set(AJEntityUnit.IS_DELETED, false);
 
-      //Get max sequence id for course
+      // Get max sequence id for course
       String getMaxSequenceIdSql = "SELECT max(" + AJEntityUnit.SEQUENCE_ID + ") FROM course_unit WHERE " + AJEntityUnit.COURSE_ID + "=?";
       Object maxSequenceId = Base.firstCell(getMaxSequenceIdSql, context.courseId());
       int sequenceId = 1;
-      if(maxSequenceId != null) {
+      if (maxSequenceId != null) {
         sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
-        
+
       }
       newUnit.set(AJEntityUnit.SEQUENCE_ID, sequenceId);
 
-      if(newUnit.isValid()) {
-        if(newUnit.insert()) {
+      if (newUnit.isValid()) {
+        if (newUnit.insert()) {
           LOGGER.info("unit {} created successfully for course {}", id, context.courseId());
           return new ExecutionResult<>(MessageResponseFactory.createPostResponse(id), ExecutionStatus.SUCCESSFUL);
         } else {
           throw new Exception("Something went wrong, unable to create unit. Try Again!");
         }
       } else {
-        LOGGER.info("Error while creating unit");
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(newUnit.errors()), ExecutionStatus.FAILED);
+        LOGGER.error("Error while creating unit");
+        if (newUnit.hasErrors()) {
+          Map<String, String> errMap = newUnit.errors();
+          JsonObject errors = new JsonObject();
+          errMap.forEach(errors::put);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+        } else {
+          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while creating unit"), ExecutionStatus.FAILED);
+        }
       }
     } catch (Throwable t) {
       LOGGER.error("Exception while creating unit", t);

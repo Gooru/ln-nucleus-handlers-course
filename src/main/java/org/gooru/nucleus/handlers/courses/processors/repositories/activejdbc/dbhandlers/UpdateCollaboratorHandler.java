@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import java.util.Map;
+
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
@@ -10,6 +12,8 @@ import org.javalite.activejdbc.LazyList;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class UpdateCollaboratorHandler implements DBHandler {
 
@@ -23,7 +27,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.request() == null || context.request().isEmpty()) {
-      LOGGER.info("invalid request received, aborting");
+      LOGGER.warn("invalid request received, aborting");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided request"),
         ExecutionStatus.FAILED);
     }
@@ -42,18 +46,18 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
       //irrespective of size, always get first 
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.info("course {} is deleted, hence collborators can't be updated. Aborting", context.courseId());
+        LOGGER.warn("course {} is deleted, hence collborators can't be updated. Aborting", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which your are trying to update collaborators"),
           ExecutionStatus.FAILED);
       }
       
       //check whether user is owner, if anonymous or not owner, send unauthorized back;
       if(!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
-        LOGGER.info("user is anonymous or not owner of course to update collaborators. aborting");
+        LOGGER.warn("user is anonymous or not owner of course to update collaborators. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.info("course {} not found to update collaborators, aborting", context.courseId());
+      LOGGER.warn("course {} not found to update collaborators, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
@@ -66,6 +70,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
     try {
       AJEntityCourse ajEntityCourse = new AJEntityCourse();
       ajEntityCourse.setId(context.courseId());
+      ajEntityCourse.setString(AJEntityCourse.MODIFIER_ID, context.userId());
 
       PGobject jsonbField = new PGobject();
       jsonbField.setType("jsonb");
@@ -76,9 +81,16 @@ public class UpdateCollaboratorHandler implements DBHandler {
         LOGGER.info("updated collaborators of course {} successfully", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.info("error in update course, returning errors");
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(ajEntityCourse.errors()),
-          ExecutionStatus.FAILED);
+        LOGGER.error("error in update collaborators of course {}", context.courseId());
+        if(ajEntityCourse.hasErrors()) {
+          Map<String, String> errMap = ajEntityCourse.errors();
+          JsonObject errors = new JsonObject();
+          errMap.forEach(errors::put);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
+            ExecutionStatus.FAILED);
+        } else {
+          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error in update collaborators of course"), ExecutionStatus.FAILED);
+        }
       }
     } catch (Throwable t) {
       LOGGER.error("exception while updating course", t);

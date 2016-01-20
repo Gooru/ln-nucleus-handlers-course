@@ -26,7 +26,7 @@ public class FetchCourseHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
-      LOGGER.info("invalid course id for fetch course");
+      LOGGER.warn("invalid course id for fetch course");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to fetch course"),
         ExecutionStatus.FAILED);
     }
@@ -60,7 +60,7 @@ public class FetchCourseHandler implements DBHandler {
       }
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(body), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.info("course not found {}", context.courseId());
+      LOGGER.error("course not found {}", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
   }

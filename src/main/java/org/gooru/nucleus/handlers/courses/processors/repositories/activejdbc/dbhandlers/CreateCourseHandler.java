@@ -31,7 +31,7 @@ public class CreateCourseHandler implements DBHandler {
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("invalid request received to create course");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create course"),
-        ExecutionStatus.FAILED);
+              ExecutionStatus.FAILED);
     }
 
     JsonObject request = context.request();
@@ -46,8 +46,8 @@ public class CreateCourseHandler implements DBHandler {
     if (!missingFields.toString().isEmpty()) {
       LOGGER.warn("request data validation failed for '{}'", missingFields.toString());
       return new ExecutionResult<>(
-        MessageResponseFactory.createInvalidRequestResponse("mandatory field(s) '" + missingFields.toString() + "' missing"),
-        ExecutionStatus.FAILED);
+              MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("missingFields", missingFields.toString())),
+              ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -56,12 +56,12 @@ public class CreateCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    //make sure that user is not anonymous
-    if(context.userId().equals(MessageConstants.MSG_USER_ANONYMOUS)) {
+    // make sure that user is not anonymous
+    if (context.userId().equals(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("user is anonymous so can't create course. aborting");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
-    
+
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
@@ -87,8 +87,10 @@ public class CreateCourseHandler implements DBHandler {
       }
 
       // TODO: UUID should be generated from separate utility
-      // Check for duplicate id, if its already exists in same table, generate new
-      // Probably need to revisit this logic again or need to move in separate utility
+      // Check for duplicate id, if its already exists in same table, generate
+      // new
+      // Probably need to revisit this logic again or need to move in separate
+      // utility
       String id = UUID.randomUUID().toString();
       boolean isDuplicate = true;
       while (isDuplicate) {
@@ -113,7 +115,14 @@ public class CreateCourseHandler implements DBHandler {
         }
       } else {
         LOGGER.error("Error while creating course");
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(course.errors()), ExecutionStatus.FAILED);
+        if (course.hasErrors()) {
+          Map<String, String> errMap = course.errors();
+          JsonObject errors = new JsonObject();
+          errMap.forEach(errors::put);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+        } else {
+          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while creating course"), ExecutionStatus.FAILED);
+        }
       }
     } catch (Throwable t) {
       LOGGER.error("Exception while creating course", t);

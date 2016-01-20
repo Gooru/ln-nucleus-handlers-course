@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import java.util.Map;
+
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
@@ -9,6 +11,8 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class DeleteCourseHandler implements DBHandler {
 
@@ -22,9 +26,8 @@ public class DeleteCourseHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
-      LOGGER.info("invalid course id for delete");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for delete"),
-        ExecutionStatus.FAILED);
+      LOGGER.warn("invalid course id for delete");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for delete"), ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -35,22 +38,23 @@ public class DeleteCourseHandler implements DBHandler {
   public ExecutionResult<MessageResponse> validateRequest() {
     String sql = "SELECT " + AJEntityCourse.IS_DELETED + " FROM course WHERE " + AJEntityCourse.ID + " = ?";
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
-    
+
     if (!ajEntityCourse.isEmpty()) {
-      //irrespective of size, always get first 
+      // irrespective of size, always get first
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.info("course {} is already deleted. Aborting", context.courseId());
+        LOGGER.warn("course {} is already deleted. Aborting", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course your are trying to delete is already deleted"),
-          ExecutionStatus.FAILED);
+                ExecutionStatus.FAILED);
       }
-      
-      //check whether user is owner, if anonymous or not owner, send unauthorized back;
-      if(!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
-        LOGGER.info("user is anonymous or not owner of course for delete. aborting");
+
+      // check whether user is owner, if anonymous or not owner, send
+      // unauthorized back;
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
+        LOGGER.warn("user is anonymous or not owner of course for delete. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.info("course {} not found to delete, aborting", context.courseId());
+      LOGGER.warn("course {} not found to delete, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
@@ -64,13 +68,20 @@ public class DeleteCourseHandler implements DBHandler {
       AJEntityCourse ajEntityCourse = new AJEntityCourse();
       ajEntityCourse.setId(context.courseId());
       ajEntityCourse.set(AJEntityCourse.IS_DELETED, true);
+      ajEntityCourse.setString(AJEntityCourse.MODIFIER_ID, context.userId());
       if (ajEntityCourse.save()) {
         LOGGER.info("course marked as deleted successfully");
         return new ExecutionResult<>(MessageResponseFactory.createDeleteResponse(), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.info("error in delete course, returning errors");
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(ajEntityCourse.errors()),
-          ExecutionStatus.FAILED);
+        LOGGER.error("error in delete course");
+        if (ajEntityCourse.hasErrors()) {
+          Map<String, String> errMap = ajEntityCourse.errors();
+          JsonObject errors = new JsonObject();
+          errMap.forEach(errors::put);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+        } else {
+          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error in deleting course"), ExecutionStatus.FAILED);
+        }
       }
     } catch (Throwable t) {
       LOGGER.error("exception while delete course", t);
