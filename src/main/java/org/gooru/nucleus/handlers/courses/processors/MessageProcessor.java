@@ -60,20 +60,182 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_COURSE_COLLABORATOR_UPDATE:
           result = processCourseCollaboratorUpdate();
           break;
+        case MessageConstants.MSG_OP_UNIT_CREATE:
+          result = processUnitCreate();
+          break;
+        case MessageConstants.MSG_OP_UNIT_UPDATE:
+          result = processUnitUpdate();
+          break;
+        case MessageConstants.MSG_OP_UNIT_DELETE:
+          result = processUnitDelete();
+          break;
+        case MessageConstants.MSG_OP_UNIT_GET:
+          result = processUnitGet();
+          break;
+        case MessageConstants.MSG_OP_UNIT_CONTENT_REORDER:
+          result = processUnitContentReorder();
+          break;
+        case MessageConstants.MSG_OP_UNIT_COPY:
+          result = processUnitCopy();
+          break;
+        case MessageConstants.MSG_OP_LESSON_CREATE:
+          result = processLessonCreate();
+          break;
+        case MessageConstants.MSG_OP_LESSON_UPDATE:
+          result = processLessonUpdate();
+          break;
+        case MessageConstants.MSG_OP_LESSON_DELETE:
+          result = processLessonDelete();
+          break;
+        case MessageConstants.MSG_OP_LESSON_GET:
+          result = processLessonGet();
+          break;
+        case MessageConstants.MSG_OP_LESSON_CONTENT_REORDER:
+          result = processLessonContentReorder();
+          break;
+        case MessageConstants.MSG_OP_LESSON_COPY:
+          result = processLessonCopy();
+          break;
         default:
           LOGGER.error("Invalid operation type passed in, not able to handle");
           throw new InvalidRequestException();
       }
       return result;
     } catch (InvalidRequestException e) {
-      // TODO: handle exception
+      LOGGER.error("Invalid request");
+      return MessageResponseFactory.createInternalErrorResponse(e.getMessage());
     } catch (InvalidUserException e) {
-      // TODO: handle exception
+      LOGGER.error("User is not valid");
+      return MessageResponseFactory.createForbiddenResponse();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while processing request");
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
+  }
 
+  private MessageResponse processLessonCopy() {
+    // TODO Auto-generated method stub
     return null;
   }
 
+  private MessageResponse processLessonContentReorder() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  private MessageResponse processLessonGet() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  private MessageResponse processLessonDelete() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  private MessageResponse processLessonUpdate() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  private MessageResponse processLessonCreate() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  private MessageResponse processUnitCopy() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  private MessageResponse processUnitContentReorder() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  private MessageResponse processUnitGet() {
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.debug("Course id not available to get unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      if(checkUnitId(context)) {
+        LOGGER.debug("Unit id not available to get unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+      
+      LOGGER.info("getting unit {} of course {}", context.unitId(), context.courseId());
+      return new RepoBuilder().buildUnitRepo(context).fetchUnit();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while getting unit", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
+  }
+
+  private MessageResponse processUnitDelete() {
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.debug("Course id not available to delete unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      if(checkUnitId(context)) {
+        LOGGER.debug("Unit id not available to delete unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+      
+      LOGGER.info("deleting unit {} of course {}", context.unitId(), context.courseId());
+      return new RepoBuilder().buildUnitRepo(context).deleteUnit();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while deleting unit", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
+  }
+
+  private MessageResponse processUnitUpdate() {
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.debug("Course id not available to update unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      if(checkUnitId(context)) {
+        LOGGER.debug("Unit id not available to update unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+      
+      LOGGER.info("updating unit {} of course {}", context.unitId(), context.courseId());
+      return new RepoBuilder().buildUnitRepo(context).updateUnit();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while updating unit", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
+  }
+
+  private MessageResponse processUnitCreate() {
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.debug("Course id not available to create unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      LOGGER.info("creating new unit for course {}", context.courseId());
+      return new RepoBuilder().buildUnitRepo(context).createUnit();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while creating unit", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
+  }
+  
+  private boolean checkUnitId(ProcessorContext context) {
+    return (context.unitId() == null || context.unitId().isEmpty());
+  }
+  
   private boolean checkCourseId(ProcessorContext context) {
     return (context.courseId() == null || context.courseId().isEmpty());
   }
@@ -215,7 +377,9 @@ class MessageProcessor implements Processor {
 
   private ProcessorContext createContext() {
     String courseId = message.headers().get(MessageConstants.COURSE_ID);
-    return new ProcessorContext(userId, prefs, request, courseId);
+    String unitId = message.headers().get(MessageConstants.UNIT_ID);
+    String lessonId = message.headers().get(MessageConstants.LESSON_ID);
+    return new ProcessorContext(userId, prefs, request, courseId, unitId, lessonId);
   }
 
   private ExecutionResult<MessageResponse> validateAndInitialize() {

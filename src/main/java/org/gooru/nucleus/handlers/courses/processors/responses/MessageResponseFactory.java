@@ -15,8 +15,8 @@ public class MessageResponseFactory {
   }
 
   public static MessageResponse createInvalidRequestResponse(String message) {
-    return new MessageResponse.Builder().failed().setStatusBadRequest().setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message))
-                                        .build();
+    return new MessageResponse.Builder().failed().setStatusBadRequest().setContentTypeJson()
+            .setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message)).build();
   }
 
   public static MessageResponse createForbiddenResponse() {

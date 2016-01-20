@@ -1,19 +1,18 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.CourseEntityConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 
-public class AJResponseJsonTransformer {
-  private static final Logger LOGGER = LoggerFactory.getLogger(AJResponseJsonTransformer.class);
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 
-  public JsonObject transform(String ajResult) {
-    LOGGER.debug("received string to transform in json:" + ajResult);
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
+public class AJResponseJsonTransformer {
+
+  public JsonObject transformCourse(String ajResult) {
     JsonObject result = new JsonObject(ajResult);
     if (ajResult == null || ajResult.isEmpty()) {
       return result;
@@ -23,34 +22,50 @@ public class AJResponseJsonTransformer {
     for (Map.Entry<String, Object> entry : result) {
       mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
       if (mapValue != null && !mapValue.isEmpty()) {
-        if (Arrays.asList(CourseEntityConstants.JSON_OBJECT_FIELDS).contains(entry.getKey())) {
-          //result.remove(entry.getKey());
+        if (Arrays.asList(AJEntityCourse.JSON_OBJECT_FIELDS).contains(entry.getKey())) {
           result.put(entry.getKey(), new JsonObject(mapValue));
-        } else if (Arrays.asList(CourseEntityConstants.JSON_ARRAY_FIELDS).contains(entry.getKey())) {
-          //result.remove(entry.getKey());
+        } else if (Arrays.asList(AJEntityCourse.JSON_ARRAY_FIELDS).contains(entry.getKey())) {
           result.put(entry.getKey(), new JsonArray(mapValue));
         }
       }
     }
-    
-    /*
-    for (String fieldName: CourseRepo.JSON_OBJECT_FIELDS) {
-      String valueToXform = result.getString(fieldName);
-      if (valueToXform != null && !valueToXform.isEmpty()) {
-        JsonObject xformedValue = new JsonObject(valueToXform);
-        result.remove(fieldName);
-        result.put(fieldName, xformedValue);
+
+    return result;
+  }
+  
+  public JsonObject transformUnit(String ajResult) {
+    JsonObject result = new JsonObject(ajResult);
+    if (ajResult == null || ajResult.isEmpty()) {
+      return result;
+    }
+
+    String mapValue;
+    for (Map.Entry<String, Object> entry : result) {
+      mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
+      if (mapValue != null && !mapValue.isEmpty()) {
+        if (Arrays.asList(AJEntityUnit.JSON_OBJECT_FIELDS).contains(entry.getKey())) {
+          result.put(entry.getKey(), new JsonObject(mapValue));
+        } 
       }
     }
-    
-    for (String fieldName: CourseRepo.JSON_ARRAY_FIELDS) {
-      String valueToXform = result.getString(fieldName);
-      if (valueToXform != null && !valueToXform.isEmpty()) {
-        JsonArray xformedValue = new JsonArray(valueToXform);
-        result.remove(fieldName);
-        result.put(fieldName, xformedValue);
-      }
-    }*/
+
     return result;
+    
+  }
+  
+  public JsonArray transformUnitSummary(String ajUnitSummary) {
+    JsonArray result = new JsonArray(ajUnitSummary);
+    if(ajUnitSummary == null || ajUnitSummary.isEmpty()) {
+      return result;
+    }
+    
+    JsonArray toReturn = new JsonArray();
+    Iterator<Object> iterator = result.iterator();
+    while(iterator.hasNext()) {
+      JsonObject jsonObj = (JsonObject) (iterator.next());
+      toReturn.add(jsonObj);
+    }
+    
+    return toReturn;
   }
 }

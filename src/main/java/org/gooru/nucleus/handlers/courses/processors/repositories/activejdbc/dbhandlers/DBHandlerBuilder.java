@@ -38,4 +38,54 @@ public class DBHandlerBuilder {
   public DBHandler buildUpdateCollaboratorHandler(ProcessorContext context) {
     return new UpdateCollaboratorHandler(context);
   }
+  
+  //Unit Handlers
+  public DBHandler buildCreateUnitHandler(ProcessorContext context) {
+    return new CreateUnitHandler(context);
+  }
+
+  public DBHandler buildCopyUnitToCourseHandler(ProcessorContext context) {
+    return new CopyUnitToCourseHandler(context);
+  }
+
+  public DBHandler buildUpdateUnitHandler(ProcessorContext context) {
+    return new UpdateUnitHandler(context);
+  }
+
+  public DBHandler buildFetchUnitHandler(ProcessorContext context) {
+    return new FetchUnitHandler(context);
+  }
+
+  public DBHandler buildDeleteUnitHandler(ProcessorContext context) {
+    return new DeleteUnitHandler(context);
+  }
+
+  public DBHandler buildReorderLessonInUnitHandler(ProcessorContext context) {
+    return new ReorderLessonInUnitHandler(context);
+  }
+
+  //Lesson Handlers
+  public DBHandler buildCreateLessonHandler(ProcessorContext context) {
+    return new CreateLessonHandler(context);
+  }
+
+  public DBHandler buildCopyLessonToUnitHandler(ProcessorContext context) {
+    return new CopyLessonToUnitHandler(context);
+  }
+
+  public DBHandler buildUpdateLessonHandler(ProcessorContext context) {
+    return new UpdateLessonHandler(context);
+  }
+
+  public DBHandler buildFetchLessonHandler(ProcessorContext context) {
+    return new FetchLessonHandler(context);
+  }
+
+  public DBHandler buildDeleteLessonHandler(ProcessorContext context) {
+    return new DeleteLessonHandler(context);
+  }
+
+  public DBHandler buildReorderCollectionsAssessmentsInLessonHandler(ProcessorContext context) {
+    return new ReorderCollectionsAssessmentsInLessonHandler(context);
+  }
 }
