@@ -1,20 +1,20 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonObject;
+import java.util.Arrays;
+import java.util.Map;
+
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.CourseEntityConstants;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.AJValidatorBuilder;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
-import org.javalite.activejdbc.LazyList;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Map;
+import io.vertx.core.json.JsonObject;
 
 public class UpdateCourseHandler implements DBHandler {
 
@@ -45,8 +45,9 @@ public class UpdateCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
+    return new AJValidatorBuilder().buildCourseValidator(context, LOGGER).checkIsDeletedAndOwner();
 
-    //Check whether the course is deleted or not, which will also verify if course exists or not
+    /*//Check whether the course is deleted or not, which will also verify if course exists or not
     String sql = "SELECT " + CourseEntityConstants.IS_DELETED + ", " + CourseEntityConstants.CREATOR_ID + " FROM course WHERE " + CourseEntityConstants.ID + " = ?";
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
 
@@ -74,7 +75,7 @@ public class UpdateCourseHandler implements DBHandler {
     }
 
     LOGGER.debug("validateRequest() OK");
-    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
+    return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);*/
   }
 
   @Override
@@ -87,7 +88,7 @@ public class UpdateCourseHandler implements DBHandler {
       for (Map.Entry<String, Object> entry : request) {
         mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
         if (mapValue != null && !mapValue.isEmpty()) {
-          if (Arrays.asList(CourseEntityConstants.JSON_FIELDS).contains(entry.getKey())) {
+          if (Arrays.asList(AJEntityCourse.JSON_FIELDS).contains(entry.getKey())) {
             PGobject jsonbField = new PGobject();
             jsonbField.setType("jsonb");
             jsonbField.setValue(mapValue);
@@ -99,7 +100,8 @@ public class UpdateCourseHandler implements DBHandler {
       }
       //May be this is not required if id is present in incoming request data
       course.setId(context.courseId());
-
+      course.set(AJEntityCourse.MODIFIER_ID, context.userId());
+      
       if (course.save()) {
         LOGGER.info("course {} updated successfully", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
