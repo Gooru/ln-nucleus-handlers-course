@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.AJResponseJsonTransformer;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -29,6 +30,11 @@ public class FetchCollaboratorHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id to fetch collaborator"),
               ExecutionStatus.FAILED);
     }
+    
+    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+      LOGGER.warn("Anonymous user attempting to fetch course collaborator");
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+    }
 
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
@@ -36,18 +42,14 @@ public class FetchCollaboratorHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    String sql = "SELECT " + AJEntityCourse.IS_DELETED + " FROM course WHERE " + AJEntityCourse.ID + " = ?";
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
-
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
     if (!ajEntityCourse.isEmpty()) {
-      // irrespective of size, always get first
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
         LOGGER.warn("course {} is deleted. Aborting", context.courseId());
         return new ExecutionResult<>(
                 MessageResponseFactory.createNotFoundResponse("Course is deleted for which your are trying to fetch collaborators."),
                 ExecutionStatus.FAILED);
       }
-
     } else {
       LOGGER.warn("course {} not found to delete, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
@@ -60,8 +62,7 @@ public class FetchCollaboratorHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     String courseId = context.courseId();
-    String sql = "SELECT " + AJEntityCourse.COLLABORATOR + " FROM COURSE WHERE " + AJEntityCourse.ID + " = ?";
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, courseId);
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COLLABORATOR, courseId);
     JsonObject body;
     if (ajEntityCourse != null && !ajEntityCourse.isEmpty()) {
       LOGGER.info("collaborator found for course {}", courseId);

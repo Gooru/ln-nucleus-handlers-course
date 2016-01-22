@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import java.util.Map;
 
+import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
@@ -26,10 +27,21 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
+    
+    if (context.courseId() == null || context.courseId().isEmpty()) {
+      LOGGER.info("invalid course id to update collaborator");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to udpate collaborator"),
+              ExecutionStatus.FAILED);
+    }
+    
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("invalid request received, aborting");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided request"),
-        ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided request"), ExecutionStatus.FAILED);
+    }
+    
+    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+      LOGGER.warn("Anonymous user attempting to update course collaborator");
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -38,21 +50,20 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    //Check whether the course is deleted or not, which will also verify if course exists or not
-    String sql = "SELECT " + AJEntityCourse.IS_DELETED + ", " + AJEntityCourse.CREATOR_ID + " FROM course WHERE " + AJEntityCourse.ID + " = ?";
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
 
     if (!ajEntityCourse.isEmpty()) {
-
-      //irrespective of size, always get first 
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
         LOGGER.warn("course {} is deleted, hence collborators can't be updated. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which your are trying to update collaborators"),
-          ExecutionStatus.FAILED);
+        return new ExecutionResult<>(
+                MessageResponseFactory.createNotFoundResponse("Course is deleted for which your are trying to update collaborators"),
+                ExecutionStatus.FAILED);
       }
-      
-      //check whether user is owner, if anonymous or not owner, send unauthorized back;
-      if(!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
+
+      // check whether user is owner, if anonymous or not owner, send
+      // unauthorized back
+      // It also implies that collaborator can not update the collaborators
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
         LOGGER.warn("user is anonymous or not owner of course to update collaborators. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
@@ -75,21 +86,21 @@ public class UpdateCollaboratorHandler implements DBHandler {
       PGobject jsonbField = new PGobject();
       jsonbField.setType("jsonb");
       jsonbField.setValue(context.request().getJsonArray(AJEntityCourse.COLLABORATOR).toString());
-
       ajEntityCourse.set(AJEntityCourse.COLLABORATOR, jsonbField);
+
       if (ajEntityCourse.save()) {
         LOGGER.info("updated collaborators of course {} successfully", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.error("error in update collaborators of course {}", context.courseId());
-        if(ajEntityCourse.hasErrors()) {
+        if (ajEntityCourse.hasErrors()) {
           Map<String, String> errMap = ajEntityCourse.errors();
           JsonObject errors = new JsonObject();
           errMap.forEach(errors::put);
-          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
-            ExecutionStatus.FAILED);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
         } else {
-          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error in update collaborators of course"), ExecutionStatus.FAILED);
+          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error in update collaborators of course"),
+                  ExecutionStatus.FAILED);
         }
       }
     } catch (Throwable t) {

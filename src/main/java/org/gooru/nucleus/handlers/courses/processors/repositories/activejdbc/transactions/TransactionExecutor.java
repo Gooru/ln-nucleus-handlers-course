@@ -47,6 +47,8 @@ public class TransactionExecutor {
         } else {
           Base.rollbackTransaction();
         }
+      } else {
+        Base.rollbackTransaction();
       }
       return executionResult;
     } catch (Throwable e) {

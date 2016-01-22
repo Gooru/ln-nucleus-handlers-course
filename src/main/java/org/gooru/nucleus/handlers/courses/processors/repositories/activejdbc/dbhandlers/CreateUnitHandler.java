@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -32,10 +33,22 @@ public class CreateUnitHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
+
+    if (context.courseId() == null || context.courseId().isEmpty()) {
+      LOGGER.warn("invalid course id to delete unit");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to delete unit"),
+              ExecutionStatus.FAILED);
+    }
+
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("invalid request received to create unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create unit"),
               ExecutionStatus.FAILED);
+    }
+    
+    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+      LOGGER.warn("Anonymous user attempting to create unit");
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
     JsonObject request = context.request();
@@ -61,14 +74,9 @@ public class CreateUnitHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    // Check whether the course is deleted or not, which will also verify if
-    // course exists or not
-    String sql = "SELECT " + AJEntityCourse.IS_DELETED + ", " + AJEntityCourse.CREATOR_ID + " FROM course WHERE " + AJEntityCourse.ID + " = ?";
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(sql, context.courseId());
 
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
     if (!ajEntityCourse.isEmpty()) {
-
-      // irrespective of size, always get first
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
         LOGGER.warn("course {} is deleted, hence can't create unit. Aborting", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which you are trying to create unit"),
@@ -77,6 +85,7 @@ public class CreateUnitHandler implements DBHandler {
 
       // check whether user is owner, if anonymous or not owner, send
       // unauthorized back;
+      // TODO: check whether user is either owner or collaborator
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
         LOGGER.warn("user is anonymous or not owner of course to create unit. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -133,8 +142,7 @@ public class CreateUnitHandler implements DBHandler {
       newUnit.set(AJEntityUnit.IS_DELETED, false);
 
       // Get max sequence id for course
-      String getMaxSequenceIdSql = "SELECT max(" + AJEntityUnit.SEQUENCE_ID + ") FROM course_unit WHERE " + AJEntityUnit.COURSE_ID + "=?";
-      Object maxSequenceId = Base.firstCell(getMaxSequenceIdSql, context.courseId());
+      Object maxSequenceId = Base.firstCell(AJEntityUnit.SELECT_UNIT_MAX_SEQUENCEID, context.courseId());
       int sequenceId = 1;
       if (maxSequenceId != null) {
         sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;

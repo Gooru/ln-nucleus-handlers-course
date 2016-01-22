@@ -26,7 +26,7 @@ public class MessageResponseFactory {
   }
 
   public static MessageResponse createInternalErrorResponse(String message) {
-    return new MessageResponse.Builder().failed().setStatusInternalError()
+    return new MessageResponse.Builder().failed().setStatusInternalError().setContentTypeJson()
                                         .setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message)).build();
   }
 
@@ -56,6 +56,6 @@ public class MessageResponseFactory {
   }
 
   public static MessageResponse createValidationErrorResponse(JsonObject errors) {
-    return new MessageResponse.Builder().validationFailed().setStatusNoOutput().setContentTypeJson().setResponseBody(errors).build();
+    return new MessageResponse.Builder().validationFailed().setStatusBadRequest().setContentTypeJson().setResponseBody(errors).build();
   }
 }
