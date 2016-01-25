@@ -26,7 +26,7 @@ public class MessageConstants {
   public static final String MSG_OP_COURSE_UPDATE = "course.update";
   public static final String MSG_OP_COURSE_COPY = "course.copy";
   public static final String MSG_OP_COURSE_DELETE = "course.delete";
-  public static final String MSG_OP_COURSE_CONTENT_REORDER = "course.unit.reorder";
+  public static final String MSG_OP_COURSE_CONTENT_REORDER = "course.content.reorder";
   public static final String MSG_OP_COURSE_COLLABORATOR_GET = "course.collaborator.get";
   public static final String MSG_OP_COURSE_COLLABORATOR_UPDATE = "course.collaborator.update";
   public static final String MSG_OP_UNIT_GET = "unit.get";

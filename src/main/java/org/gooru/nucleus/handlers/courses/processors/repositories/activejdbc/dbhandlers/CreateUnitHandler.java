@@ -1,7 +1,6 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,6 +19,7 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CreateUnitHandler implements DBHandler {
@@ -45,7 +45,7 @@ public class CreateUnitHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create unit"),
               ExecutionStatus.FAILED);
     }
-    
+
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to create unit");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -83,12 +83,12 @@ public class CreateUnitHandler implements DBHandler {
                 ExecutionStatus.FAILED);
       }
 
-      // check whether user is owner, if anonymous or not owner, send
-      // unauthorized back;
-      // TODO: check whether user is either owner or collaborator
-      if (!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
-        LOGGER.warn("user is anonymous or not owner of course to create unit. aborting");
-        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+      // check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+        }
       }
     } else {
       LOGGER.warn("course {} not found to create unit, aborting", context.courseId());
@@ -108,7 +108,7 @@ public class CreateUnitHandler implements DBHandler {
       for (Map.Entry<String, Object> entry : request) {
         mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
         if (mapValue != null && !mapValue.isEmpty()) {
-          if (Arrays.asList(AJEntityUnit.JSON_FIELDS).contains(entry.getKey())) {
+          if (AJEntityUnit.JSON_FIELDS.contains(entry.getKey())) {
             PGobject jsonbField = new PGobject();
             jsonbField.setType("jsonb");
             jsonbField.setValue(mapValue);
@@ -136,6 +136,7 @@ public class CreateUnitHandler implements DBHandler {
 
       newUnit.setId(id);
       newUnit.set(AJEntityUnit.COURSE_ID, context.courseId());
+      newUnit.set(AJEntityUnit.OWNER_ID, context.userId());
       newUnit.set(AJEntityUnit.CREATOR_ID, context.userId());
       newUnit.set(AJEntityUnit.MODIFIER_ID, context.userId());
       newUnit.set(AJEntityUnit.ORIGINAL_CREATOR_ID, context.userId());

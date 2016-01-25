@@ -1,6 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
@@ -80,10 +79,11 @@ public class CreateCourseHandler implements DBHandler {
       for (Map.Entry<String, Object> entry : request) {
         mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
         if (mapValue != null && !mapValue.isEmpty()) {
-          if (Arrays.asList(AJEntityCourse.JSON_FIELDS).contains(entry.getKey())) {
+          if (AJEntityCourse.JSON_FIELDS.contains(entry.getKey())) {
             PGobject jsonbField = new PGobject();
             jsonbField.setType("jsonb");
             jsonbField.setValue(mapValue);
+            LOGGER.debug("setting {} to {}", entry.getKey(), mapValue);
             course.set(entry.getKey(), jsonbField);
           } else {
             course.set(entry.getKey(), entry.getValue());
@@ -107,6 +107,7 @@ public class CreateCourseHandler implements DBHandler {
       }
 
       course.setId(id);
+      course.set(AJEntityCourse.OWNER_ID, context.userId());
       course.set(AJEntityCourse.CREATOR_ID, context.userId());
       course.set(AJEntityCourse.ORIGINAL_CREATOR_ID, context.userId());
       course.set(AJEntityCourse.MODIFIER_ID, context.userId());

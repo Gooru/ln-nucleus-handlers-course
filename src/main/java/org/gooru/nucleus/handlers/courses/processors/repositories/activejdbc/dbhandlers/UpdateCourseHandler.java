@@ -17,6 +17,7 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class UpdateCourseHandler implements DBHandler {
@@ -46,13 +47,37 @@ public class UpdateCourseHandler implements DBHandler {
       LOGGER.warn("Anonymous user attempting to update course");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
-    
+
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
+    if (!ajEntityCourse.isEmpty()) {
+      if (ajEntityCourse.size() >= 2) {
+        LOGGER.debug("more that 1 course found for id {}", context.courseId());
+      }
+
+      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
+        LOGGER.info("course {} is deleted, hence can't be updated. Aborting", context.courseId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course your are trying to update is deleted"),
+                ExecutionStatus.FAILED);
+      }
+
+      // check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+        }
+      }
+    } else {
+      LOGGER.info("course {} not found to update, aborting", context.courseId());
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+    }
+
     courseToUpdate = new AJEntityCourse();
     try {
       List<String> invalidFields = new ArrayList<>();
@@ -98,31 +123,7 @@ public class UpdateCourseHandler implements DBHandler {
       LOGGER.error("Exception while updating course", e.getMessage());
       return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionStatus.FAILED);
     }
-
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
-    if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.size() >= 2) {
-        LOGGER.debug("more that 1 course found for id {}", context.courseId());
-      }
-
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.info("course {} is deleted, hence can't be updated. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course your are trying to update is deleted"),
-                ExecutionStatus.FAILED);
-      }
-
-      // check whether user is owner, if anonymous or not owner, send
-      // unauthorized back;
-      // TODO: if the user is collaborator, verify in collaborator list
-      if (!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
-        LOGGER.info("user is anonymous or not owner of course for delete. aborting");
-        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
-      }
-    } else {
-      LOGGER.info("course {} not found to update, aborting", context.courseId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
-    }
-
+    
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }

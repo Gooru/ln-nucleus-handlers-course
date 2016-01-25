@@ -14,6 +14,7 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class DeleteUnitHandler implements DBHandler {
@@ -38,7 +39,7 @@ public class DeleteUnitHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to delete unit"),
               ExecutionStatus.FAILED);
     }
-    
+
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to delete unit");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -58,8 +59,14 @@ public class DeleteUnitHandler implements DBHandler {
                 MessageResponseFactory.createNotFoundResponse("Course is already deleted for which you are trying to delete unit"),
                 ExecutionStatus.FAILED);
       }
-      
-      //TODO: check whether user is either owner or collaborator of course
+
+      // check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+        }
+      }
     } else {
       LOGGER.warn("course {} not found to delete unit, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);

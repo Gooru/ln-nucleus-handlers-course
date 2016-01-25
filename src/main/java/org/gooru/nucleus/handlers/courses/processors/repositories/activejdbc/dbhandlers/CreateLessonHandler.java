@@ -20,6 +20,7 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CreateLessonHandler implements DBHandler {
@@ -85,7 +86,13 @@ public class CreateLessonHandler implements DBHandler {
                 ExecutionStatus.FAILED);
       }
 
-      //TODO: check whether user is owner or collaborator
+      // check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+        }
+      }
     } else {
       LOGGER.warn("course {} not found to create lesson, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
@@ -139,6 +146,7 @@ public class CreateLessonHandler implements DBHandler {
       newLesson.setId(id);
       newLesson.set(AJEntityLesson.COURSE_ID, context.courseId());
       newLesson.set(AJEntityLesson.UNIT_ID, context.unitId());
+      newLesson.set(AJEntityLesson.OWNER_ID, context.userId());
       newLesson.set(AJEntityLesson.CREATOR_ID, context.userId());
       newLesson.set(AJEntityLesson.MODIFIER_ID, context.userId());
       newLesson.set(AJEntityLesson.ORIGINAL_CREATOR_ID, context.userId());

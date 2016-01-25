@@ -18,6 +18,7 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class UpdateUnitHandler implements DBHandler {
@@ -61,6 +62,37 @@ public class UpdateUnitHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
+
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
+    if (!ajEntityCourse.isEmpty()) {
+      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
+        LOGGER.warn("course {} is deleted. Aborting", context.courseId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted"), ExecutionStatus.FAILED);
+      }
+
+      // check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+        }
+      }
+    } else {
+      LOGGER.warn("course {} not found, aborting", context.courseId());
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+    }
+
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
+    if (!ajEntityUnit.isEmpty()) {
+      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
+        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
+      }
+    } else {
+      LOGGER.warn("Unit {} not found, aborting", context.unitId());
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+    }
+    
     unitToUpdate = new AJEntityUnit();
     try {
       List<String> invalidFields = new ArrayList<>();
@@ -105,30 +137,6 @@ public class UpdateUnitHandler implements DBHandler {
     } catch (SQLException e) {
       LOGGER.error("Exception while updating unit", e.getMessage());
       return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionStatus.FAILED);
-    }
-
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
-    if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.warn("course {} is deleted. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted"), ExecutionStatus.FAILED);
-      }
-      
-    //TODO: check whether user is either owner or collaborator of course
-    } else {
-      LOGGER.warn("course {} not found, aborting", context.courseId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
-    }
-
-    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
-    if (!ajEntityUnit.isEmpty()) {
-      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
-        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
-      LOGGER.warn("Unit {} not found, aborting", context.unitId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);

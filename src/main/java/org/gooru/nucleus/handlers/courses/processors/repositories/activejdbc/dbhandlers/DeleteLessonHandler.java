@@ -15,6 +15,7 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class DeleteLessonHandler implements DBHandler {
@@ -45,7 +46,7 @@ public class DeleteLessonHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id provided to delete lesson"),
               ExecutionStatus.FAILED);
     }
-    
+
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to delete lesson");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -66,7 +67,13 @@ public class DeleteLessonHandler implements DBHandler {
                 ExecutionStatus.FAILED);
       }
 
-      // TODO: Check whether user is owner or collaborator on course
+      // check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+        }
+      }
     } else {
       LOGGER.warn("course {} not found to delete lesson, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
@@ -102,7 +109,7 @@ public class DeleteLessonHandler implements DBHandler {
   public ExecutionResult<MessageResponse> executeRequest() {
     AJEntityLesson lessonToDelete = new AJEntityLesson();
     lessonToDelete.setId(context.lessonId());
-    lessonToDelete.setString(AJEntityLesson.IS_DELETED, true);
+    lessonToDelete.setBoolean(AJEntityLesson.IS_DELETED, true);
     lessonToDelete.setString(AJEntityLesson.MODIFIER_ID, context.userId());
 
     if (lessonToDelete.save()) {

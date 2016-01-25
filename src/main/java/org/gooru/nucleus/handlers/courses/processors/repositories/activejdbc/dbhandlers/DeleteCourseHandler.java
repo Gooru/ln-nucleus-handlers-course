@@ -51,7 +51,8 @@ public class DeleteCourseHandler implements DBHandler {
                 ExecutionStatus.FAILED);
       }
 
-      if (!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
+      //Only owner can delete the course
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
         LOGGER.warn("user is anonymous or not owner of course for delete. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
