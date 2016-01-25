@@ -42,7 +42,13 @@ public class TransactionExecutor {
       executionResult = handler.validateRequest();
       if (executionResult.continueProcessing()) {
         executionResult = handler.executeRequest();
-        Base.commitTransaction();
+        if (executionResult.isSuccessful()) {
+          Base.commitTransaction();
+        } else {
+          Base.rollbackTransaction();
+        }
+      } else {
+        Base.rollbackTransaction();
       }
       return executionResult;
     } catch (Throwable e) {

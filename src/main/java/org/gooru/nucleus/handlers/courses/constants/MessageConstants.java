@@ -29,11 +29,24 @@ public class MessageConstants {
   public static final String MSG_OP_COURSE_CONTENT_REORDER = "course.unit.reorder";
   public static final String MSG_OP_COURSE_COLLABORATOR_GET = "course.collaborator.get";
   public static final String MSG_OP_COURSE_COLLABORATOR_UPDATE = "course.collaborator.update";
-
+  public static final String MSG_OP_UNIT_GET = "unit.get";
+  public static final String MSG_OP_UNIT_CREATE = "unit.create";
+  public static final String MSG_OP_UNIT_UPDATE = "unit.update";
+  public static final String MSG_OP_UNIT_DELETE = "unit.delete";
+  public static final String MSG_OP_UNIT_CONTENT_REORDER = "unit.content.reorder";
+  public static final String MSG_OP_UNIT_COPY = "unit.copy";
+  public static final String MSG_OP_LESSON_GET = "lesson.get";
+  public static final String MSG_OP_LESSON_CREATE = "lesson.create";
+  public static final String MSG_OP_LESSON_UPDATE = "lesson.update";
+  public static final String MSG_OP_LESSON_DELETE = "lesson.delete";
+  public static final String MSG_OP_LESSON_CONTENT_REORDER = "lesson.content.reorder";
+  public static final String MSG_OP_LESSON_COPY = "lesson.copy";
   // Containers for different responses
   public static final String RESP_CONTAINER_MBUS = "mb.container";
   public static final String RESP_CONTAINER_EVENT = "mb.event";
 
   public static final String COURSE_ID = "courseId";
+  public static final String UNIT_ID = "unitId";
+  public static final String LESSON_ID = "lessonId";
 
 }

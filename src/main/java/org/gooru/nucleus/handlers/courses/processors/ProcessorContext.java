@@ -11,8 +11,10 @@ public class ProcessorContext {
   private final JsonObject prefs;
   private final JsonObject request;
   private final String courseId;
+  private final String unitId;
+  private final String lessonId;
 
-  public ProcessorContext(String userId, JsonObject prefs, JsonObject request, String courseId) {
+  public ProcessorContext(String userId, JsonObject prefs, JsonObject request, String courseId, String unitId, String lessonId) {
     if (prefs == null || userId == null || prefs.isEmpty()) {
       throw new IllegalStateException("Processor Context creation failed because of invalid values");
     }
@@ -20,6 +22,8 @@ public class ProcessorContext {
     this.prefs = prefs.copy();
     this.request = request != null ? request.copy() : null;
     this.courseId = courseId;
+    this.unitId = unitId;
+    this.lessonId = lessonId;
   }
 
   public String userId() {
@@ -36,6 +40,14 @@ public class ProcessorContext {
 
   public String courseId() {
     return this.courseId;
+  }
+  
+  public String unitId() {
+    return this.unitId;
+  }
+  
+  public String lessonId() {
+    return this.lessonId;
   }
 
 }

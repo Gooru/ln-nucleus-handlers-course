@@ -8,6 +8,8 @@ import java.util.Map;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -19,41 +21,49 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
-public class UpdateCourseHandler implements DBHandler {
+public class UpdateLessonHandler implements DBHandler {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCourseHandler.class);
   private final ProcessorContext context;
-  private AJEntityCourse courseToUpdate;
+  private static final Logger LOGGER = LoggerFactory.getLogger(UpdateLessonHandler.class);
+  private AJEntityLesson lessonToUpdate = null;
 
-  public UpdateCourseHandler(ProcessorContext context) {
+  public UpdateLessonHandler(ProcessorContext context) {
     this.context = context;
   }
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
-      LOGGER.warn("invalid course id for update");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for update"), ExecutionStatus.FAILED);
-    }
-
-    if (context.request() == null || context.request().isEmpty()) {
-      LOGGER.warn("invalid data provided to update course {}", context.courseId());
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to update course"),
+      LOGGER.warn("invalid course id to update lesson");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to update lesson"),
               ExecutionStatus.FAILED);
     }
 
-    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
-      LOGGER.warn("Anonymous user attempting to update course");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+    if (context.unitId() == null || context.unitId().isEmpty()) {
+      LOGGER.warn("invalid unit id to update lesson");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to update lesson"),
+              ExecutionStatus.FAILED);
+    }
+
+    if (context.lessonId() == null || context.lessonId().isEmpty()) {
+      LOGGER.warn("invalid lesson id to update lesson");
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id provided to update lesson"),
+              ExecutionStatus.FAILED);
     }
     
+    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+      LOGGER.warn("Anonymous user attempting to update lesson");
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+    }
+
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    courseToUpdate = new AJEntityCourse();
+
+    lessonToUpdate = new AJEntityLesson();
     try {
       List<String> invalidFields = new ArrayList<>();
       List<String> notNullFields = new ArrayList<>();
@@ -62,20 +72,20 @@ public class UpdateCourseHandler implements DBHandler {
       for (Map.Entry<String, Object> entry : context.request()) {
         mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
         if (mapValue != null && !mapValue.isEmpty()) {
-          if (AJEntityCourse.UPDATABLE_FIELDS.contains(entry.getKey())) {
-            if (AJEntityCourse.JSON_FIELDS.contains(entry.getKey())) {
+          if (AJEntityLesson.UPDATABLE_FIELDS.contains(entry.getKey())) {
+            if (AJEntityLesson.JSON_FIELDS.contains(entry.getKey())) {
               PGobject jsonbField = new PGobject();
               jsonbField.setType("jsonb");
               jsonbField.setValue(mapValue);
-              courseToUpdate.set(entry.getKey(), jsonbField);
+              lessonToUpdate.set(entry.getKey(), jsonbField);
             } else {
-              courseToUpdate.set(entry.getKey(), entry.getValue());
+              lessonToUpdate.set(entry.getKey(), entry.getValue());
             }
           } else {
             invalidFields.add(entry.getKey());
           }
         } else {
-          if (AJEntityCourse.NOTNULL_FIELDS.contains(entry.getKey())) {
+          if (AJEntityLesson.NOTNULL_FIELDS.contains(entry.getKey())) {
             notNullFields.add(entry.getKey());
           }
         }
@@ -101,25 +111,37 @@ public class UpdateCourseHandler implements DBHandler {
 
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
     if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.size() >= 2) {
-        LOGGER.debug("more that 1 course found for id {}", context.courseId());
-      }
-
       if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.info("course {} is deleted, hence can't be updated. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course your are trying to update is deleted"),
+        LOGGER.warn("course {} is deleted, hence can't update lesson. Aborting", context.courseId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which you are trying to update lesson"),
                 ExecutionStatus.FAILED);
       }
 
-      // check whether user is owner, if anonymous or not owner, send
-      // unauthorized back;
-      // TODO: if the user is collaborator, verify in collaborator list
-      if (!ajEntityCourse.get(0).getString(AJEntityCourse.CREATOR_ID).equalsIgnoreCase(context.userId())) {
-        LOGGER.info("user is anonymous or not owner of course for delete. aborting");
-        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+      // TODO: check whether user is either owner or collaborator of course
+    } else {
+      LOGGER.warn("course {} not found to update lesson, aborting", context.courseId());
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+    }
+
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
+    if (!ajEntityUnit.isEmpty()) {
+      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
+        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.info("course {} not found to update, aborting", context.courseId());
+      LOGGER.warn("Unit {} not found, aborting", context.unitId());
+      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
+    }
+
+    LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId());
+    if (!ajEntityLesson.isEmpty()) {
+      if (ajEntityLesson.get(0).getBoolean(AJEntityLesson.IS_DELETED)) {
+        LOGGER.warn("Lesson {} is deleted, aborting.", context.lessonId());
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Lesson is deleted"), ExecutionStatus.FAILED);
+      }
+    } else {
+      LOGGER.warn("Lesson {} not found, aborting", context.lessonId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
@@ -129,22 +151,21 @@ public class UpdateCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
+    lessonToUpdate.setId(context.lessonId());
+    lessonToUpdate.setString(AJEntityLesson.MODIFIER_ID, context.userId());
 
-    courseToUpdate.setId(context.courseId());
-    courseToUpdate.set(AJEntityCourse.MODIFIER_ID, context.userId());
-
-    if (courseToUpdate.save()) {
-      LOGGER.info("course {} updated successfully", context.courseId());
-      return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
+    if (lessonToUpdate.save()) {
+      LOGGER.info("lesson {} updated successfully", context.lessonId());
+      return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.lessonId()), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.error("error in updating course");
-      if (courseToUpdate.hasErrors()) {
-        Map<String, String> errMap = courseToUpdate.errors();
+      LOGGER.error("error in updating lesson");
+      if (lessonToUpdate.hasErrors()) {
+        Map<String, String> errMap = lessonToUpdate.errors();
         JsonObject errors = new JsonObject();
         errMap.forEach(errors::put);
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
       } else {
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating course"), ExecutionStatus.FAILED);
+        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating lesson"), ExecutionStatus.FAILED);
       }
     }
   }
@@ -153,5 +174,4 @@ public class UpdateCourseHandler implements DBHandler {
   public boolean handlerReadOnly() {
     return false;
   }
-
 }
