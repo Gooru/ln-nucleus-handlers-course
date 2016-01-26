@@ -4,7 +4,11 @@ import java.util.Map;
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -30,7 +34,7 @@ public class DeleteCourseHandler implements DBHandler {
       LOGGER.warn("invalid course id for delete");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id for delete"), ExecutionStatus.FAILED);
     }
-    
+
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to delete course");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -51,7 +55,7 @@ public class DeleteCourseHandler implements DBHandler {
                 ExecutionStatus.FAILED);
       }
 
-      //Only owner can delete the course
+      // Only owner can delete the course
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
         LOGGER.warn("user is anonymous or not owner of course for delete. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -74,8 +78,82 @@ public class DeleteCourseHandler implements DBHandler {
       ajEntityCourse.setString(AJEntityCourse.MODIFIER_ID, context.userId());
 
       if (ajEntityCourse.save()) {
-        LOGGER.info("course marked as deleted successfully");
+        LOGGER.info("course {} marked as deleted successfully", context.courseId());
         // TODO: Delete everything underneath this course i.e. U/L/C/A
+        // Get all units associated with course and mark as deleted
+        LazyList<AJEntityUnit> unitsOfCourse = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_ASSOCIATED_WITH_COURSE, context.courseId(), false);
+        if (!unitsOfCourse.isEmpty()) {
+          LOGGER.info("{} units found to mark as deleted", unitsOfCourse.size());
+          for (AJEntityUnit unitToDelete : unitsOfCourse) {
+            unitToDelete.setBoolean(AJEntityUnit.IS_DELETED, true);
+            unitToDelete.setString(AJEntityUnit.MODIFIER_ID, context.userId());
+            if (unitToDelete.save()) {
+              LOGGER.debug("unit {} marked deleted.", unitToDelete.get(AJEntityUnit.UNIT_ID));
+            } else {
+              LOGGER.debug("unable to mark unit {} to deleted.", unitToDelete.get(AJEntityUnit.UNIT_ID));
+            }
+          }
+        } else {
+          LOGGER.info("no units found to delete");
+        }
+
+        // Get all lessons associated with course and mark as deleted
+        LazyList<AJEntityLesson> lessonsOfCourse =
+                AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_ASSOCIATED_WITH_COURSE, context.courseId(), false);
+        if (!lessonsOfCourse.isEmpty()) {
+          LOGGER.info("{} lessons found to mark as deleted", lessonsOfCourse.size());
+          for (AJEntityLesson lessonToDelete : lessonsOfCourse) {
+            lessonToDelete.setBoolean(AJEntityLesson.IS_DELETED, true);
+            lessonToDelete.setString(AJEntityLesson.MODIFIER_ID, context.userId());
+            if (lessonToDelete.save()) {
+              LOGGER.debug("lesson {} marked deleted.", lessonToDelete.get(AJEntityLesson.LESSON_ID));
+            } else {
+              LOGGER.debug("unable to mark lesson {} to deleted.", lessonToDelete.get(AJEntityLesson.LESSON_ID));
+            }
+          }
+        } else {
+          LOGGER.info("no lessons found to delete");
+        }
+
+        // Get all Collections/Assessments associated with course and mark as
+        // deleted
+        LazyList<AJEntityCollection> collectionsOfCourse =
+                AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTIONS_ASSOCIATED_WITH_COURSE, context.courseId(), false);
+        if (!collectionsOfCourse.isEmpty()) {
+          LOGGER.info("{} collections/assessments found to mark as deleted", collectionsOfCourse.size());
+          for (AJEntityCollection collectionToDelete : collectionsOfCourse) {
+            collectionToDelete.setBoolean(AJEntityCollection.IS_DELETED, true);
+            collectionToDelete.setString(AJEntityCollection.MODIFIER_ID, context.userId());
+            if (collectionToDelete.save()) {
+              LOGGER.debug("collection/assessment {} marked as deleted", collectionToDelete.get(AJEntityCollection.ID));
+            } else {
+              LOGGER.debug("unable to mark collection/assessment {} to deleted.", collectionToDelete.get(AJEntityCollection.ID));
+            }
+          }
+        } else {
+          LOGGER.info("no collection/assessment found to delete");
+        }
+
+        // Get all Resources/Questions associated with course and mark as
+        // deleted
+        LazyList<AJEntityContent> contentsOfCourse =
+                AJEntityContent.findBySQL(AJEntityContent.SELECT_CONTENT_ASSOCIATED_WITH_COURSE, context.courseId(), false);
+        if (!contentsOfCourse.isEmpty()) {
+          LOGGER.info("{} resources/question found to mark as deleted", contentsOfCourse.size());
+          for (AJEntityContent contentToDelete : contentsOfCourse) {
+            contentToDelete.setBoolean(AJEntityContent.IS_DELETED, true);
+            // contentToDelete.setString(AJEntityContent.MODIFIER_ID,
+            // context.userId());
+            if (contentToDelete.save()) {
+              LOGGER.debug("resource/question {} marked as deleted", contentToDelete.get(AJEntityContent.ID));
+            } else {
+              LOGGER.debug("unable to mark resource/question {} to deleted", contentToDelete.get(AJEntityContent.ID));
+            }
+          }
+        } else {
+          LOGGER.info("no resources/questions found to delete");
+        }
+
         return new ExecutionResult<>(MessageResponseFactory.createDeleteResponse(), ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.error("error in delete course");

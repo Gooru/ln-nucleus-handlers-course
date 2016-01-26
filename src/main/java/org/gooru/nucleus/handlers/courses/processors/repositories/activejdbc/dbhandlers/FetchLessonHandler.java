@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -113,7 +114,15 @@ public class FetchLessonHandler implements DBHandler {
       LOGGER.info("lesson {} found, packing into JSON", context.unitId());
       resultBody =
               new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.ALL_FIELDS).toJson(ajEntityLesson.get(0)));
-      // TODO: fetch C/A summary and bundle into response
+      // fetch C/A summary and bundle into response
+      // TODO: include order by sequence_id in query
+      LazyList<AJEntityCollection> collectionSummary = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY, context.lessonId(), false);
+      LOGGER.debug("number of collections found for lesson {} : {}", context.lessonId(), collectionSummary.size());
+      if (collectionSummary.size() > 0) {
+        resultBody.put("collectionSummary", new JsonArray(
+                new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS).toJson(collectionSummary)));
+      }
+      
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody), ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.error("lesson {} not found", context.lessonId());

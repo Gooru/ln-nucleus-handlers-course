@@ -40,7 +40,9 @@ public class AJEntityLesson extends Model {
           "SELECT lesson_id, unit_id, course_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_lesson_id, "
                   + "metadata, taxonomy, sequence_id, is_deleted FROM course_unit_lesson WHERE lesson_id = ? AND unit_id = ? AND course_id = ? and is_deleted = ?";
   public static final String SELECT_LESSON_SUMMARY =
-          "SELECT lesson_id, title, sequence_id FROM course_unit_lesson WHERE unit_id = ? AND is_deleted = ?";
+          "SELECT lesson_id, title, sequence_id FROM course_unit_lesson WHERE unit_id = ? AND is_deleted = ? order by sequence_id asc";
   public static final String SELECT_LESSON_MAX_SEQUENCEID = "SELECT max(sequence_id) FROM course_unit_lesson WHERE course_id = ? AND unit_id = ?";
+  public static final String SELECT_LESSON_ASSOCIATED_WITH_COURSE = "SELECT lesson_id FROM course_unit_lesson WHERE course_id = ? AND is_deleted = ?";
+  public static final String SELECT_LESSON_ASSOCIATED_WITH_UNIT = "SELECT lesson_id FROM course_unit_lesson WHERE unit_id = ? AND is_deleted = ?";
 
 }
