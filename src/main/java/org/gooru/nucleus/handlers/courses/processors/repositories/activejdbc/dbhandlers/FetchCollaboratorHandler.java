@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Arrays;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -33,7 +31,7 @@ public class FetchCollaboratorHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id to fetch collaborator"),
               ExecutionStatus.FAILED);
     }
-    
+
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to fetch course collaborator");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -53,7 +51,7 @@ public class FetchCollaboratorHandler implements DBHandler {
                 MessageResponseFactory.createNotFoundResponse("Course is deleted for which your are trying to fetch collaborators."),
                 ExecutionStatus.FAILED);
       }
-      
+
       // check whether user is either owner or collaborator
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
         if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
@@ -77,7 +75,8 @@ public class FetchCollaboratorHandler implements DBHandler {
     JsonObject body;
     if (ajEntityCourse != null && !ajEntityCourse.isEmpty()) {
       LOGGER.info("collaborator found for course {}", courseId);
-      body = new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, Arrays.asList(new String[] {AJEntityCourse.COLLABORATOR})).toJson(ajEntityCourse.get(0)));
+      body = new JsonObject(
+              new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCourse.COLLABORATOR_FIELD).toJson(ajEntityCourse.get(0)));
     } else {
       LOGGER.error("no collaborator found for course {}", courseId);
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);

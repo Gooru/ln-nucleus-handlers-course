@@ -10,9 +10,9 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.ent
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
+import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
-import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,41 +116,11 @@ public class DeleteLessonHandler implements DBHandler {
 
     if (lessonToDelete.save()) {
       LOGGER.info("lesson {} marked as deleted successfully", context.lessonId());
-      
-      //Get all Collections/Assessments associated with lesson and mark as deleted
-      LazyList<AJEntityCollection> collectionsOfLesson= AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTIONS_ASSOCIATED_WITH_LESSON, context.lessonId(), false);
-      if(!collectionsOfLesson.isEmpty()) {
-        LOGGER.info("{} collections/assessments found to mark as deleted", collectionsOfLesson.size());
-        for (AJEntityCollection collectionToDelete : collectionsOfLesson) {
-          collectionToDelete.setBoolean(AJEntityCollection.IS_DELETED, true);
-          collectionToDelete.setString(AJEntityCollection.MODIFIER_ID, context.userId());
-          if(collectionToDelete.save()) {
-            LOGGER.debug("collection/assessment {} marked as deleted", collectionToDelete.get(AJEntityCollection.ID));
-          } else {
-            LOGGER.debug("unable to mark collection/assessment {} to deleted.", collectionToDelete.get(AJEntityCollection.ID));
-          }
-        }
-      } else {
-        LOGGER.info("no collection/assessment found to delete");
-      }
-      
-      //Get all Resources/Questions associated with lesson and mark as deleted
-      LazyList<AJEntityContent> contentsOfLesson = AJEntityContent.findBySQL(AJEntityContent.SELECT_CONTENT_ASSOCIATED_WITH_LESSON, context.lessonId(), false);
-      if(!contentsOfLesson.isEmpty()) {
-        LOGGER.info("{} resources/question found to mark as deleted", contentsOfLesson.size());
-        for (AJEntityContent contentToDelete : contentsOfLesson) {
-          contentToDelete.setBoolean(AJEntityContent.IS_DELETED, true);
-          //contentToDelete.setString(AJEntityContent.MODIFIER_ID, context.userId());
-          if(contentToDelete.save()) {
-            LOGGER.debug("resource/question {} marked as deleted", contentToDelete.get(AJEntityContent.ID));
-          } else {
-            LOGGER.debug("unable to mark resource/question {} to deleted", contentToDelete.get(AJEntityContent.ID));
-          }
-        }
-      } else {
-        LOGGER.info("no resources/questions found to delete");
-      }
-      
+
+      AJEntityCollection.update("is_deleted = ?, modifier_id = ?", "lesson_id = ?", true, context.userId(), context.lessonId());
+      // TODO: update modifier id
+      AJEntityContent.update("is_deleted = ?", "lesson_id = ?", true, context.lessonId());
+
       return new ExecutionResult<>(MessageResponseFactory.createDeleteResponse(), ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.error("error in delete lesson");

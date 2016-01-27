@@ -14,7 +14,6 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class UpdateCollaboratorHandler implements DBHandler {
@@ -61,12 +60,10 @@ public class UpdateCollaboratorHandler implements DBHandler {
                 ExecutionStatus.FAILED);
       }
 
-      // check whether user is either owner or collaborator
+      // check whether user is owner of course
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
-        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
-          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
-          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
-        }
+        LOGGER.warn("user is not owner of course to udpate collaborator. aborting");
+        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
     } else {
       LOGGER.warn("course {} not found to update collaborators, aborting", context.courseId());

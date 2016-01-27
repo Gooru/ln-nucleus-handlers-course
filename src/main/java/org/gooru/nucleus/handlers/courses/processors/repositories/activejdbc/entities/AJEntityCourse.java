@@ -37,7 +37,8 @@ public class AJEntityCourse extends Model {
           PUBLISH_DATE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, CLASS_LIST, VISIBLE_ON_PROFILE, IS_DELETED, CREATED_AT, UPDATED_AT);
   public static final List<String> UPDATABLE_FIELDS =
           Arrays.asList(TITLE, PUBLISH_DATE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, CLASS_LIST, VISIBLE_ON_PROFILE);
-
+  public static final List<String> COLLABORATOR_FIELD = Arrays.asList(COLLABORATOR);
+  
   public static final String SELECT_COLLABORATOR = "SELECT collaborator FROM course WHERE id = ?";
   public static final String SELECT_COURSE_TO_VALIDATE = "SELECT is_deleted, owner_id, publish_date, collaborator FROM course WHERE id = ?";
   public static final String SELECT_COURSE =

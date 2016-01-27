@@ -83,7 +83,6 @@ public class CreateCourseHandler implements DBHandler {
             PGobject jsonbField = new PGobject();
             jsonbField.setType("jsonb");
             jsonbField.setValue(mapValue);
-            LOGGER.debug("setting {} to {}", entry.getKey(), mapValue);
             course.set(entry.getKey(), jsonbField);
           } else {
             course.set(entry.getKey(), entry.getValue());
