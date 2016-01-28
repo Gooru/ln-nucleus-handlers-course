@@ -14,11 +14,6 @@ public class AJCourseCollaboratorRepo implements CourseCollaboratorRepo {
   }
 
   @Override
-  public MessageResponse fetchCollaborator() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildFetchCollaboratorHandler(context));
-  }
-
-  @Override
   public MessageResponse updateCollaborator() {
     return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateCollaboratorHandler(context));
   }

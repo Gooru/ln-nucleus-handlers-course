@@ -27,10 +27,6 @@ public class DBHandlerBuilder {
     return new ReorderUnitInCourseHandler(context);
   }
 
-  public DBHandler buildFetchCollaboratorHandler(ProcessorContext context) {
-    return new FetchCollaboratorHandler(context);
-  }
-
   public DBHandler buildUpdateCollaboratorHandler(ProcessorContext context) {
     return new UpdateCollaboratorHandler(context);
   }

@@ -51,9 +51,6 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_COURSE_CONTENT_REORDER:
           result = processCourseUnitReorder();
           break;
-        case MessageConstants.MSG_OP_COURSE_COLLABORATOR_GET:
-          result = processCourseCollaboratorGet();
-          break;
         case MessageConstants.MSG_OP_COURSE_COLLABORATOR_UPDATE:
           result = processCourseCollaboratorUpdate();
           break;
@@ -323,21 +320,6 @@ class MessageProcessor implements Processor {
 
       LOGGER.info("updating collaborators for course {}", context.courseId());
       return new RepoBuilder().buildCourseCollaboratorRepo(context).updateCollaborator();
-    } catch (Throwable t) {
-      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-    }
-  }
-
-  private MessageResponse processCourseCollaboratorGet() {
-    try {
-      ProcessorContext context = createContext();
-      if (checkCourseId(context)) {
-        LOGGER.error("Invalid request, course id not available. Aborting");
-        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-      }
-
-      LOGGER.info("getting collaborators for course {}", context.courseId());
-      return new RepoBuilder().buildCourseCollaboratorRepo(context).fetchCollaborator();
     } catch (Throwable t) {
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
