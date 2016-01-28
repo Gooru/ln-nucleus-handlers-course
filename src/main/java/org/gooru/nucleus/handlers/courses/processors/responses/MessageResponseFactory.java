@@ -20,6 +20,11 @@ public class MessageResponseFactory {
   public static MessageResponse createForbiddenResponse() {
     return new MessageResponse.Builder().failed().setStatusForbidden().build();
   }
+  
+  public static MessageResponse createForbiddenResponse(String message) {
+    return new MessageResponse.Builder().failed().setStatusForbidden().setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message))
+                                        .build();
+  }
 
   public static MessageResponse createInternalErrorResponse() {
     return new MessageResponse.Builder().failed().setStatusInternalError().build();

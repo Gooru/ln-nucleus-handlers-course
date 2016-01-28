@@ -16,16 +16,19 @@ DONE
 * Transactional layer to govern the transaction
 * DB layer to actually do the operations
 * Decide on using plain JDBC or light weight ORM like ActiveJDBC - Done - decided to use ActiveJDBC
+* Extract UUID generation into separate utility which will also retry till gets unique UUID - handled by adding changing id columns to uuid datatype
+* For update functionality, define list of updatable columns and update only those
+* Revisit the logic to throw back errors for missing data in input data
 
 TODO
 ----
 * Transformer and/or writer layer so that output from DB layer could be transformed and written back to message bus - Partially done, may need to revisit later
-* Generalize the sanity check, validate request code to be reused
+* Generalize the sanity check, validate request code to be reused (this is not needed now) - Low Priority
 * Validate taxonomy from request data
-* Extract UUID generation into separate utility which will also retry till gets unique UUID
-* For update functionality, define list of updatable columns and update only those
-* Revisit the logic to throw back errors for missing data in input data
-
+* While creating lesson, verify the unit is associated with proper course
+* Authorization for all APIs
+* Add Move APIs
+* While creating Unit and Lesson, fetch owner of course and set as owner of Unit/Lesson
  
 
 To understand build related stuff, take a look at **BUILD_README.md**.

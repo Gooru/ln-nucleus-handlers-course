@@ -59,6 +59,12 @@ public class DeleteCourseHandler implements DBHandler {
         LOGGER.warn("user is anonymous or not owner of course for delete. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
+      
+      //published course can not be deleted
+      if(ajEntityCourse.get(0).getDate(AJEntityCourse.PUBLISH_DATE) != null) {
+        LOGGER.warn("course {} is published hence can't deleted");
+        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Course is published"), ExecutionResult.ExecutionStatus.FAILED);
+      }
     } else {
       LOGGER.warn("course {} not found to delete, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
