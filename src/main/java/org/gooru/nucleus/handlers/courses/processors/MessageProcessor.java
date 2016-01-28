@@ -45,9 +45,6 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_COURSE_UPDATE:
           result = processCourseUpdate();
           break;
-        case MessageConstants.MSG_OP_COURSE_COPY:
-          result = processCourseCopy();
-          break;
         case MessageConstants.MSG_OP_COURSE_DELETE:
           result = processCourseDelete();
           break;
@@ -75,9 +72,6 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_UNIT_CONTENT_REORDER:
           result = processUnitContentReorder();
           break;
-        case MessageConstants.MSG_OP_UNIT_COPY:
-          result = processUnitCopy();
-          break;
         case MessageConstants.MSG_OP_LESSON_CREATE:
           result = processLessonCreate();
           break;
@@ -92,9 +86,6 @@ class MessageProcessor implements Processor {
           break;
         case MessageConstants.MSG_OP_LESSON_CONTENT_REORDER:
           result = processLessonContentReorder();
-          break;
-        case MessageConstants.MSG_OP_LESSON_COPY:
-          result = processLessonCopy();
           break;
         default:
           LOGGER.error("Invalid operation type passed in, not able to handle");
@@ -111,11 +102,6 @@ class MessageProcessor implements Processor {
       LOGGER.error("Exception while processing request");
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
-  }
-
-  private MessageResponse processLessonCopy() {
-    // TODO Auto-generated method stub
-    return null;
   }
 
   private MessageResponse processLessonContentReorder() {
@@ -220,11 +206,6 @@ class MessageProcessor implements Processor {
       LOGGER.error("Exception while creating lesson", t);
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
-  }
-
-  private MessageResponse processUnitCopy() {
-    // TODO Auto-generated method stub
-    return null;
   }
 
   private MessageResponse processUnitContentReorder() {
@@ -392,22 +373,6 @@ class MessageProcessor implements Processor {
 
       LOGGER.info("deleting course {}", context.courseId());
       return new RepoBuilder().buildCourseRepo(context).deleteCourse();
-    } catch (Throwable t) {
-      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-    }
-  }
-
-  private MessageResponse processCourseCopy() {
-    try {
-      ProcessorContext context = createContext();
-
-      if (checkRequest(context)) {
-        LOGGER.error("Invalid input data, Aborting");
-        return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
-      }
-
-      LOGGER.info("copying course");
-      return new RepoBuilder().buildCourseRepo(context).copyCourse();
     } catch (Throwable t) {
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }

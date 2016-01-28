@@ -34,11 +34,6 @@ public class AJCourseRepo implements CourseRepo {
   }
 
   @Override
-  public MessageResponse copyCourse() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildCopyCourseHandler(context));
-  }
-
-  @Override
   public MessageResponse reorderUnitInCourse() {
     return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildReorderUnitInCourseHandler(context));
   }

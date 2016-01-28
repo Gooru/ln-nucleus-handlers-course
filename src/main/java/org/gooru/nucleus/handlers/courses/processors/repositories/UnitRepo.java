@@ -6,8 +6,6 @@ public interface UnitRepo {
 
   MessageResponse createUnit();
 
-  MessageResponse copyUnitToCourse();
-
   MessageResponse updateUnit();
 
   MessageResponse fetchUnit();

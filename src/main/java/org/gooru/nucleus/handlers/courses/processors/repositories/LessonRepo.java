@@ -6,8 +6,6 @@ public interface LessonRepo {
 
   MessageResponse createLesson();
 
-  MessageResponse copyLessonToUnit();
-
   MessageResponse updateLesson();
 
   MessageResponse fetchLesson();

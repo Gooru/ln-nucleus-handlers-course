@@ -20,11 +20,6 @@ public class AJUnitRepo implements UnitRepo {
   }
 
   @Override
-  public MessageResponse copyUnitToCourse() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildCopyUnitToCourseHandler(context));
-  }
-
-  @Override
   public MessageResponse updateUnit() {
     return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateUnitHandler(context));
   }

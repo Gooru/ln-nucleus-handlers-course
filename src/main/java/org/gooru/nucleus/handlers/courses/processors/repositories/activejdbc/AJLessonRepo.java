@@ -20,11 +20,6 @@ public class AJLessonRepo implements LessonRepo {
   }
 
   @Override
-  public MessageResponse copyLessonToUnit() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildCopyLessonToUnitHandler(context));
-  }
-
-  @Override
   public MessageResponse updateLesson() {
     return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateLessonHandler(context));
   }

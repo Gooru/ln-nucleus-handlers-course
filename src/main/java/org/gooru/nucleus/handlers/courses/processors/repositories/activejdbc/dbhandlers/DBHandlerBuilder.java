@@ -23,10 +23,6 @@ public class DBHandlerBuilder {
     return new DeleteCourseHandler(context);
   }
 
-  public DBHandler buildCopyCourseHandler(ProcessorContext context) {
-    return new CopyCourseHandler(context);
-  }
-
   public DBHandler buildReorderUnitInCourseHandler(ProcessorContext context) {
     return new ReorderUnitInCourseHandler(context);
   }
@@ -42,10 +38,6 @@ public class DBHandlerBuilder {
   //Unit Handlers
   public DBHandler buildCreateUnitHandler(ProcessorContext context) {
     return new CreateUnitHandler(context);
-  }
-
-  public DBHandler buildCopyUnitToCourseHandler(ProcessorContext context) {
-    return new CopyUnitToCourseHandler(context);
   }
 
   public DBHandler buildUpdateUnitHandler(ProcessorContext context) {
@@ -67,10 +59,6 @@ public class DBHandlerBuilder {
   //Lesson Handlers
   public DBHandler buildCreateLessonHandler(ProcessorContext context) {
     return new CreateLessonHandler(context);
-  }
-
-  public DBHandler buildCopyLessonToUnitHandler(ProcessorContext context) {
-    return new CopyLessonToUnitHandler(context);
   }
 
   public DBHandler buildUpdateLessonHandler(ProcessorContext context) {
