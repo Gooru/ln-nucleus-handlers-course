@@ -1,8 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Map;
-import java.util.UUID;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -10,7 +7,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
-import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +16,7 @@ public class CreateCourseHandler implements DBHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateCourseHandler.class);
   private final ProcessorContext context;
+  private AJEntityCourse course;
 
   public CreateCourseHandler(ProcessorContext context) {
     this.context = context;
@@ -32,26 +29,20 @@ public class CreateCourseHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create course"),
               ExecutionStatus.FAILED);
     }
-    
+
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to create course");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
-    JsonObject request = context.request();
-    StringBuilder missingFields = new StringBuilder();
-    for (String fieldName : AJEntityCourse.NOTNULL_FIELDS) {
-      if (request.getString(fieldName) == null || request.getString(fieldName).isEmpty()) {
-        missingFields.append(fieldName).append(" ");
-      }
+    JsonObject validateErrors = validateFields();
+    if (validateErrors != null && !validateErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(validateErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
-    // TODO: May be need to revisit this logic of validating fields and
-    // returning error back for all validation failed in one go
-    if (!missingFields.toString().isEmpty()) {
-      LOGGER.warn("request data validation failed for '{}'", missingFields.toString());
-      return new ExecutionResult<>(
-              MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("missingFields", missingFields.toString())),
-              ExecutionStatus.FAILED);
+
+    JsonObject notNullErrors = validateNullFields();
+    if (notNullErrors != null && !notNullErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -60,78 +51,34 @@ public class CreateCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    // make sure that user is not anonymous
-    if (context.userId().equals(MessageConstants.MSG_USER_ANONYMOUS)) {
-      LOGGER.warn("user is anonymous so can't create course. aborting");
-      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
-    }
-
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    JsonObject request = context.request();
-    AJEntityCourse course = new AJEntityCourse();
-    String mapValue;
-    try {
-      for (Map.Entry<String, Object> entry : request) {
-        mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-        if (mapValue != null && !mapValue.isEmpty()) {
-          if (AJEntityCourse.JSON_FIELDS.contains(entry.getKey())) {
-            PGobject jsonbField = new PGobject();
-            jsonbField.setType("jsonb");
-            jsonbField.setValue(mapValue);
-            course.set(entry.getKey(), jsonbField);
-          } else {
-            course.set(entry.getKey(), entry.getValue());
-          }
-        }
-      }
+    course = new AJEntityCourse();
+    course.setAllFromJson(context.request());
+    course.setOwnerId(context.userId());
+    course.setCreatorId(context.userId());
+    course.setModifierId(context.userId());
 
-      // TODO: UUID should be generated from separate utility
-      // Check for duplicate id, if its already exists in same table, generate
-      // new
-      // Probably need to revisit this logic again or need to move in separate
-      // utility
-      String id = UUID.randomUUID().toString();
-      boolean isDuplicate = true;
-      while (isDuplicate) {
-        if (AJEntityCourse.exists(id)) {
-          id = UUID.randomUUID().toString();
-        } else {
-          isDuplicate = false;
-        }
-      }
+    if (course.hasErrors()) {
+      LOGGER.debug("errors in course creation");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
 
-      course.setId(id);
-      course.set(AJEntityCourse.OWNER_ID, context.userId());
-      course.set(AJEntityCourse.CREATOR_ID, context.userId());
-      course.set(AJEntityCourse.ORIGINAL_CREATOR_ID, context.userId());
-      course.set(AJEntityCourse.MODIFIER_ID, context.userId());
-
-      if (course.isValid()) {
-        if (course.insert()) {
-          LOGGER.info("course created successfully : {}", id);
-          return new ExecutionResult<>(MessageResponseFactory.createPostResponse(id), ExecutionStatus.SUCCESSFUL);
-        } else {
-          throw new Exception("Something went wrong, unable to save course. Try Again!");
-        }
+    if (course.isValid()) {
+      if (course.insert()) {
+        LOGGER.info("course created successfully : {}", course.getId().toString());
+        return new ExecutionResult<>(MessageResponseFactory.createPostResponse(course.getId().toString()), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.error("Error while creating course");
-        if (course.hasErrors()) {
-          Map<String, String> errMap = course.errors();
-          JsonObject errors = new JsonObject();
-          errMap.forEach(errors::put);
-          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
-        } else {
-          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while creating course"), ExecutionStatus.FAILED);
-        }
+        LOGGER.debug("error while saving course");
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
-    } catch (Throwable t) {
-      LOGGER.error("Exception while creating course", t);
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
+    } else {
+      LOGGER.error("Error while creating course");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
@@ -140,4 +87,26 @@ public class CreateCourseHandler implements DBHandler {
     return false;
   }
 
+  private JsonObject validateFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    AJEntityCourse.INSERT_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
+            .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject validateNullFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    AJEntityCourse.NOTNULL_FIELDS.stream()
+            .filter(notNullField -> (input.getValue(notNullField) == null || input.getValue(notNullField).toString().isEmpty()))
+            .forEach(notNullField -> output.put(notNullField, "Field should not be empty or null"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.course.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
+  }
 }

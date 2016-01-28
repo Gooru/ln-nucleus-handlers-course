@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
@@ -24,6 +22,7 @@ public class DeleteLessonHandler implements DBHandler {
 
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(DeleteLessonHandler.class);
+  private AJEntityLesson lessonToDelete;
 
   public DeleteLessonHandler(ProcessorContext context) {
     this.context = context;
@@ -109,34 +108,37 @@ public class DeleteLessonHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    AJEntityLesson lessonToDelete = new AJEntityLesson();
-    lessonToDelete.setId(context.lessonId());
+    lessonToDelete = new AJEntityLesson();
+    lessonToDelete.setLessonId(context.lessonId());
     lessonToDelete.setBoolean(AJEntityLesson.IS_DELETED, true);
-    lessonToDelete.setString(AJEntityLesson.MODIFIER_ID, context.userId());
+    lessonToDelete.setModifierId(context.userId());
+
+    if (lessonToDelete.hasErrors()) {
+      LOGGER.debug("deleting lesson has errors");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
 
     if (lessonToDelete.save()) {
       LOGGER.info("lesson {} marked as deleted successfully", context.lessonId());
 
-      AJEntityCollection.update("is_deleted = ?, modifier_id = ?", "lesson_id = ?", true, context.userId(), context.lessonId());
-      // TODO: update modifier id
-      AJEntityContent.update("is_deleted = ?", "lesson_id = ?", true, context.lessonId());
+      AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true, context.userId(), context.lessonId());
+      AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true, context.userId(), context.lessonId());
 
       return new ExecutionResult<>(MessageResponseFactory.createDeleteResponse(), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.error("error in delete lesson");
-      if (lessonToDelete.hasErrors()) {
-        Map<String, String> errMap = lessonToDelete.errors();
-        JsonObject errors = new JsonObject();
-        errMap.forEach(errors::put);
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
-      } else {
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error in deleting lesson"), ExecutionStatus.FAILED);
-      }
+      LOGGER.debug("error while deleting lesson");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.lessonToDelete.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
   }
 }

@@ -1,10 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -13,7 +8,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.E
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.LazyList;
-import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +42,16 @@ public class UpdateCourseHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
+    JsonObject validateErrors = validateFields();
+    if (validateErrors != null && !validateErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(validateErrors), ExecutionResult.ExecutionStatus.FAILED);
+    }
+
+    JsonObject notNullErrors = validateNullFields();
+    if (notNullErrors != null && !notNullErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
+    }
+
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
@@ -78,81 +82,62 @@ public class UpdateCourseHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    courseToUpdate = new AJEntityCourse();
-    try {
-      List<String> invalidFields = new ArrayList<>();
-      List<String> notNullFields = new ArrayList<>();
-
-      String mapValue;
-      for (Map.Entry<String, Object> entry : context.request()) {
-        mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-        if (mapValue != null && !mapValue.isEmpty()) {
-          if (AJEntityCourse.UPDATABLE_FIELDS.contains(entry.getKey())) {
-            if (AJEntityCourse.JSON_FIELDS.contains(entry.getKey())) {
-              PGobject jsonbField = new PGobject();
-              jsonbField.setType("jsonb");
-              jsonbField.setValue(mapValue);
-              courseToUpdate.set(entry.getKey(), jsonbField);
-            } else {
-              courseToUpdate.set(entry.getKey(), entry.getValue());
-            }
-          } else {
-            invalidFields.add(entry.getKey());
-          }
-        } else {
-          if (AJEntityCourse.NOTNULL_FIELDS.contains(entry.getKey())) {
-            notNullFields.add(entry.getKey());
-          }
-        }
-      }
-
-      if (invalidFields.size() > 0) {
-        LOGGER.error("not updatable fields present in request : {}", String.join(",", invalidFields));
-        return new ExecutionResult<>(
-                MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("invalidFields", String.join(",", invalidFields))),
-                ExecutionStatus.FAILED);
-      }
-
-      if (notNullFields.size() > 0) {
-        LOGGER.error("trying to update not null fields to null value : {}", String.join(",", notNullFields));
-        return new ExecutionResult<>(
-                MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("notnullFields", String.join(",", notNullFields))),
-                ExecutionStatus.FAILED);
-      }
-    } catch (SQLException e) {
-      LOGGER.error("Exception while updating course", e.getMessage());
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionStatus.FAILED);
-    }
-    
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
+    courseToUpdate = new AJEntityCourse();
+    courseToUpdate.setAllFromJson(context.request());
+    courseToUpdate.setCourseId(context.courseId());
+    courseToUpdate.setModifierId(context.userId());
 
-    courseToUpdate.setId(context.courseId());
-    courseToUpdate.set(AJEntityCourse.MODIFIER_ID, context.userId());
+    if (courseToUpdate.hasErrors()) {
+      LOGGER.debug("updating course has errors");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
 
-    if (courseToUpdate.save()) {
-      LOGGER.info("course {} updated successfully", context.courseId());
-      return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
-    } else {
-      LOGGER.error("error in updating course");
-      if (courseToUpdate.hasErrors()) {
-        Map<String, String> errMap = courseToUpdate.errors();
-        JsonObject errors = new JsonObject();
-        errMap.forEach(errors::put);
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+    if (courseToUpdate.isValid()) {
+      if (courseToUpdate.save()) {
+        LOGGER.info("course {} updated successfully", context.courseId());
+        return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
       } else {
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating course"), ExecutionStatus.FAILED);
+        LOGGER.debug("error while saving udpated course");
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
+    } else {
+      LOGGER.debug("validation error while updating course");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+
+  private JsonObject validateFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    AJEntityCourse.UPDATE_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
+            .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject validateNullFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    input.fieldNames().stream()
+            .filter(key -> AJEntityCourse.NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+            .forEach(key -> output.put(key, "Field should not be empty or null"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.courseToUpdate.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
   }
 
 }

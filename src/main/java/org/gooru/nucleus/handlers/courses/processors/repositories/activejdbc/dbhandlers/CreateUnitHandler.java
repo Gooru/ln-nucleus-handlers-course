@@ -1,13 +1,9 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
@@ -15,7 +11,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
-import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +21,7 @@ public class CreateUnitHandler implements DBHandler {
 
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateUnitHandler.class);
+  private AJEntityUnit newUnit;
 
   public CreateUnitHandler(ProcessorContext context) {
     this.context = context;
@@ -51,21 +47,14 @@ public class CreateUnitHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
-    JsonObject request = context.request();
-    List<String> missingFields = new ArrayList<>();
-    for (String fieldName : AJEntityUnit.NOTNULL_FIELDS) {
-      if (request.getString(fieldName) == null || request.getString(fieldName).isEmpty()) {
-        missingFields.add(fieldName);
-      }
+    JsonObject validateErrors = validateFields();
+    if (validateErrors != null && !validateErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(validateErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
 
-    // TODO: May be need to revisit this logic of validating fields and
-    // returning error back for all validation failed in one go
-    if (missingFields.size() > 0) {
-      LOGGER.warn("request data validation failed for '{}'", String.join(",", missingFields));
-      return new ExecutionResult<>(
-              MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("missingFields", String.join(",", missingFields))),
-              ExecutionStatus.FAILED);
+    JsonObject notNullErrors = validateNullFields();
+    if (notNullErrors != null && !notNullErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -101,83 +90,71 @@ public class CreateUnitHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    JsonObject request = context.request();
-    AJEntityUnit newUnit = new AJEntityUnit();
-    String mapValue;
-    try {
-      for (Map.Entry<String, Object> entry : request) {
-        mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-        if (mapValue != null && !mapValue.isEmpty()) {
-          if (AJEntityUnit.JSON_FIELDS.contains(entry.getKey())) {
-            PGobject jsonbField = new PGobject();
-            jsonbField.setType("jsonb");
-            jsonbField.setValue(mapValue);
-            newUnit.set(entry.getKey(), jsonbField);
-          } else {
-            newUnit.set(entry.getKey(), entry.getValue());
-          }
-        }
-      }
+    newUnit = new AJEntityUnit();
+    newUnit.setAllFromJson(context.request());
+    newUnit.setCourseId(context.courseId());
 
-      // TODO: UUID should be generated from separate utility
-      // Check for duplicate id, if its already exists in same table, generate
-      // new
-      // Probably need to revisit this logic again or need to move in separate
-      // utility
-      String id = UUID.randomUUID().toString();
-      boolean isDuplicate = true;
-      while (isDuplicate) {
-        if (AJEntityCourse.exists(id)) {
-          id = UUID.randomUUID().toString();
-        } else {
-          isDuplicate = false;
-        }
-      }
+    // TODO: fetch owner id of course and set it as owner of unit if unit is
+    // getting created by course collaborator
+    newUnit.setOwnerId(context.userId());
+    newUnit.setCreatorId(context.userId());
+    newUnit.setModifierId(context.userId());
+    newUnit.set(AJEntityUnit.IS_DELETED, false);
 
-      newUnit.setId(id);
-      newUnit.set(AJEntityUnit.COURSE_ID, context.courseId());
-      newUnit.set(AJEntityUnit.OWNER_ID, context.userId());
-      newUnit.set(AJEntityUnit.CREATOR_ID, context.userId());
-      newUnit.set(AJEntityUnit.MODIFIER_ID, context.userId());
-      newUnit.set(AJEntityUnit.ORIGINAL_CREATOR_ID, context.userId());
-      newUnit.set(AJEntityUnit.IS_DELETED, false);
+    // Get max sequence id for course
+    Object maxSequenceId = Base.firstCell(AJEntityUnit.SELECT_UNIT_MAX_SEQUENCEID, context.courseId());
+    int sequenceId = 1;
+    if (maxSequenceId != null) {
+      sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
 
-      // Get max sequence id for course
-      Object maxSequenceId = Base.firstCell(AJEntityUnit.SELECT_UNIT_MAX_SEQUENCEID, context.courseId());
-      int sequenceId = 1;
-      if (maxSequenceId != null) {
-        sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
+    }
+    newUnit.set(AJEntityUnit.SEQUENCE_ID, sequenceId);
 
-      }
-      newUnit.set(AJEntityUnit.SEQUENCE_ID, sequenceId);
+    if (newUnit.hasErrors()) {
+      LOGGER.debug("error in creating new unit");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
 
-      if (newUnit.isValid()) {
-        if (newUnit.insert()) {
-          LOGGER.info("unit {} created successfully for course {}", id, context.courseId());
-          return new ExecutionResult<>(MessageResponseFactory.createPostResponse(id), ExecutionStatus.SUCCESSFUL);
-        } else {
-          throw new Exception("Something went wrong, unable to create unit. Try Again!");
-        }
+    if (newUnit.isValid()) {
+      if (newUnit.save()) {
+        LOGGER.info("unit {} created successfully for course {}", newUnit.getId().toString(), context.courseId());
+        return new ExecutionResult<>(MessageResponseFactory.createPostResponse(newUnit.getId().toString()), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.error("Error while creating unit");
-        if (newUnit.hasErrors()) {
-          Map<String, String> errMap = newUnit.errors();
-          JsonObject errors = new JsonObject();
-          errMap.forEach(errors::put);
-          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
-        } else {
-          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while creating unit"), ExecutionStatus.FAILED);
-        }
+        LOGGER.debug("error in saving unit");
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
-    } catch (Throwable t) {
-      LOGGER.error("Exception while creating unit", t);
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
+    } else {
+      LOGGER.debug("validation error in saving unit");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+
+  private JsonObject validateFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    AJEntityLesson.INSERT_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
+            .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject validateNullFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    AJEntityLesson.NOTNULL_FIELDS.stream()
+            .filter(notNullField -> (input.getValue(notNullField) == null || input.getValue(notNullField).toString().isEmpty()))
+            .forEach(notNullField -> output.put(notNullField, "Field should not be empty or null"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.newUnit.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
   }
 
 }

@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -10,7 +8,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.E
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.LazyList;
-import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +17,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollaboratorHandler.class);
   private final ProcessorContext context;
+  private AJEntityCourse courseUpdateCollab;
 
   public UpdateCollaboratorHandler(ProcessorContext context) {
     this.context = context;
@@ -42,6 +40,16 @@ public class UpdateCollaboratorHandler implements DBHandler {
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to update course collaborator");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+    }
+
+    JsonObject validateErrors = validateFields();
+    if (validateErrors != null && !validateErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(validateErrors), ExecutionResult.ExecutionStatus.FAILED);
+    }
+
+    JsonObject notNullErrors = validateNullFields();
+    if (notNullErrors != null && !notNullErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -76,40 +84,51 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    try {
-      AJEntityCourse ajEntityCourse = new AJEntityCourse();
-      ajEntityCourse.setId(context.courseId());
-      ajEntityCourse.setString(AJEntityCourse.MODIFIER_ID, context.userId());
+    courseUpdateCollab = new AJEntityCourse();
+    courseUpdateCollab.setCourseId(context.courseId());
+    courseUpdateCollab.setModifierId(context.userId());
+    courseUpdateCollab.setCollaborator(context.request().getJsonArray(AJEntityCourse.COLLABORATOR).toString());
 
-      PGobject jsonbField = new PGobject();
-      jsonbField.setType("jsonb");
-      jsonbField.setValue(context.request().getJsonArray(AJEntityCourse.COLLABORATOR).toString());
-      ajEntityCourse.set(AJEntityCourse.COLLABORATOR, jsonbField);
+    if (courseUpdateCollab.hasErrors()) {
+      LOGGER.debug("updating course collaborator has errors");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
 
-      if (ajEntityCourse.save()) {
-        LOGGER.info("updated collaborators of course {} successfully", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
-      } else {
-        LOGGER.error("error in update collaborators of course {}", context.courseId());
-        if (ajEntityCourse.hasErrors()) {
-          Map<String, String> errMap = ajEntityCourse.errors();
-          JsonObject errors = new JsonObject();
-          errMap.forEach(errors::put);
-          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
-        } else {
-          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error in update collaborators of course"),
-                  ExecutionStatus.FAILED);
-        }
-      }
-    } catch (Throwable t) {
-      LOGGER.error("exception while updating course", t);
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
+    if (courseUpdateCollab.save()) {
+      LOGGER.info("updated collaborators of course {} successfully", context.courseId());
+      return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
+    } else {
+      LOGGER.debug("error while upating course collaborator");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+
+  private JsonObject validateFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    input.fieldNames().stream().filter(key -> !AJEntityCourse.COLLABORATOR_FIELD.contains(key)).forEach(key -> output.put(key, "Field not allowed"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject validateNullFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    input.fieldNames().stream()
+            .filter(key -> AJEntityCourse.COLLABORATOR_FIELD.contains(key)
+                    && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+            .forEach(key -> output.put(key, "Field should not be empty or null"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.courseUpdateCollab.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
   }
 
 }

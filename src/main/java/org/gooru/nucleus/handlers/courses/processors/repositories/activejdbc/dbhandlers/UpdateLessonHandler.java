@@ -1,10 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -15,7 +10,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.E
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.LazyList;
-import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +49,16 @@ public class UpdateLessonHandler implements DBHandler {
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to update lesson");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+    }
+
+    JsonObject validateErrors = validateFields();
+    if (validateErrors != null && !validateErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(validateErrors), ExecutionResult.ExecutionStatus.FAILED);
+    }
+
+    JsonObject notNullErrors = validateNullFields();
+    if (notNullErrors != null && !notNullErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -105,52 +109,6 @@ public class UpdateLessonHandler implements DBHandler {
       LOGGER.warn("Lesson {} not found, aborting", context.lessonId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
-    
-    lessonToUpdate = new AJEntityLesson();
-    try {
-      List<String> invalidFields = new ArrayList<>();
-      List<String> notNullFields = new ArrayList<>();
-
-      String mapValue;
-      for (Map.Entry<String, Object> entry : context.request()) {
-        mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-        if (mapValue != null && !mapValue.isEmpty()) {
-          if (AJEntityLesson.UPDATABLE_FIELDS.contains(entry.getKey())) {
-            if (AJEntityLesson.JSON_FIELDS.contains(entry.getKey())) {
-              PGobject jsonbField = new PGobject();
-              jsonbField.setType("jsonb");
-              jsonbField.setValue(mapValue);
-              lessonToUpdate.set(entry.getKey(), jsonbField);
-            } else {
-              lessonToUpdate.set(entry.getKey(), entry.getValue());
-            }
-          } else {
-            invalidFields.add(entry.getKey());
-          }
-        } else {
-          if (AJEntityLesson.NOTNULL_FIELDS.contains(entry.getKey())) {
-            notNullFields.add(entry.getKey());
-          }
-        }
-      }
-
-      if (invalidFields.size() > 0) {
-        LOGGER.error("not updatable fields present in request : {}", String.join(",", invalidFields));
-        return new ExecutionResult<>(
-                MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("invalidFields", String.join(",", invalidFields))),
-                ExecutionStatus.FAILED);
-      }
-
-      if (notNullFields.size() > 0) {
-        LOGGER.error("trying to update not null fields to null value : {}", String.join(",", notNullFields));
-        return new ExecutionResult<>(
-                MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("notnullFields", String.join(",", notNullFields))),
-                ExecutionStatus.FAILED);
-      }
-    } catch (SQLException e) {
-      LOGGER.error("Exception while updating course", e.getMessage());
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionStatus.FAILED);
-    }
 
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
@@ -158,27 +116,54 @@ public class UpdateLessonHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    lessonToUpdate.setId(context.lessonId());
-    lessonToUpdate.setString(AJEntityLesson.MODIFIER_ID, context.userId());
+    lessonToUpdate = new AJEntityLesson();
+    lessonToUpdate.setLessonId(context.lessonId());
+    lessonToUpdate.setModifierId(context.userId());
 
-    if (lessonToUpdate.save()) {
-      LOGGER.info("lesson {} updated successfully", context.lessonId());
-      return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.lessonId()), ExecutionStatus.SUCCESSFUL);
-    } else {
-      LOGGER.error("error in updating lesson");
-      if (lessonToUpdate.hasErrors()) {
-        Map<String, String> errMap = lessonToUpdate.errors();
-        JsonObject errors = new JsonObject();
-        errMap.forEach(errors::put);
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+    if (lessonToUpdate.hasErrors()) {
+      LOGGER.debug("updating lesson has errors");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
+
+    if (lessonToUpdate.isValid()) {
+      if (lessonToUpdate.save()) {
+        LOGGER.info("lesson {} updated successfully", context.lessonId());
+        return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.lessonId()), ExecutionStatus.SUCCESSFUL);
       } else {
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating lesson"), ExecutionStatus.FAILED);
+        LOGGER.debug("error while saving udpated lesson");
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
+    } else {
+      LOGGER.debug("validation error while updating lesson");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+
+  private JsonObject validateFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    AJEntityLesson.UPDATE_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
+            .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject validateNullFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    input.fieldNames().stream()
+            .filter(key -> AJEntityLesson.NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+            .forEach(key -> output.put(key, "Field should not be empty or null"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.lessonToUpdate.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
   }
 }

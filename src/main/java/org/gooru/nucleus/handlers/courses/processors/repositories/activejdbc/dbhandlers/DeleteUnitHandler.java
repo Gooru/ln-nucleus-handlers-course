@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
@@ -24,6 +22,7 @@ public class DeleteUnitHandler implements DBHandler {
 
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(DeleteUnitHandler.class);
+  private AJEntityUnit unitToDelete;
 
   public DeleteUnitHandler(ProcessorContext context) {
     this.context = context;
@@ -91,30 +90,27 @@ public class DeleteUnitHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    AJEntityUnit unitToDelete = new AJEntityUnit();
-    unitToDelete.setId(context.unitId());
+    unitToDelete = new AJEntityUnit();
+    unitToDelete.setUnitId(context.unitId());
     unitToDelete.setBoolean(AJEntityUnit.IS_DELETED, true);
-    unitToDelete.setString(AJEntityUnit.MODIFIER_ID, context.userId());
+    unitToDelete.setModifierId(context.userId());
+
+    if (unitToDelete.hasErrors()) {
+      LOGGER.debug("deleting unit has errors");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
 
     if (unitToDelete.save()) {
       LOGGER.info("unit {} marked as deleted successfully", context.unitId());
 
-      AJEntityLesson.update("is_deleted = ?, modifier_id = ?", "unit_id = ?", true, context.userId(), context.unitId());
-      AJEntityCollection.update("is_deleted = ?, modifier_id = ?", "unit_id = ?", true, context.userId(), context.unitId());
-      // TODO: update modifier id
-      AJEntityContent.update("is_deleted = ?", "unit_id = ?", true, context.unitId());
+      AJEntityLesson.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true, context.userId(), context.unitId());
+      AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true, context.userId(), context.unitId());
+      AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true, context.userId(), context.unitId());
 
       return new ExecutionResult<>(MessageResponseFactory.createDeleteResponse(), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.error("error in delete unit");
-      if (unitToDelete.hasErrors()) {
-        Map<String, String> errMap = unitToDelete.errors();
-        JsonObject errors = new JsonObject();
-        errMap.forEach(errors::put);
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
-      } else {
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error in deleting unit"), ExecutionStatus.FAILED);
-      }
+      LOGGER.debug("error while deleting unit");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
@@ -123,4 +119,9 @@ public class DeleteUnitHandler implements DBHandler {
     return false;
   }
 
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.unitToDelete.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
+  }
 }
