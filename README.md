@@ -29,6 +29,8 @@ TODO
 * Authorization for all APIs
 * Add Move APIs
 * While creating Unit and Lesson, fetch owner of course and set as owner of Unit/Lesson
+* Refactor delete check to include in query instead explicit
+* input validation for move APIs
  
 
 To understand build related stuff, take a look at **BUILD_README.md**.

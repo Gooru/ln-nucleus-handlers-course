@@ -13,4 +13,6 @@ public interface LessonRepo {
   MessageResponse deleteLesson();
 
   MessageResponse reorderCollectionsAssessmentsInLesson();
+
+  MessageResponse moveCollectionToLesson();
 }

@@ -44,7 +44,7 @@ public class AJEntityLesson extends Model {
   public static final List<String> UPDATABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
   public static final List<String> LESSON_SUMMARY_FIELDS = Arrays.asList(LESSON_ID, TITLE, SEQUENCE_ID);
 
-  public static final String SELECT_LESSON_TO_VALIDATE = "SELECT is_deleted, creator_id FROM course_unit_lesson WHERE lesson_id = ?::uuid";
+  public static final String SELECT_LESSON_TO_VALIDATE = "SELECT lesson_id, unit_id, course_id, is_deleted FROM course_unit_lesson WHERE lesson_id = ?::uuid";
   public static final String SELECT_LESSON =
           "SELECT lesson_id, unit_id, course_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_lesson_id, "
                   + "metadata, taxonomy, sequence_id, is_deleted FROM course_unit_lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid and is_deleted = ?";
@@ -56,6 +56,7 @@ public class AJEntityLesson extends Model {
           ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);
   public static final List<String> UPDATE_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
           ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);
+  public static final List<String> COLLECTION_MOVE_NOTNULL_FIELDS = Arrays.asList("collection_id");
   
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";

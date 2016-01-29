@@ -13,4 +13,6 @@ public interface CourseRepo {
   MessageResponse deleteCourse();
 
   MessageResponse reorderUnitInCourse();
+
+  MessageResponse moveUnitToCourse();
 }

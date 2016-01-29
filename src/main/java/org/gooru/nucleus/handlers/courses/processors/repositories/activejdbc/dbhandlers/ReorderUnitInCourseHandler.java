@@ -1,9 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
@@ -14,17 +12,16 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.E
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.LazyList;
-import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ReorderUnitInCourseHandler implements DBHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ReorderUnitInCourseHandler.class);
   private final ProcessorContext context;
-  private List<AJEntityUnit> unitsToReorder;
 
   public ReorderUnitInCourseHandler(ProcessorContext context) {
     this.context = context;
@@ -55,52 +52,6 @@ public class ReorderUnitInCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    unitsToReorder = new ArrayList<>();
-    try {
-      List<String> invalidFields = new ArrayList<>();
-      List<String> notNullFields = new ArrayList<>();
-
-      String mapValue;
-      for (Map.Entry<String, Object> entry : context.request()) {
-        mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-        if (mapValue != null && !mapValue.isEmpty()) {
-          LOGGER.debug("entry {} -- {}", entry.getKey(), mapValue);
-          /*if (AJEntityCourse.UPDATABLE_FIELDS.contains(entry.getKey())) {
-            if (AJEntityCourse.JSON_FIELDS.contains(entry.getKey())) {
-              PGobject jsonbField = new PGobject();
-              jsonbField.setType("jsonb");
-              jsonbField.setValue(mapValue);
-              courseToUpdate.set(entry.getKey(), jsonbField);
-            } else {
-              courseToUpdate.set(entry.getKey(), entry.getValue());
-            }
-          } else {
-            invalidFields.add(entry.getKey());
-          }*/
-        } else {
-          if (AJEntityCourse.NOTNULL_FIELDS.contains(entry.getKey())) {
-            notNullFields.add(entry.getKey());
-          }
-        }
-      }
-
-      if (invalidFields.size() > 0) {
-        LOGGER.error("not updatable fields present in request : {}", String.join(",", invalidFields));
-        return new ExecutionResult<>(
-                MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("invalidFields", String.join(",", invalidFields))),
-                ExecutionStatus.FAILED);
-      }
-
-      if (notNullFields.size() > 0) {
-        LOGGER.error("trying to update not null fields to null value : {}", String.join(",", notNullFields));
-        return new ExecutionResult<>(
-                MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("notnullFields", String.join(",", notNullFields))),
-                ExecutionStatus.FAILED);
-      }
-
-    } catch (Exception e) {
-      
-    }
     
     LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
     if (!ajEntityCourse.isEmpty()) {
@@ -110,7 +61,12 @@ public class ReorderUnitInCourseHandler implements DBHandler {
                 ExecutionStatus.FAILED);
       }
 
-      // TODO: check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to reoder units. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+        }
+      }
     } else {
       LOGGER.warn("course {} not found to reorder units, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
@@ -122,8 +78,44 @@ public class ReorderUnitInCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    // TODO Auto-generated method stub
-    return null;
+    JsonArray unitsToReorder = context.request().getJsonArray("order");
+    for (Object object : unitsToReorder) {
+      JsonObject jsonObject = (JsonObject) object;
+      String unitId = jsonObject.getValue("id").toString();
+      Integer sequence = jsonObject.getInteger("sequence");
+      LOGGER.info("Id {} -- Sequence {}", unitId, sequence);
+
+      //check whether the unit exists, not deleted and associated with the course
+      LazyList<AJEntityUnit> units = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, unitId);
+      if(!units.isEmpty()) {
+        AJEntityUnit unit = units.get(0);
+        if(unit.getBoolean(AJEntityUnit.IS_DELETED)) {
+          LOGGER.debug("unit {} is deleted so can not reorder", unitId);
+          return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(unitId + " is deleted"),
+                  ExecutionStatus.FAILED);
+        }
+        
+        if(!unit.getString(AJEntityUnit.COURSE_ID).equalsIgnoreCase(context.courseId())) {
+          LOGGER.debug("unit {} is not associated with course {}", unitId, context.courseId());
+          return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Unit is not associated with course"),
+                  ExecutionStatus.FAILED);
+        }
+        
+        unit.setInteger(AJEntityUnit.SEQUENCE_ID, sequence);
+        unit.setModifierId(context.userId());
+        
+        if (unit.hasErrors()) {
+          LOGGER.debug("reordering unit {} has error", unitId);
+          
+        }
+      } else {
+        LOGGER.error("no matching unit found for id {}", unitId);
+        return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Id provided to reorder units not exist in database"),
+                ExecutionStatus.FAILED);
+      }
+    }
+    
+    return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
   }
 
   @Override

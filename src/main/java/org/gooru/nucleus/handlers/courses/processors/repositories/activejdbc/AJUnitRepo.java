@@ -39,4 +39,9 @@ public class AJUnitRepo implements UnitRepo {
     return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildReorderLessonInUnitHandler(context));
   }
 
+  @Override
+  public MessageResponse moveLessonToUnit() {
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildMoveLessonToUnitHandler(context));
+  }
+
 }

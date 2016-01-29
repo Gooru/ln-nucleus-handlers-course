@@ -39,4 +39,9 @@ public class AJLessonRepo implements LessonRepo {
     return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildReorderCollectionsAssessmentsInLessonHandler(context));
   }
 
+  @Override
+  public MessageResponse moveCollectionToLesson() {
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildMoveCollectionToLessonHandler(context));
+  }
+
 }

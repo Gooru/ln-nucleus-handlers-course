@@ -52,17 +52,18 @@ public class AJEntityUnit extends Model {
           MODIFIER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_UNIT_ID, SEQUENCE_ID, IS_DELETED);
   public static final List<String> UPDATE_FORBIDDEN_FIELDS = Arrays.asList(UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID,
           MODIFIER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_UNIT_ID, SEQUENCE_ID, IS_DELETED);
-
+  public static final List<String> LESSON_MOVE_NOTNULL_FIELDS = Arrays.asList("course_id", "unit_id", "lesson_id");
+  
   public static final String SELECT_UNIT =
           "SELECT course_id, unit_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_unit_id,"
                   + " big_ideas, essential_questions, metadata, taxonomy, sequence_id, is_deleted FROM course_unit WHERE course_id = ?::uuid AND"
                   + " unit_id = ?::uuid AND is_deleted = ?";
 
-  public static final String SELECT_UNIT_TO_VALIDATE = "SELECT is_deleted, creator_id FROM course_unit WHERE unit_id = ?::uuid";
+  public static final String SELECT_UNIT_TO_VALIDATE = "SELECT unit_id, course_id, is_deleted FROM course_unit WHERE unit_id = ?::uuid";
   public static final String SELECT_UNIT_SUMMARY =
           "SELECT unit_id, title, sequence_id FROM course_unit WHERE course_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
   public static final String SELECT_UNIT_MAX_SEQUENCEID = "SELECT max(sequence_id) FROM course_unit WHERE course_id = ?::uuid";
-
+  
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 

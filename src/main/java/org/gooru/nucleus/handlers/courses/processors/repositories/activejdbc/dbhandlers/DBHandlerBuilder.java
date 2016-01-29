@@ -30,8 +30,12 @@ public class DBHandlerBuilder {
   public DBHandler buildUpdateCollaboratorHandler(ProcessorContext context) {
     return new UpdateCollaboratorHandler(context);
   }
-  
-  //Unit Handlers
+
+  public DBHandler buildMoveUnitToCourseHandler(ProcessorContext context) {
+    return new MoveUnitToCourseHandler(context);
+  }
+
+  // Unit Handlers
   public DBHandler buildCreateUnitHandler(ProcessorContext context) {
     return new CreateUnitHandler(context);
   }
@@ -52,7 +56,11 @@ public class DBHandlerBuilder {
     return new ReorderLessonInUnitHandler(context);
   }
 
-  //Lesson Handlers
+  public DBHandler buildMoveLessonToUnitHandler(ProcessorContext context) {
+    return new MoveLessonToUnitHandler(context);
+  }
+
+  // Lesson Handlers
   public DBHandler buildCreateLessonHandler(ProcessorContext context) {
     return new CreateLessonHandler(context);
   }
@@ -71,5 +79,9 @@ public class DBHandlerBuilder {
 
   public DBHandler buildReorderCollectionsAssessmentsInLessonHandler(ProcessorContext context) {
     return new ReorderCollectionsAssessmentsInLessonHandler(context);
+  }
+
+  public DBHandler buildMoveCollectionToLessonHandler(ProcessorContext context) {
+    return new MoveCollectionToLessonHandler(context);
   }
 }

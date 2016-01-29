@@ -13,4 +13,6 @@ public interface UnitRepo {
   MessageResponse deleteUnit();
 
   MessageResponse reorderLessonInUnit();
+
+  MessageResponse moveLessonToUnit();
 }

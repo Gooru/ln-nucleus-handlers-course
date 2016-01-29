@@ -1,7 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors;
 
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
+
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidRequestException;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidUserException;
@@ -11,6 +11,9 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonObject;
 
 class MessageProcessor implements Processor {
 
@@ -54,6 +57,9 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_COURSE_COLLABORATOR_UPDATE:
           result = processCourseCollaboratorUpdate();
           break;
+        case MessageConstants.MSG_OP_COURSE_MOVE_UNIT:
+          result = processUnitMove();
+          break;
         case MessageConstants.MSG_OP_UNIT_CREATE:
           result = processUnitCreate();
           break;
@@ -68,6 +74,9 @@ class MessageProcessor implements Processor {
           break;
         case MessageConstants.MSG_OP_UNIT_CONTENT_REORDER:
           result = processUnitContentReorder();
+          break;
+        case MessageConstants.MSG_OP_UNIT_MOVE_LESSON:
+          result = processLessonMove();
           break;
         case MessageConstants.MSG_OP_LESSON_CREATE:
           result = processLessonCreate();
@@ -84,6 +93,9 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_LESSON_CONTENT_REORDER:
           result = processLessonContentReorder();
           break;
+        case MessageConstants.MSG_OP_LESSON_MOVE_COLLECTION:
+          result = processCollectionMove();
+          break;
         default:
           LOGGER.error("Invalid operation type passed in, not able to handle");
           throw new InvalidRequestException();
@@ -99,6 +111,54 @@ class MessageProcessor implements Processor {
       LOGGER.error("Exception while processing request");
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
+  }
+
+  private MessageResponse processCollectionMove() {
+    ProcessorContext context = createContext();
+    
+    if(checkCourseId(context)) {
+      LOGGER.error("Course id not available to move collection. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+    }
+    
+    if(checkUnitId(context)) {
+      LOGGER.error("Unit id not available to move collection. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+    }
+    
+    if(checkLessonId(context)) {
+      LOGGER.error("Lesson id not available to move collection. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
+    }
+    
+    return new RepoBuilder().buildLessonRepo(context).moveCollectionToLesson();
+  }
+
+  private MessageResponse processLessonMove() {
+    ProcessorContext context = createContext();
+    
+    if(checkCourseId(context)) {
+      LOGGER.error("Course id not available to move lesson. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+    }
+    
+    if(checkUnitId(context)) {
+      LOGGER.error("Unit id not available to move lesson. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+    }
+    
+    return new RepoBuilder().buildUnitRepo(context).moveLessonToUnit();
+  }
+
+  private MessageResponse processUnitMove() {
+    ProcessorContext context = createContext();
+    
+    if(checkCourseId(context)) {
+      LOGGER.error("Course id not available to move unit. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+    }
+    
+    return new RepoBuilder().buildCourseRepo(context).moveUnitToCourse();
   }
 
   private MessageResponse processLessonContentReorder() {
@@ -422,10 +482,11 @@ class MessageProcessor implements Processor {
     }
 
     userId = ((JsonObject) message.body()).getString(MessageConstants.MSG_USER_ID);
-    if (userId == null) {
+    if (!validateUser(userId)) {
       LOGGER.error("Invalid user id passed. Not authorized.");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
     }
+    
     prefs = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
     request = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_HTTP_BODY);
 
@@ -441,5 +502,22 @@ class MessageProcessor implements Processor {
 
     // All is well, continue processing
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+  }
+  
+  private boolean validateUser(String userId) {
+    if (userId == null) {
+      return false;
+    } else if (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+      return true;
+    } else {
+      try {
+        UUID.fromString(userId);
+        return true;
+      } catch (IllegalArgumentException e) {
+        return false;
+      } catch (Exception e) {
+        return false;
+      }
+    }
   }
 }
