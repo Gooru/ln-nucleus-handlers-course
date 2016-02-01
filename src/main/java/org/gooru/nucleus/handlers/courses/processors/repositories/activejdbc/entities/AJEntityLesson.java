@@ -44,7 +44,8 @@ public class AJEntityLesson extends Model {
   public static final List<String> UPDATABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
   public static final List<String> LESSON_SUMMARY_FIELDS = Arrays.asList(LESSON_ID, TITLE, SEQUENCE_ID);
 
-  public static final String SELECT_LESSON_TO_VALIDATE = "SELECT lesson_id, unit_id, course_id, is_deleted FROM course_unit_lesson WHERE lesson_id = ?::uuid";
+  public static final String SELECT_LESSON_TO_VALIDATE =
+          "SELECT lesson_id, unit_id, course_id FROM course_unit_lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_LESSON =
           "SELECT lesson_id, unit_id, course_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_lesson_id, "
                   + "metadata, taxonomy, sequence_id, is_deleted FROM course_unit_lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid and is_deleted = ?";

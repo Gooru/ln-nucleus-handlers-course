@@ -59,7 +59,7 @@ public class AJEntityUnit extends Model {
                   + " big_ideas, essential_questions, metadata, taxonomy, sequence_id, is_deleted FROM course_unit WHERE course_id = ?::uuid AND"
                   + " unit_id = ?::uuid AND is_deleted = ?";
 
-  public static final String SELECT_UNIT_TO_VALIDATE = "SELECT unit_id, course_id, is_deleted FROM course_unit WHERE unit_id = ?::uuid";
+  public static final String SELECT_UNIT_TO_VALIDATE = "SELECT unit_id, course_id FROM course_unit WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_UNIT_SUMMARY =
           "SELECT unit_id, title, sequence_id FROM course_unit WHERE course_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
   public static final String SELECT_UNIT_MAX_SEQUENCEID = "SELECT max(sequence_id) FROM course_unit WHERE course_id = ?::uuid";

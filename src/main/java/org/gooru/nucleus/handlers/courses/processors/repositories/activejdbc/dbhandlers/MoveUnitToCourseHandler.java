@@ -73,8 +73,8 @@ public class MoveUnitToCourseHandler implements DBHandler {
     String sourceCourseId = context.request().getString("course_id");
     String unitToMove = context.request().getString("unit_id");
 
-    LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, targetCourseId);
-    LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, sourceCourseId);
+    LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, targetCourseId, false);
+    LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, sourceCourseId, false);
 
     if (targetCourses.isEmpty() || sourceCourses.isEmpty()) {
       LOGGER.debug("source or target course is not found in database");
@@ -83,11 +83,6 @@ public class MoveUnitToCourseHandler implements DBHandler {
 
     AJEntityCourse targetCourse = targetCourses.get(0);
     AJEntityCourse sourceCourse = sourceCourses.get(0);
-
-    if (targetCourse.getBoolean(AJEntityCourse.IS_DELETED) || sourceCourse.getBoolean(AJEntityCourse.IS_DELETED)) {
-      LOGGER.info("source or target course is deleted, hence can't move unit. Aborting", context.courseId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("source or target course is deleted"), ExecutionStatus.FAILED);
-    }
 
     targetCourseOwner = targetCourse.getString(AJEntityCourse.OWNER_ID);
     if (!targetCourseOwner.equalsIgnoreCase(context.userId())
@@ -102,20 +97,8 @@ public class MoveUnitToCourseHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityUnit> units = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, unitToMove);
-    if (!units.isEmpty()) {
-      unitToUpdate = units.get(0);
-      if (unitToUpdate.getBoolean(AJEntityUnit.IS_DELETED)) {
-        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
-      }
-
-      if (!unitToUpdate.getString(AJEntityUnit.COURSE_ID).equalsIgnoreCase(sourceCourseId)) {
-        LOGGER.debug("unit is not associated with source course");
-        return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Unit is not associated with source course"),
-                ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityUnit> units = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, unitToMove, targetCourseId, false);
+    if (units.isEmpty()) {
       LOGGER.warn("Unit {} not found to move, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }

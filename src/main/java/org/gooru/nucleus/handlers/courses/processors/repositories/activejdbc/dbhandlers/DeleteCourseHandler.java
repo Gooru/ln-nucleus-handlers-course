@@ -46,14 +46,8 @@ public class DeleteCourseHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
 
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
     if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.warn("course {} is already deleted. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course your are trying to delete is already deleted"),
-                ExecutionStatus.FAILED);
-      }
-
       // Only owner can delete the course
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
         LOGGER.warn("user is anonymous or not owner of course for delete. aborting");

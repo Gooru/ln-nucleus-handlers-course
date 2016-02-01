@@ -74,19 +74,19 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     String collectionToMove = context.request().getString("collection_id");
     //String type = context.request().getString("type");
     
-    LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, targetCourseId);
+    LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, targetCourseId, false);
     if (targetCourses.isEmpty()) {
       LOGGER.debug("target course is not found in database");
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target course is not found"), ExecutionStatus.FAILED);
     }
     
-    LazyList<AJEntityUnit> targetUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, targetUnitId);
+    LazyList<AJEntityUnit> targetUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, targetUnitId, targetCourseId, false);
     if (targetUnits.isEmpty()) {
       LOGGER.debug("target unit is not found in database");
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target unit is not found"), ExecutionStatus.FAILED);
     }
     
-    LazyList<AJEntityLesson> targetLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, targetLessonId);
+    LazyList<AJEntityLesson> targetLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, targetLessonId, targetUnitId, targetCourseId, false);
     if (targetLessons.isEmpty()) {
       LOGGER.debug("target lesson is not found in database");
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target lesson is not found"), ExecutionStatus.FAILED);
@@ -101,10 +101,18 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     collectionToUpdate = collections.get(0);
     //if the course_id is null in collection, then its not associated with CUL
     if (collectionToUpdate.getString("course_id") == null || collectionToUpdate.getString("course_id").isEmpty()) {
-      //As the collection is not part of CUL, check whether the user is owner of course to move it
+      //As the collection is not part of CUL, check whether the user is owner of collection to move it
       if (!collectionToUpdate.getString("owner_id").equalsIgnoreCase(context.userId())) {
         LOGGER.debug("user is not owner of collection to move");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner of course"), ExecutionStatus.FAILED);
+      }
+      
+      //Also check whether the user is either owner or collaborator on course
+      if (!targetCourses.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(targetCourses.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.debug("user is not owner or collaborator of target course to move collection");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner or collaborator of target course"), ExecutionStatus.FAILED);
+        }
       }
     } else {
       String sourceCourseId = context.request().getString("course_id");
@@ -133,13 +141,13 @@ public class MoveCollectionToLessonHandler implements DBHandler {
         }
       }
       
-      LazyList<AJEntityUnit> sourcetUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, sourceUnitId);
+      LazyList<AJEntityUnit> sourcetUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, sourceUnitId, sourceCourseId, false);
       if (sourcetUnits.isEmpty()) {
         LOGGER.debug("source unit is not found in database");
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("source unit is not found"), ExecutionStatus.FAILED);
       }
       
-      LazyList<AJEntityLesson> sourceLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, sourceLessonId);
+      LazyList<AJEntityLesson> sourceLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, sourceLessonId, sourceUnitId, sourceCourseId, false);
       if (sourceLessons.isEmpty()) {
         LOGGER.debug("source lesson is not found in database");
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("source lesson is not found"), ExecutionStatus.FAILED);

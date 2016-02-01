@@ -68,14 +68,8 @@ public class CreateLessonHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
     if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.warn("course {} is deleted, hence can't create lesson. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which you are trying to create lesson"),
-                ExecutionStatus.FAILED);
-      }
-
       // check whether user is either owner or collaborator
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
         if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
@@ -88,15 +82,8 @@ public class CreateLessonHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
-    if (!ajEntityUnit.isEmpty()) {
-      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
-        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
-      }
-      
-      //TODO: check whether the unit is associated with proper course or not
-    } else {
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
+    if (ajEntityUnit.isEmpty()) {
       LOGGER.warn("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }

@@ -58,18 +58,8 @@ public class UpdateCourseHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
     if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.size() >= 2) {
-        LOGGER.debug("more that 1 course found for id {}", context.courseId());
-      }
-
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.info("course {} is deleted, hence can't be updated. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course your are trying to update is deleted"),
-                ExecutionStatus.FAILED);
-      }
-
       // check whether user is either owner or collaborator
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
         if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {

@@ -58,36 +58,20 @@ public class FetchLessonHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
 
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
-    if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.warn("course {} is deleted, hence can't fetch lesson. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which you are trying to fetch lesson"),
-                ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
+    if (ajEntityCourse.isEmpty()) {
       LOGGER.warn("course {} not found to fetch lesson, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
-    if (!ajEntityUnit.isEmpty()) {
-      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
-        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
+    if (ajEntityUnit.isEmpty()) {
       LOGGER.warn("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId());
-    if (!ajEntityLesson.isEmpty()) {
-      if (ajEntityLesson.get(0).getBoolean(AJEntityLesson.IS_DELETED)) {
-        LOGGER.warn("Lesson {} is deleted, aborting.", context.lessonId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Lesson is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId(), context.unitId(), context.courseId(), false);
+    if (ajEntityLesson.isEmpty()) {
       LOGGER.warn("Lesson {} not found, aborting", context.lessonId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
