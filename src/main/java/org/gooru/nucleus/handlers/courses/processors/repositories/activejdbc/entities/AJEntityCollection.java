@@ -42,6 +42,8 @@ public class AJEntityCollection extends Model {
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 
+  public static final List<String> COLLECTION_MOVE_NOTNULL_FIELDS = Arrays.asList(COURSE_ID, UNIT_ID, LESSON_ID);
+
   public void setCourseId(String courseId) {
     setPGObject(COURSE_ID, UUID_TYPE, courseId);
   }

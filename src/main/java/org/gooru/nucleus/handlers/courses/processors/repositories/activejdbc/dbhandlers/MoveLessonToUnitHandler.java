@@ -52,6 +52,11 @@ public class MoveLessonToUnitHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to move lesson"),
               ExecutionStatus.FAILED);
     }
+    
+    JsonObject missingFieldErrors = validateMissinFields();
+    if (missingFieldErrors != null && !missingFieldErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(missingFieldErrors), ExecutionResult.ExecutionStatus.FAILED);
+    }
 
     JsonObject validateErrors = validateFields();
     if (validateErrors != null && !validateErrors.isEmpty()) {
@@ -62,8 +67,6 @@ public class MoveLessonToUnitHandler implements DBHandler {
     if (notNullErrors != null && !notNullErrors.isEmpty()) {
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
-
-    // TODO: check all required fields exists in request payload
 
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
@@ -198,6 +201,15 @@ public class MoveLessonToUnitHandler implements DBHandler {
                     && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
             .forEach(key -> output.put(key, "Field should not be empty or null"));
     return output.isEmpty() ? null : output;
+  }
+  
+  private JsonObject validateMissinFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+
+    AJEntityUnit.LESSON_MOVE_NOTNULL_FIELDS.stream().filter(field -> !input.containsKey(field))
+            .forEach(field -> output.put(field, "Mandatory field"));
+    return output;
   }
 
   private JsonObject getModelErrors() {

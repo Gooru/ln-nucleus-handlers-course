@@ -8,9 +8,9 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.ent
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
+import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
-import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
@@ -46,7 +46,12 @@ public class MoveUnitToCourseHandler implements DBHandler {
       LOGGER.warn("invalid data provided to move unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to move unit"), ExecutionStatus.FAILED);
     }
-
+    
+    JsonObject missingFieldErrors = validateMissinFields();
+    if (missingFieldErrors != null && !missingFieldErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(missingFieldErrors), ExecutionResult.ExecutionStatus.FAILED);
+    }
+    
     JsonObject validateErrors = validateFields();
     if (validateErrors != null && !validateErrors.isEmpty()) {
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(validateErrors), ExecutionResult.ExecutionStatus.FAILED);
@@ -57,8 +62,6 @@ public class MoveUnitToCourseHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
     
-    //TODO: check all required fields exists in request payload
-
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
@@ -74,6 +77,12 @@ public class MoveUnitToCourseHandler implements DBHandler {
     String sourceCourseId = context.request().getString("course_id");
     String unitToMove = context.request().getString("unit_id");
 
+    if (sourceCourseId == null || unitToMove == null || sourceCourseId.isEmpty() || unitToMove.isEmpty()) {
+      LOGGER.debug("missing required fields");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("message", "missing required fileds")),
+              ExecutionResult.ExecutionStatus.FAILED);
+    }
+    
     LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, targetCourseId, false);
     LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, sourceCourseId, false);
 
@@ -166,6 +175,15 @@ public class MoveUnitToCourseHandler implements DBHandler {
                     && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
             .forEach(key -> output.put(key, "Field should not be empty or null"));
     return output.isEmpty() ? null : output;
+  }
+  
+  private JsonObject validateMissinFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+
+    AJEntityCourse.UNIT_MOVE_NOTNULL_FIELDS.stream().filter(field -> !input.containsKey(field))
+            .forEach(field -> output.put(field, "Mandatory field"));
+    return output;
   }
 
   private JsonObject getModelErrors() {

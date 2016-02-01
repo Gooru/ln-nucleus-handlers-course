@@ -58,7 +58,10 @@ public class MoveCollectionToLessonHandler implements DBHandler {
               ExecutionStatus.FAILED);
     }
 
-    // TODO: check all required fields exists in request payload
+    JsonObject mandatoryFieldErrors = validateMandatoryFields();
+    if (mandatoryFieldErrors != null && !mandatoryFieldErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(mandatoryFieldErrors), ExecutionResult.ExecutionStatus.FAILED);
+    }
 
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
@@ -100,25 +103,23 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     }
     
     collectionToUpdate = collections.get(0);
-    //if the course_id is null in collection, then its not associated with CUL
-    if (collectionToUpdate.getString("course_id") == null || collectionToUpdate.getString("course_id").isEmpty()) {
-      //As the collection is not part of CUL, check whether the user is owner of collection to move it
-      if (!collectionToUpdate.getString("owner_id").equalsIgnoreCase(context.userId())) {
-        LOGGER.debug("user is not owner of collection to move");
-        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner of course"), ExecutionStatus.FAILED);
+    //If request contains course_id, then collection to move is associated with CUL
+    if (context.request().containsKey(AJEntityCollection.COURSE_ID)) {
+      
+      JsonObject notNullErrors = validateNullFields();
+      if (notNullErrors != null && !notNullErrors.isEmpty()) {
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
       }
       
-      //Also check whether the user is either owner or collaborator on course
-      if (!targetCourses.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
-        if (!new JsonArray(targetCourses.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
-          LOGGER.debug("user is not owner or collaborator of target course to move collection");
-          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner or collaborator of target course"), ExecutionStatus.FAILED);
-        }
-      }
-    } else {
       String sourceCourseId = context.request().getString("course_id");
       String sourceUnitId = context.request().getString("unit_id");
       String sourceLessonId = context.request().getString("lesson_id");
+      
+      //Check whether source course id is also exists in db
+      if(!sourceCourseId.equalsIgnoreCase(collectionToUpdate.getString(AJEntityCollection.COURSE_ID))) {
+        LOGGER.debug("collection is not associated with source course");
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Collection is not associated with source course"), ExecutionStatus.FAILED);
+      }
       
       LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, sourceCourseId);
       if (sourceCourses.isEmpty()) {
@@ -152,6 +153,21 @@ public class MoveCollectionToLessonHandler implements DBHandler {
       if (sourceLessons.isEmpty()) {
         LOGGER.debug("source lesson is not found in database");
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("source lesson is not found"), ExecutionStatus.FAILED);
+      }
+    } else {
+      //if the course_id is null in request, then its not associated with CUL
+      //As the collection is not part of CUL, check whether the user is owner of collection to move it
+      if (!collectionToUpdate.getString("owner_id").equalsIgnoreCase(context.userId())) {
+        LOGGER.debug("user is not owner of collection to move");
+        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner of course"), ExecutionStatus.FAILED);
+      }
+      
+      //Also check whether the user is either owner or collaborator on course
+      if (!targetCourses.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(targetCourses.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.debug("user is not owner or collaborator of target course to move collection");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner or collaborator of target course"), ExecutionStatus.FAILED);
+        }
       }
     }
     
@@ -194,6 +210,32 @@ public class MoveCollectionToLessonHandler implements DBHandler {
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+  
+  private JsonObject validateNullFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    input.fieldNames().stream()
+            .filter(key -> AJEntityCollection.COLLECTION_MOVE_NOTNULL_FIELDS.contains(key)
+                    && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+            .forEach(key -> output.put(key, "Field should not be empty or null"));
+    return output.isEmpty() ? null : output;
+  }
+  
+  private JsonObject validateMandatoryFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    
+    if (!input.containsKey("collection_id")) {
+      output.put("collection_id", "Mandatory field");
+      return output;
+    }
+    
+    if (input.getString("collection_id") == null || input.getString("collection_id").isEmpty()) {
+      output.put("collection_id", "Field should not be empty or null");
+    }
+    
+    return output;
   }
   
   private JsonObject getModelErrors() {
