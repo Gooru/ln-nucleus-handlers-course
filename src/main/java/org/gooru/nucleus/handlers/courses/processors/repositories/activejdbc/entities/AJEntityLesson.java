@@ -53,6 +53,10 @@ public class AJEntityLesson extends Model {
           "SELECT lesson_id, title, sequence_id FROM course_unit_lesson WHERE unit_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
   public static final String SELECT_LESSON_MAX_SEQUENCEID =
           "SELECT max(sequence_id) FROM course_unit_lesson WHERE course_id = ?::uuid AND unit_id = ?::uuid";
+  public static final String SELECT_LESSON_OF_COURSE = "SELECT lesson_id FROM course_unit_lesson WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+  public static final String REORDER_QUERY =
+          "UPDATE course_unit_lesson SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+  
   public static final List<String> INSERT_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
           ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);
   public static final List<String> UPDATE_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
@@ -61,6 +65,9 @@ public class AJEntityLesson extends Model {
   
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
+
+  public static final String REORDER_PAYLOAD_KEY = "order";
+  public static final String ID = "id";
   
   public void setModifierId(String modifierId) {
     setPGObject(MODIFIER_ID, UUID_TYPE, modifierId);

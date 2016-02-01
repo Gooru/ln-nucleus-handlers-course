@@ -37,6 +37,9 @@ public class AJEntityUnit extends Model {
   public static final String TAXONOMY = "taxonomy";
   public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
+  
+  public static final String ID = "id";
+  public static final String REORDER_PAYLOAD_KEY = "order";
 
   public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE, BIG_IDEAS, ESSENTIAL_QUESTIONS);
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
@@ -63,6 +66,9 @@ public class AJEntityUnit extends Model {
   public static final String SELECT_UNIT_SUMMARY =
           "SELECT unit_id, title, sequence_id FROM course_unit WHERE course_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
   public static final String SELECT_UNIT_MAX_SEQUENCEID = "SELECT max(sequence_id) FROM course_unit WHERE course_id = ?::uuid";
+  public static final String SELECT_UNIT_OF_COURSE = "SELECT unit_id FROM course_unit WHERE course_id = ?::uuid AND is_deleted = ?";
+  public static final String REORDER_QUERY =
+          "UPDATE course_unit SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE unit_id = ?::uuid and course_id = ?::uuid and is_deleted = ?";
   
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";

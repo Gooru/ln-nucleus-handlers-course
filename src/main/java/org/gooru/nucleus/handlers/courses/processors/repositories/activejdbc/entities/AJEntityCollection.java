@@ -22,14 +22,20 @@ public class AJEntityCollection extends Model {
   public static final String TITLE = "title";
   public static final String MODIFIER_ID = "modifier_id";
   public static final String OWNER_ID = "owner_id";
+  public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
 
-  public static final List<String> COLLECTION_SUMMARY_FIELDS = Arrays.asList(ID, TITLE);
+  public static final String REORDER_PAYLOAD_KEY = "order";
+  
+  public static final List<String> COLLECTION_SUMMARY_FIELDS = Arrays.asList(ID, TITLE, SEQUENCE_ID);
 
-  public static final String SELECT_COLLECTION_SUMMARY = "SELECT id, title FROM collection WHERE lesson_id = ?::uuid AND is_deleted = ?";
+  public static final String SELECT_COLLECTION_SUMMARY = "SELECT id, title, sequence_id FROM collection WHERE lesson_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
   public static final String SELECT_COLLECTION_TO_MOVE =
           "SELECT id, course_id, unit_id, lesson_id, owner_id, collaborator FROM collection WHERE id = ?::uuid AND is_deleted = ?";
-
+  public static final String SELECT_COLLECTION_OF_COURSE = "SELECT id FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+  public static final String REORDER_QUERY =
+          "UPDATE collection SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE id = ?::uuid AND lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+  
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 

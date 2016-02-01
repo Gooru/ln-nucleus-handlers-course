@@ -162,8 +162,29 @@ class MessageProcessor implements Processor {
   }
 
   private MessageResponse processLessonContentReorder() {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.error("Course id not available to reorder lesson content. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      if(checkUnitId(context)) {
+        LOGGER.error("Unit id not available to reorder lesson content. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+      
+      if(checkLessonId(context)) {
+        LOGGER.error("Lesson id not available to reorder lesson content. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
+      }
+      
+      LOGGER.info("reorder content of lesson {} of unit {}", context.lessonId(), context.unitId());
+      return new RepoBuilder().buildLessonRepo(context).reorderCollectionsAssessmentsInLesson();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while reordering lesson content", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
   }
 
   private MessageResponse processLessonGet() {
@@ -266,8 +287,24 @@ class MessageProcessor implements Processor {
   }
 
   private MessageResponse processUnitContentReorder() {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.error("Course id not available to reorder lessons. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      if(checkUnitId(context)) {
+        LOGGER.error("Unit id not available to reorder lessons. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+      
+      LOGGER.info("reordering lessons for unit {} of course {}", context.unitId(), context.courseId());
+      return new RepoBuilder().buildUnitRepo(context).reorderLessonInUnit();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while reordering lessons", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
   }
 
   private MessageResponse processUnitGet() {
