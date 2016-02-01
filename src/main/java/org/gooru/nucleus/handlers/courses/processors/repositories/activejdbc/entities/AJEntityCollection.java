@@ -22,6 +22,7 @@ public class AJEntityCollection extends Model {
   public static final String TITLE = "title";
   public static final String MODIFIER_ID = "modifier_id";
   public static final String OWNER_ID = "owner_id";
+  public static final String COLLABORATOR = "collaborator";
   public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
 
@@ -35,6 +36,8 @@ public class AJEntityCollection extends Model {
   public static final String SELECT_COLLECTION_OF_COURSE = "SELECT id FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String REORDER_QUERY =
           "UPDATE collection SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE id = ?::uuid AND lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+  public static final String SELECT_COLLECTION_MAX_SEQUENCEID =
+          "SELECT max(sequence_id) FROM collection WHERE lesson_id = ?::uuid";
   
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";

@@ -11,6 +11,7 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
+import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +114,16 @@ public class MoveUnitToCourseHandler implements DBHandler {
     unitToUpdate.setCourseId(context.courseId());
     unitToUpdate.setModifierId(context.userId());
     unitToUpdate.setOwnerId(targetCourseOwner);
+    
+    // Get max sequence id for course
+    Object maxSequenceId = Base.firstCell(AJEntityUnit.SELECT_UNIT_MAX_SEQUENCEID, context.courseId());
+    int sequenceId = 1;
+    if (maxSequenceId != null) {
+      sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
 
+    }
+    unitToUpdate.set(AJEntityUnit.SEQUENCE_ID, sequenceId);
+    
     if (unitToUpdate.hasErrors()) {
       LOGGER.debug("moving unit has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);

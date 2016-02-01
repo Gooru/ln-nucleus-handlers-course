@@ -11,6 +11,7 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,7 +166,14 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     collectionToUpdate.setLessonId(context.lessonId());
     collectionToUpdate.setModifierId(context.userId());
     collectionToUpdate.setOwnerId(targetCourseOwner);
-    //TODO: update collaborator to null
+    collectionToUpdate.set(AJEntityCollection.COLLABORATOR, null);
+    
+    Object maxSequenceId = Base.firstCell(AJEntityCollection.SELECT_COLLECTION_MAX_SEQUENCEID, context.lessonId());
+    int sequenceId = 1;
+    if (maxSequenceId != null) {
+      sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
+    }
+    collectionToUpdate.set(AJEntityCollection.SEQUENCE_ID, sequenceId);
     
     if(collectionToUpdate.hasErrors()) {
       LOGGER.debug("moving collection has errors");

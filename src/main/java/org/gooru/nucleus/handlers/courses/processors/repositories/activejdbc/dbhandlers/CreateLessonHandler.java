@@ -22,6 +22,7 @@ public class CreateLessonHandler implements DBHandler {
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateLessonHandler.class);
   private AJEntityLesson newLesson;
+  private String courseOwner;
 
   public CreateLessonHandler(ProcessorContext context) {
     this.context = context;
@@ -81,6 +82,8 @@ public class CreateLessonHandler implements DBHandler {
       LOGGER.warn("course {} not found to create lesson, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
+    
+    courseOwner = ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID);
 
     LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
     if (ajEntityUnit.isEmpty()) {
@@ -96,12 +99,9 @@ public class CreateLessonHandler implements DBHandler {
   public ExecutionResult<MessageResponse> executeRequest() {
     newLesson = new AJEntityLesson();
     newLesson.setAllFromJson(context.request());
-
     newLesson.setCourseId(context.courseId());
     newLesson.setUnitId(context.unitId());
-    // TODO: fetch owner id of course and set it as owner of lesson if lesson is
-    // getting created by course collaborator
-    newLesson.setOwnerId(context.userId());
+    newLesson.setOwnerId(courseOwner);
     newLesson.setCreatorId(context.userId());
     newLesson.setModifierId(context.userId());
     newLesson.set(AJEntityLesson.IS_DELETED, false);

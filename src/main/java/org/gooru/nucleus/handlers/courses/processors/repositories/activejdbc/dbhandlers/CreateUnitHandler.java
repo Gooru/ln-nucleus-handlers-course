@@ -22,6 +22,7 @@ public class CreateUnitHandler implements DBHandler {
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateUnitHandler.class);
   private AJEntityUnit newUnit;
+  private String courseOwner;
 
   public CreateUnitHandler(ProcessorContext context) {
     this.context = context;
@@ -77,6 +78,8 @@ public class CreateUnitHandler implements DBHandler {
       LOGGER.warn("course {} not found to create unit, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
+    
+    courseOwner = ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID);
 
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
@@ -87,10 +90,7 @@ public class CreateUnitHandler implements DBHandler {
     newUnit = new AJEntityUnit();
     newUnit.setAllFromJson(context.request());
     newUnit.setCourseId(context.courseId());
-
-    // TODO: fetch owner id of course and set it as owner of unit if unit is
-    // getting created by course collaborator
-    newUnit.setOwnerId(context.userId());
+    newUnit.setOwnerId(courseOwner);
     newUnit.setCreatorId(context.userId());
     newUnit.setModifierId(context.userId());
     newUnit.set(AJEntityUnit.IS_DELETED, false);
