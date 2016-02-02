@@ -55,8 +55,7 @@ public class TransactionExecutor {
       Base.rollbackTransaction();
       LOGGER.error("Caught exception, need to rollback and abort", e);
       // Most probably we do not know what to do with this, so send internal error
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()),
-        ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionResult.ExecutionStatus.FAILED);
     } finally {
       if (handler.handlerReadOnly()) {
         // restore the settings

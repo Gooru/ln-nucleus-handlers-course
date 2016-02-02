@@ -1,14 +1,14 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
-
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 @Table("collection")
 public class AJEntityCollection extends Model {
@@ -28,15 +28,17 @@ public class AJEntityCollection extends Model {
 
   public static final List<String> COLLECTION_SUMMARY_FIELDS = Arrays.asList(ID, TITLE, SEQUENCE_ID);
 
-  public static final String SELECT_COLLECTION_SUMMARY = "SELECT id, title, sequence_id FROM collection WHERE lesson_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
+  public static final String SELECT_COLLECTION_SUMMARY =
+    "SELECT id, title, sequence_id FROM collection WHERE lesson_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
   public static final String SELECT_COLLECTION_TO_MOVE =
-          "SELECT id, course_id, unit_id, lesson_id, owner_id, collaborator FROM collection WHERE id = ?::uuid AND is_deleted = ?";
-  public static final String SELECT_COLLECTION_OF_COURSE = "SELECT id FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+    "SELECT id, course_id, unit_id, lesson_id, owner_id, collaborator FROM collection WHERE id = ?::uuid AND is_deleted = ?";
+  public static final String SELECT_COLLECTION_OF_COURSE =
+    "SELECT id FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String REORDER_QUERY =
-          "UPDATE collection SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE id = ?::uuid AND lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
-  public static final String SELECT_COLLECTION_MAX_SEQUENCEID =
-          "SELECT max(sequence_id) FROM collection WHERE lesson_id = ?::uuid";
-  
+    "UPDATE collection SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE id = ?::uuid AND lesson_id = ?::uuid AND unit_id = " +
+      "?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+  public static final String SELECT_COLLECTION_MAX_SEQUENCEID = "SELECT max(sequence_id) FROM collection WHERE lesson_id = ?::uuid";
+
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 

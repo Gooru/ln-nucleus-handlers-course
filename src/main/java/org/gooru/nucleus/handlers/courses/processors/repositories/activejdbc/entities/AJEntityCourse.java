@@ -1,17 +1,16 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
-
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 @Table("course")
 public class AJEntityCourse extends Model {
@@ -42,22 +41,24 @@ public class AJEntityCourse extends Model {
   public static final List<String> JSON_FIELDS = Arrays.asList(AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, CLASS_LIST);
   public static final List<String> JSON_OBJECT_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> JSON_ARRAY_FIELDS = Arrays.asList(AUDIENCE, COLLABORATOR, CLASS_LIST);
-  public static final List<String> ALL_FIELDS = Arrays.asList(ID, TITLE, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID, ORIGINAL_COURSE_ID,
-          PUBLISH_DATE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, CLASS_LIST, VISIBLE_ON_PROFILE, IS_DELETED, CREATED_AT, UPDATED_AT);
+  public static final List<String> ALL_FIELDS = Arrays
+    .asList(ID, TITLE, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID, ORIGINAL_COURSE_ID, PUBLISH_DATE, THUMBNAIL, AUDIENCE, METADATA,
+      TAXONOMY, COLLABORATOR, CLASS_LIST, VISIBLE_ON_PROFILE, IS_DELETED, CREATED_AT, UPDATED_AT);
 
-  public static final List<String> INSERT_FORBIDDEN_FIELDS = Arrays.asList(ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
-          ORIGINAL_CREATOR_ID, ORIGINAL_COURSE_ID, PUBLISH_DATE, IS_DELETED);
-  public static final List<String> UPDATE_FORBIDDEN_FIELDS = Arrays.asList(ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
-          ORIGINAL_CREATOR_ID, ORIGINAL_COURSE_ID, PUBLISH_DATE, IS_DELETED);
+  public static final List<String> INSERT_FORBIDDEN_FIELDS =
+    Arrays.asList(ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_COURSE_ID, PUBLISH_DATE, IS_DELETED);
+  public static final List<String> UPDATE_FORBIDDEN_FIELDS =
+    Arrays.asList(ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_COURSE_ID, PUBLISH_DATE, IS_DELETED);
   public static final List<String> COLLABORATOR_FIELD = Arrays.asList(COLLABORATOR);
   public static final List<String> UNIT_MOVE_NOTNULL_FIELDS = Arrays.asList("course_id", "unit_id");
 
   public static final String SELECT_COLLABORATOR = "SELECT collaborator FROM course WHERE id = ?::uuid";
   //TODO: update it to include is_deleted
-  public static final String SELECT_COURSE_TO_VALIDATE = "SELECT id, owner_id, publish_date, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ?";
+  public static final String SELECT_COURSE_TO_VALIDATE =
+    "SELECT id, owner_id, publish_date, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_COURSE =
-          "SELECT id, title, created_at, updated_at, owner_id, creator_id, original_creator_id, original_course_id, publish_date, thumbnail, audience,"
-                  + " metadata, taxonomy, collaborator, class_list, visible_on_profile, is_deleted FROM course WHERE id = ?::uuid AND is_deleted = ?";
+    "SELECT id, title, created_at, updated_at, owner_id, creator_id, original_creator_id, original_course_id, publish_date, thumbnail, audience," +
+      " metadata, taxonomy, collaborator, class_list, visible_on_profile, is_deleted FROM course WHERE id = ?::uuid AND is_deleted = ?";
 
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";

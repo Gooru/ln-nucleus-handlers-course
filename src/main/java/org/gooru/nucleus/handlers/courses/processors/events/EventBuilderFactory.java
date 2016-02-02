@@ -21,13 +21,13 @@ public class EventBuilderFactory {
   private static final String EVT_LESSON_DELETE = "event.lesson.delete";
   private static final String EVT_COLLECTION_MOVE = "event.collection.move";
   private static final String EVT_COLLECTION_REORDER = "event.collection.reorder";
-  
+
   private static final String EVENT_NAME = "event.name";
   private static final String EVENT_BODY = "event.body";
   private static final String COURSE_ID = "id";
   private static final String UNIT_ID = "unit_id";
   private static final String LESSON_ID = "id";
-  
+
   public static EventBuilder getCreateLessonEventBuilder(String lessonId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_CREATE).put(EVENT_BODY, new JsonObject().put(LESSON_ID, lessonId));
   }

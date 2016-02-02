@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
@@ -12,9 +14,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class FetchUnitHandler implements DBHandler {
 
@@ -30,13 +29,13 @@ public class FetchUnitHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id to fetch unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to fetch unit"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.unitId() == null || context.unitId().isEmpty()) {
       LOGGER.info("invalid unit id to fetch unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to fetch unit"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty()) {
@@ -76,8 +75,8 @@ public class FetchUnitHandler implements DBHandler {
       LazyList<AJEntityLesson> lessonSummary = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), false);
       LOGGER.debug("number of lessons found for unit {} : {}", context.unitId(), lessonSummary.size());
       if (lessonSummary.size() > 0) {
-        resultBody.put("lessonSummary", new JsonArray(
-                new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS).toJson(lessonSummary)));
+        resultBody.put("lessonSummary",
+          new JsonArray(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS).toJson(lessonSummary)));
       }
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody), ExecutionStatus.SUCCESSFUL);
     } else {

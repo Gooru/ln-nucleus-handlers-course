@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -12,9 +14,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class UpdateUnitHandler implements DBHandler {
 
@@ -31,19 +30,19 @@ public class UpdateUnitHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id to update unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to update unit"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.unitId() == null || context.unitId().isEmpty()) {
       LOGGER.info("invalid unit id to update unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to update unit"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("invalid request received to update unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to update unit"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
@@ -106,7 +105,8 @@ public class UpdateUnitHandler implements DBHandler {
     if (unitToUpdate.isValid()) {
       if (unitToUpdate.save()) {
         LOGGER.info("unit {} updated successfully", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateUnitEventBuilder(context.unitId())), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateUnitEventBuilder(context.unitId())),
+          ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.debug("error while saving updated unit");
         return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating unit"), ExecutionStatus.FAILED);
@@ -126,7 +126,7 @@ public class UpdateUnitHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     AJEntityUnit.UPDATE_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
-            .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+                                        .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
     return output.isEmpty() ? null : output;
   }
 
@@ -134,8 +134,8 @@ public class UpdateUnitHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     input.fieldNames().stream()
-            .filter(key -> AJEntityUnit.NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
-            .forEach(key -> output.put(key, "Field should not be empty or null"));
+         .filter(key -> AJEntityUnit.NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+         .forEach(key -> output.put(key, "Field should not be empty or null"));
     return output.isEmpty() ? null : output;
   }
 

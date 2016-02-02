@@ -41,11 +41,11 @@ public class ProcessorContext {
   public String courseId() {
     return this.courseId;
   }
-  
+
   public String unitId() {
     return this.unitId;
   }
-  
+
   public String lessonId() {
     return this.lessonId;
   }

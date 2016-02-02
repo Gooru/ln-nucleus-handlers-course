@@ -1,10 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -20,8 +17,10 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.sql.PreparedStatement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class ReorderUnitInCourseHandler implements DBHandler {
 
@@ -40,13 +39,13 @@ public class ReorderUnitInCourseHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.warn("invalid course id to reorder units");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to reorder units"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("invalid request received to reorder units");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to reorder units"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
@@ -57,7 +56,8 @@ public class ReorderUnitInCourseHandler implements DBHandler {
     if (!reorderPayloadValidator(context.request().getJsonArray(REORDER_PAYLOAD_KEY))) {
       LOGGER.warn("Request data validation failed");
       return new ExecutionResult<>(MessageResponseFactory
-        .createValidationErrorResponse(new JsonObject().put("Reorder", "Data validation failed. Invalid data in request payload")), ExecutionStatus.FAILED);
+        .createValidationErrorResponse(new JsonObject().put("Reorder", "Data validation failed. Invalid data in request payload")),
+        ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -92,7 +92,7 @@ public class ReorderUnitInCourseHandler implements DBHandler {
 
       if (unitsOfCourse.size() != input.size()) {
         return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Unit count mismatch"),
-                ExecutionResult.ExecutionStatus.FAILED);
+          ExecutionResult.ExecutionStatus.FAILED);
       }
 
       PreparedStatement ps = Base.startBatch(AJEntityUnit.REORDER_QUERY);
@@ -101,7 +101,7 @@ public class ReorderUnitInCourseHandler implements DBHandler {
         String payloadUnitId = ((JsonObject) entry).getString(REORDER_PAYLOAD_ID);
         if (!unitsOfCourse.contains(UUID.fromString(payloadUnitId))) {
           return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Missing unit(s)"),
-                  ExecutionResult.ExecutionStatus.FAILED);
+            ExecutionResult.ExecutionStatus.FAILED);
         }
 
         int sequenceId = ((JsonObject) entry).getInteger(AJEntityUnit.SEQUENCE_ID);
@@ -111,10 +111,11 @@ public class ReorderUnitInCourseHandler implements DBHandler {
       Base.executeBatch(ps);
     } catch (DBException | ClassCastException e) {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Incorrect payload data types"),
-              ExecutionResult.ExecutionStatus.FAILED);
+        ExecutionResult.ExecutionStatus.FAILED);
     }
     LOGGER.info("reordered units in course {}", context.courseId());
-    return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getReorderUnitEventBuilder(context.courseId())), ExecutionStatus.SUCCESSFUL);
+    return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getReorderUnitEventBuilder(context.courseId())),
+      ExecutionStatus.SUCCESSFUL);
   }
 
   @Override

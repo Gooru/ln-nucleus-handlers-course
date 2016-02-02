@@ -13,7 +13,7 @@ public class AJLessonRepo implements LessonRepo {
   public AJLessonRepo(ProcessorContext context) {
     this.context = context;
   }
-  
+
   @Override
   public MessageResponse createLesson() {
     return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildCreateLessonHandler(context));

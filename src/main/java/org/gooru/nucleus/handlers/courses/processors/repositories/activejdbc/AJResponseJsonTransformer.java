@@ -1,12 +1,11 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc;
 
-import java.util.Map;
-
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.util.Map;
 
 public class AJResponseJsonTransformer {
 
@@ -53,7 +52,7 @@ public class AJResponseJsonTransformer {
 
   public JsonArray transformUnitSummary(String ajUnitSummary) {
     JsonArray result = new JsonArray(ajUnitSummary);
-    if(ajUnitSummary == null || ajUnitSummary.isEmpty()) {
+    if (ajUnitSummary == null || ajUnitSummary.isEmpty()) {
       return result;
     }
 

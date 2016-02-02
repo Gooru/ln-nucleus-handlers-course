@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -11,8 +12,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonObject;
 
 public class UpdateCollaboratorHandler implements DBHandler {
 
@@ -30,7 +29,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id to update collaborator");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to update collaborator"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.request() == null || context.request().isEmpty()) {
@@ -90,7 +89,9 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
     if (courseUpdateCollab.save()) {
       LOGGER.info("updated collaborators of course {} successfully", context.courseId());
-      return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())), ExecutionStatus.SUCCESSFUL);
+      return new ExecutionResult<>(
+        MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())),
+        ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.debug("error while updating course collaborator");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
@@ -113,9 +114,8 @@ public class UpdateCollaboratorHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     input.fieldNames().stream()
-            .filter(key -> AJEntityCourse.COLLABORATOR_FIELD.contains(key)
-                    && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
-            .forEach(key -> output.put(key, "Field should not be empty or null"));
+         .filter(key -> AJEntityCourse.COLLABORATOR_FIELD.contains(key) && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+         .forEach(key -> output.put(key, "Field should not be empty or null"));
     return output.isEmpty() ? null : output;
   }
 

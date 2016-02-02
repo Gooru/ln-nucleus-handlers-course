@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -14,9 +16,6 @@ import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class CreateLessonHandler implements DBHandler {
 
@@ -34,19 +33,19 @@ public class CreateLessonHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.warn("invalid course id to create lesson");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to create lesson"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.unitId() == null || context.unitId().isEmpty()) {
       LOGGER.warn("invalid unit id to create lesson");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to create lesson"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("invalid request received to create lesson");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create lesson"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
@@ -83,7 +82,7 @@ public class CreateLessonHandler implements DBHandler {
       LOGGER.warn("course {} not found to create lesson, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
-    
+
     courseOwner = ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID);
 
     LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
@@ -122,8 +121,9 @@ public class CreateLessonHandler implements DBHandler {
     if (newLesson.isValid()) {
       if (newLesson.save()) {
         LOGGER.info("lesson {} created successfully for unit {}", newLesson.getId().toString(), context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createPostResponse(newLesson.getId().toString(),
-                EventBuilderFactory.getCreateLessonEventBuilder(newLesson.getId().toString())), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory
+          .createPostResponse(newLesson.getId().toString(), EventBuilderFactory.getCreateLessonEventBuilder(newLesson.getId().toString())),
+          ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.debug("error while saving new lesson");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
@@ -143,7 +143,7 @@ public class CreateLessonHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     AJEntityLesson.INSERT_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
-            .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+                                          .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
     return output.isEmpty() ? null : output;
   }
 
@@ -151,8 +151,8 @@ public class CreateLessonHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     AJEntityLesson.NOTNULL_FIELDS.stream()
-            .filter(notNullField -> (input.getValue(notNullField) == null || input.getValue(notNullField).toString().isEmpty()))
-            .forEach(notNullField -> output.put(notNullField, "Field should not be empty or null"));
+                                 .filter(notNullField -> (input.getValue(notNullField) == null || input.getValue(notNullField).toString().isEmpty()))
+                                 .forEach(notNullField -> output.put(notNullField, "Field should not be empty or null"));
     return output.isEmpty() ? null : output;
   }
 

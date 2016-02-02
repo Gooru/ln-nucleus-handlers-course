@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -14,9 +16,6 @@ import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class CreateUnitHandler implements DBHandler {
 
@@ -35,13 +34,13 @@ public class CreateUnitHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.warn("invalid course id to delete unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to delete unit"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("invalid request received to create unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create unit"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
@@ -79,7 +78,7 @@ public class CreateUnitHandler implements DBHandler {
       LOGGER.warn("course {} not found to create unit, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
-    
+
     courseOwner = ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID);
 
     LOGGER.debug("validateRequest() OK");
@@ -113,7 +112,9 @@ public class CreateUnitHandler implements DBHandler {
     if (newUnit.isValid()) {
       if (newUnit.save()) {
         LOGGER.info("unit {} created successfully for course {}", newUnit.getId().toString(), context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createPostResponse(newUnit.getId().toString(), EventBuilderFactory.getCreateUnitEventBuilder(newUnit.getId().toString())), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory
+          .createPostResponse(newUnit.getId().toString(), EventBuilderFactory.getCreateUnitEventBuilder(newUnit.getId().toString())),
+          ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.debug("error in saving unit");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
@@ -133,7 +134,7 @@ public class CreateUnitHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     AJEntityLesson.INSERT_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
-            .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+                                          .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
     return output.isEmpty() ? null : output;
   }
 
@@ -141,8 +142,8 @@ public class CreateUnitHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     AJEntityLesson.NOTNULL_FIELDS.stream()
-            .filter(notNullField -> (input.getValue(notNullField) == null || input.getValue(notNullField).toString().isEmpty()))
-            .forEach(notNullField -> output.put(notNullField, "Field should not be empty or null"));
+                                 .filter(notNullField -> (input.getValue(notNullField) == null || input.getValue(notNullField).toString().isEmpty()))
+                                 .forEach(notNullField -> output.put(notNullField, "Field should not be empty or null"));
     return output.isEmpty() ? null : output;
   }
 
