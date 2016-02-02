@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc;
 
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -22,9 +20,9 @@ public class AJResponseJsonTransformer {
     for (Map.Entry<String, Object> entry : result) {
       mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
       if (mapValue != null && !mapValue.isEmpty()) {
-        if (Arrays.asList(AJEntityCourse.JSON_OBJECT_FIELDS).contains(entry.getKey())) {
+        if (AJEntityCourse.JSON_OBJECT_FIELDS.contains(entry.getKey())) {
           result.put(entry.getKey(), new JsonObject(mapValue));
-        } else if (Arrays.asList(AJEntityCourse.JSON_ARRAY_FIELDS).contains(entry.getKey())) {
+        } else if (AJEntityCourse.JSON_ARRAY_FIELDS.contains(entry.getKey())) {
           result.put(entry.getKey(), new JsonArray(mapValue));
         }
       }
@@ -32,7 +30,7 @@ public class AJResponseJsonTransformer {
 
     return result;
   }
-  
+
   public JsonObject transformUnit(String ajResult) {
     JsonObject result = new JsonObject(ajResult);
     if (ajResult == null || ajResult.isEmpty()) {
@@ -43,29 +41,28 @@ public class AJResponseJsonTransformer {
     for (Map.Entry<String, Object> entry : result) {
       mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
       if (mapValue != null && !mapValue.isEmpty()) {
-        if (Arrays.asList(AJEntityUnit.JSON_OBJECT_FIELDS).contains(entry.getKey())) {
+        if (AJEntityUnit.JSON_OBJECT_FIELDS.contains(entry.getKey())) {
           result.put(entry.getKey(), new JsonObject(mapValue));
-        } 
+        }
       }
     }
 
     return result;
-    
+
   }
-  
+
   public JsonArray transformUnitSummary(String ajUnitSummary) {
     JsonArray result = new JsonArray(ajUnitSummary);
     if(ajUnitSummary == null || ajUnitSummary.isEmpty()) {
       return result;
     }
-    
+
     JsonArray toReturn = new JsonArray();
-    Iterator<Object> iterator = result.iterator();
-    while(iterator.hasNext()) {
-      JsonObject jsonObj = (JsonObject) (iterator.next());
+    for (Object aResult : result) {
+      JsonObject jsonObj = (JsonObject) (aResult);
       toReturn.add(jsonObj);
     }
-    
+
     return toReturn;
   }
 }

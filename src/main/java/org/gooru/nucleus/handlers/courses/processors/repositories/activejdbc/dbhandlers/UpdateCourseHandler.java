@@ -94,7 +94,7 @@ public class UpdateCourseHandler implements DBHandler {
         LOGGER.info("course {} updated successfully", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving udpated course");
+        LOGGER.debug("error while saving updated course");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {

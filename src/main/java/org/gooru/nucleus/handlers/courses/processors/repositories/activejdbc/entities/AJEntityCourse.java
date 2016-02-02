@@ -15,7 +15,7 @@ import io.vertx.core.json.JsonObject;
 
 @Table("course")
 public class AJEntityCourse extends Model {
-  
+
   private static final Logger LOGGER = LoggerFactory.getLogger(AJEntityCourse.class);
 
   public static final String TABLE_COURSE = "course";
@@ -58,10 +58,10 @@ public class AJEntityCourse extends Model {
   public static final String SELECT_COURSE =
           "SELECT id, title, created_at, updated_at, owner_id, creator_id, original_creator_id, original_course_id, publish_date, thumbnail, audience,"
                   + " metadata, taxonomy, collaborator, class_list, visible_on_profile, is_deleted FROM course WHERE id = ?::uuid AND is_deleted = ?";
-  
+
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
-  
+
   public void setModifierId(String modifierId) {
     setPGObject(MODIFIER_ID, UUID_TYPE, modifierId);
   }
@@ -69,15 +69,15 @@ public class AJEntityCourse extends Model {
   public void setCreatorId(String creatorId) {
     setPGObject(CREATOR_ID, UUID_TYPE, creatorId);
   }
-  
+
   public void setOwnerId(String ownerId) {
     setPGObject(OWNER_ID, UUID_TYPE, ownerId);
   }
-  
+
   public void setCourseId(String courseId) {
     setPGObject(ID, UUID_TYPE, courseId);
   }
-  
+
   public void setCollaborator(String collaborator) {
     setPGObject(COLLABORATOR, JSONB_TYPE, collaborator);
   }
@@ -89,9 +89,9 @@ public class AJEntityCourse extends Model {
     input.getMap().forEach((s, o) -> {
       // Note that special UUID cases for modifier and creator should be handled internally and not via map, so we do not care
       if (o instanceof JsonObject) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonObject) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else if (o instanceof JsonArray) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonArray) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else {
         this.set(s, o);
       }

@@ -116,7 +116,7 @@ public class UpdateLessonHandler implements DBHandler {
         LOGGER.info("lesson {} updated successfully", context.lessonId());
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateLessonEventBuilder(context.lessonId())), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving udpated lesson");
+        LOGGER.debug("error while saving updated lesson");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {

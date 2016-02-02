@@ -29,7 +29,6 @@ public class ReorderCollectionsAssessmentsInLessonHandler implements DBHandler {
 
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(ReorderCollectionsAssessmentsInLessonHandler.class);
-  private JsonArray input;
   private static final String REORDER_PAYLOAD_ID = "id";
   private static final String REORDER_PAYLOAD_KEY = "order";
   private static final String REORDER_PAYLOAD_SEQUENCE = "sequence_id";
@@ -68,11 +67,11 @@ public class ReorderCollectionsAssessmentsInLessonHandler implements DBHandler {
       LOGGER.warn("Anonymous user attempting to reorder lesson contents");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
-    
+
     if (!reorderPayloadValidator(context.request().getJsonArray(REORDER_PAYLOAD_KEY))) {
       LOGGER.warn("Request data validation failed");
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(
-              new JsonObject().put("Reorder", "Data validation failed. Invalid data in request payload")), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory
+        .createValidationErrorResponse(new JsonObject().put("Reorder", "Data validation failed. Invalid data in request payload")), ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -85,7 +84,7 @@ public class ReorderCollectionsAssessmentsInLessonHandler implements DBHandler {
     if (!ajEntityCourse.isEmpty()) {
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
         if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
-          LOGGER.warn("user is not owner or collaborator of course to reoder lesson content. aborting");
+          LOGGER.warn("user is not owner or collaborator of course to reorder lesson content. aborting");
           return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
       }
@@ -116,7 +115,7 @@ public class ReorderCollectionsAssessmentsInLessonHandler implements DBHandler {
     try {
       List contentOfLesson =
               Base.firstColumn(AJEntityCollection.SELECT_COLLECTION_OF_COURSE, context.lessonId(), context.unitId(), context.courseId(), false);
-      this.input = this.context.request().getJsonArray(REORDER_PAYLOAD_KEY);
+      JsonArray input = this.context.request().getJsonArray(REORDER_PAYLOAD_KEY);
 
       if (contentOfLesson.size() != input.size()) {
         return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Collection/Assessment count mismatch"),
@@ -149,7 +148,7 @@ public class ReorderCollectionsAssessmentsInLessonHandler implements DBHandler {
   public boolean handlerReadOnly() {
     return false;
   }
-  
+
   private boolean reorderPayloadValidator(Object value) {
     if (!(value instanceof JsonArray) || value == null || ((JsonArray) value).isEmpty()) {
       return false;

@@ -108,7 +108,7 @@ public class UpdateUnitHandler implements DBHandler {
         LOGGER.info("unit {} updated successfully", context.unitId());
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateUnitEventBuilder(context.unitId())), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving udpated unit");
+        LOGGER.debug("error while saving updated unit");
         return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating unit"), ExecutionStatus.FAILED);
       }
     } else {

@@ -27,7 +27,6 @@ public class ReorderUnitInCourseHandler implements DBHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ReorderUnitInCourseHandler.class);
   private final ProcessorContext context;
-  private JsonArray input;
   private static final String REORDER_PAYLOAD_ID = "id";
   private static final String REORDER_PAYLOAD_KEY = "order";
   private static final String REORDER_PAYLOAD_SEQUENCE = "sequence_id";
@@ -57,10 +56,10 @@ public class ReorderUnitInCourseHandler implements DBHandler {
 
     if (!reorderPayloadValidator(context.request().getJsonArray(REORDER_PAYLOAD_KEY))) {
       LOGGER.warn("Request data validation failed");
-      return new ExecutionResult<MessageResponse>(MessageResponseFactory.createValidationErrorResponse(
-              new JsonObject().put("Reorder", "Data validation failed. Invalid data in request payload")), ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory
+        .createValidationErrorResponse(new JsonObject().put("Reorder", "Data validation failed. Invalid data in request payload")), ExecutionStatus.FAILED);
     }
-    
+
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
@@ -72,7 +71,7 @@ public class ReorderUnitInCourseHandler implements DBHandler {
     if (!ajEntityCourse.isEmpty()) {
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
         if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
-          LOGGER.warn("user is not owner or collaborator of course to reoder units. aborting");
+          LOGGER.warn("user is not owner or collaborator of course to reorder units. aborting");
           return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
       }
@@ -89,7 +88,7 @@ public class ReorderUnitInCourseHandler implements DBHandler {
   public ExecutionResult<MessageResponse> executeRequest() {
     try {
       List unitsOfCourse = Base.firstColumn(AJEntityUnit.SELECT_UNIT_OF_COURSE, context.courseId(), false);
-      this.input = this.context.request().getJsonArray(REORDER_PAYLOAD_KEY);
+      JsonArray input = this.context.request().getJsonArray(REORDER_PAYLOAD_KEY);
 
       if (unitsOfCourse.size() != input.size()) {
         return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Unit count mismatch"),
@@ -122,7 +121,7 @@ public class ReorderUnitInCourseHandler implements DBHandler {
   public boolean handlerReadOnly() {
     return false;
   }
-  
+
   private boolean reorderPayloadValidator(Object value) {
     if (!(value instanceof JsonArray) || value == null || ((JsonArray) value).isEmpty()) {
       return false;

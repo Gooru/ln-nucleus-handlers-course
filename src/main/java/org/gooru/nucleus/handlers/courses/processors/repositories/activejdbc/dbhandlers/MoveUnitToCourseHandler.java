@@ -47,12 +47,12 @@ public class MoveUnitToCourseHandler implements DBHandler {
       LOGGER.warn("invalid data provided to move unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to move unit"), ExecutionStatus.FAILED);
     }
-    
-    JsonObject missingFieldErrors = validateMissinFields();
+
+    JsonObject missingFieldErrors = validateMissingFields();
     if (missingFieldErrors != null && !missingFieldErrors.isEmpty()) {
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(missingFieldErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
-    
+
     JsonObject validateErrors = validateFields();
     if (validateErrors != null && !validateErrors.isEmpty()) {
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(validateErrors), ExecutionResult.ExecutionStatus.FAILED);
@@ -62,7 +62,7 @@ public class MoveUnitToCourseHandler implements DBHandler {
     if (notNullErrors != null && !notNullErrors.isEmpty()) {
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
-    
+
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
@@ -80,10 +80,10 @@ public class MoveUnitToCourseHandler implements DBHandler {
 
     if (sourceCourseId == null || unitToMove == null || sourceCourseId.isEmpty() || unitToMove.isEmpty()) {
       LOGGER.debug("missing required fields");
-      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("message", "missing required fileds")),
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("message", "missing required fields")),
               ExecutionResult.ExecutionStatus.FAILED);
     }
-    
+
     LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, targetCourseId, false);
     LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, sourceCourseId, false);
 
@@ -124,7 +124,7 @@ public class MoveUnitToCourseHandler implements DBHandler {
     unitToUpdate.setCourseId(context.courseId());
     unitToUpdate.setModifierId(context.userId());
     unitToUpdate.setOwnerId(targetCourseOwner);
-    
+
     // Get max sequence id for course
     Object maxSequenceId = Base.firstCell(AJEntityUnit.SELECT_UNIT_MAX_SEQUENCEID, context.courseId());
     int sequenceId = 1;
@@ -133,7 +133,7 @@ public class MoveUnitToCourseHandler implements DBHandler {
 
     }
     unitToUpdate.set(AJEntityUnit.SEQUENCE_ID, sequenceId);
-    
+
     if (unitToUpdate.hasErrors()) {
       LOGGER.debug("moving unit has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
@@ -177,8 +177,8 @@ public class MoveUnitToCourseHandler implements DBHandler {
             .forEach(key -> output.put(key, "Field should not be empty or null"));
     return output.isEmpty() ? null : output;
   }
-  
-  private JsonObject validateMissinFields() {
+
+  private JsonObject validateMissingFields() {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
 

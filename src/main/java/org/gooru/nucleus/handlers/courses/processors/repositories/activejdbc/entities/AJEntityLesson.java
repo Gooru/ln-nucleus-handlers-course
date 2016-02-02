@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonObject;
 public class AJEntityLesson extends Model {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AJEntityLesson.class);
-  
+
   public static final String TABLE_LESSON = "course_unit_lesson";
   public static final String LESSON_ID = "lesson_id";
   public static final String UNIT_ID = "unit_id";
@@ -56,13 +56,13 @@ public class AJEntityLesson extends Model {
   public static final String SELECT_LESSON_OF_COURSE = "SELECT lesson_id FROM course_unit_lesson WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String REORDER_QUERY =
           "UPDATE course_unit_lesson SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
-  
+
   public static final List<String> INSERT_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
           ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);
   public static final List<String> UPDATE_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
           ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);
   public static final List<String> COLLECTION_MOVE_NOTNULL_FIELDS = Arrays.asList("collection_id");
-  
+
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 
@@ -73,19 +73,19 @@ public class AJEntityLesson extends Model {
   public void setCreatorId(String creatorId) {
     setPGObject(CREATOR_ID, UUID_TYPE, creatorId);
   }
-  
+
   public void setOwnerId(String ownerId) {
     setPGObject(OWNER_ID, UUID_TYPE, ownerId);
   }
-  
+
   public void setCourseId(String courseId) {
     setPGObject(COURSE_ID, UUID_TYPE, courseId);
   }
-  
+
   public void setUnitId(String unitId) {
     setPGObject(UNIT_ID, UUID_TYPE, unitId);
   }
-  
+
   public void setLessonId(String lessonId) {
     setPGObject(LESSON_ID, UUID_TYPE, lessonId);
   }
@@ -97,9 +97,9 @@ public class AJEntityLesson extends Model {
     input.getMap().forEach((s, o) -> {
       // Note that special UUID cases for modifier and creator should be handled internally and not via map, so we do not care
       if (o instanceof JsonObject) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonObject) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else if (o instanceof JsonArray) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonArray) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else {
         this.set(s, o);
       }

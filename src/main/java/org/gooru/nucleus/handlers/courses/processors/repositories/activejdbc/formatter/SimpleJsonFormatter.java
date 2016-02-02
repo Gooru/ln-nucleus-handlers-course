@@ -47,7 +47,7 @@ class SimpleJsonFormatter implements JsonFormatter {
         if (pretty) { sb.append('\n'); }
       }
       T model = modelList.get(i);
-      modelToJson(model, sb, (pretty ? "  " : ""));;
+      modelToJson(model, sb, (pretty ? "  " : ""));
     }
     if (pretty) { sb.append('\n'); }
     sb.append(']');
@@ -92,7 +92,7 @@ class SimpleJsonFormatter implements JsonFormatter {
         Escape.json(sb, Convert.toString(v));
         sb.append('"');
       }
-      
+
     }
     if (pretty) {
       sb.append('\n').append(indent);

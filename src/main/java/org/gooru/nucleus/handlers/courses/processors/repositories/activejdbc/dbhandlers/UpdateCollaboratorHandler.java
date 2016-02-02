@@ -29,7 +29,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.info("invalid course id to update collaborator");
-      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to udpate collaborator"),
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to update collaborator"),
               ExecutionStatus.FAILED);
     }
 
@@ -64,7 +64,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
     if (!ajEntityCourse.isEmpty()) {
       // check whether user is owner of course
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
-        LOGGER.warn("user is not owner of course to udpate collaborator. aborting");
+        LOGGER.warn("user is not owner of course to update collaborator. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
     } else {
@@ -92,7 +92,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
       LOGGER.info("updated collaborators of course {} successfully", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.debug("error while upating course collaborator");
+      LOGGER.debug("error while updating course collaborator");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

@@ -37,7 +37,7 @@ public class AJEntityUnit extends Model {
   public static final String TAXONOMY = "taxonomy";
   public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
-  
+
   public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE, BIG_IDEAS, ESSENTIAL_QUESTIONS);
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> JSON_OBJECT_FIELDS = Arrays.asList(METADATA, TAXONOMY);
@@ -53,7 +53,7 @@ public class AJEntityUnit extends Model {
   public static final List<String> UPDATE_FORBIDDEN_FIELDS = Arrays.asList(UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID,
           MODIFIER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_UNIT_ID, SEQUENCE_ID, IS_DELETED);
   public static final List<String> LESSON_MOVE_NOTNULL_FIELDS = Arrays.asList("course_id", "unit_id", "lesson_id");
-  
+
   public static final String SELECT_UNIT =
           "SELECT course_id, unit_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_unit_id,"
                   + " big_ideas, essential_questions, metadata, taxonomy, sequence_id, is_deleted FROM course_unit WHERE course_id = ?::uuid AND"
@@ -66,7 +66,7 @@ public class AJEntityUnit extends Model {
   public static final String SELECT_UNIT_OF_COURSE = "SELECT unit_id FROM course_unit WHERE course_id = ?::uuid AND is_deleted = ?";
   public static final String REORDER_QUERY =
           "UPDATE course_unit SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE unit_id = ?::uuid and course_id = ?::uuid and is_deleted = ?";
-  
+
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 
@@ -85,7 +85,7 @@ public class AJEntityUnit extends Model {
   public void setCourseId(String courseId) {
     setPGObject(COURSE_ID, UUID_TYPE, courseId);
   }
-  
+
   public void setUnitId(String unitId) {
     setPGObject(UNIT_ID, UUID_TYPE, unitId);
   }
@@ -98,9 +98,9 @@ public class AJEntityUnit extends Model {
       // Note that special UUID cases for modifier and creator should be handled
       // internally and not via map, so we do not care
       if (o instanceof JsonObject) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonObject) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else if (o instanceof JsonArray) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonArray) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else {
         this.set(s, o);
       }
