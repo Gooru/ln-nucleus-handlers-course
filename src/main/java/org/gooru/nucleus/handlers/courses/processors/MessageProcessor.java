@@ -1,7 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors;
 
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
+
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidRequestException;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidUserException;
@@ -11,6 +11,9 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonObject;
 
 class MessageProcessor implements Processor {
 
@@ -45,20 +48,17 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_COURSE_UPDATE:
           result = processCourseUpdate();
           break;
-        case MessageConstants.MSG_OP_COURSE_COPY:
-          result = processCourseCopy();
-          break;
         case MessageConstants.MSG_OP_COURSE_DELETE:
           result = processCourseDelete();
           break;
         case MessageConstants.MSG_OP_COURSE_CONTENT_REORDER:
           result = processCourseUnitReorder();
           break;
-        case MessageConstants.MSG_OP_COURSE_COLLABORATOR_GET:
-          result = processCourseCollaboratorGet();
-          break;
         case MessageConstants.MSG_OP_COURSE_COLLABORATOR_UPDATE:
           result = processCourseCollaboratorUpdate();
+          break;
+        case MessageConstants.MSG_OP_COURSE_MOVE_UNIT:
+          result = processUnitMove();
           break;
         case MessageConstants.MSG_OP_UNIT_CREATE:
           result = processUnitCreate();
@@ -75,8 +75,8 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_UNIT_CONTENT_REORDER:
           result = processUnitContentReorder();
           break;
-        case MessageConstants.MSG_OP_UNIT_COPY:
-          result = processUnitCopy();
+        case MessageConstants.MSG_OP_UNIT_MOVE_LESSON:
+          result = processLessonMove();
           break;
         case MessageConstants.MSG_OP_LESSON_CREATE:
           result = processLessonCreate();
@@ -93,8 +93,8 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_LESSON_CONTENT_REORDER:
           result = processLessonContentReorder();
           break;
-        case MessageConstants.MSG_OP_LESSON_COPY:
-          result = processLessonCopy();
+        case MessageConstants.MSG_OP_LESSON_MOVE_COLLECTION:
+          result = processCollectionMove();
           break;
         default:
           LOGGER.error("Invalid operation type passed in, not able to handle");
@@ -113,14 +113,78 @@ class MessageProcessor implements Processor {
     }
   }
 
-  private MessageResponse processLessonCopy() {
-    // TODO Auto-generated method stub
-    return null;
+  private MessageResponse processCollectionMove() {
+    ProcessorContext context = createContext();
+    
+    if(checkCourseId(context)) {
+      LOGGER.error("Course id not available to move collection. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+    }
+    
+    if(checkUnitId(context)) {
+      LOGGER.error("Unit id not available to move collection. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+    }
+    
+    if(checkLessonId(context)) {
+      LOGGER.error("Lesson id not available to move collection. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
+    }
+    
+    return new RepoBuilder().buildLessonRepo(context).moveCollectionToLesson();
+  }
+
+  private MessageResponse processLessonMove() {
+    ProcessorContext context = createContext();
+    
+    if(checkCourseId(context)) {
+      LOGGER.error("Course id not available to move lesson. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+    }
+    
+    if(checkUnitId(context)) {
+      LOGGER.error("Unit id not available to move lesson. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+    }
+    
+    return new RepoBuilder().buildUnitRepo(context).moveLessonToUnit();
+  }
+
+  private MessageResponse processUnitMove() {
+    ProcessorContext context = createContext();
+    
+    if(checkCourseId(context)) {
+      LOGGER.error("Course id not available to move unit. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+    }
+    
+    return new RepoBuilder().buildCourseRepo(context).moveUnitToCourse();
   }
 
   private MessageResponse processLessonContentReorder() {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.error("Course id not available to reorder lesson content. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      if(checkUnitId(context)) {
+        LOGGER.error("Unit id not available to reorder lesson content. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+      
+      if(checkLessonId(context)) {
+        LOGGER.error("Lesson id not available to reorder lesson content. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
+      }
+      
+      LOGGER.info("reorder content of lesson {} of unit {}", context.lessonId(), context.unitId());
+      return new RepoBuilder().buildLessonRepo(context).reorderCollectionsAssessmentsInLesson();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while reordering lesson content", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
   }
 
   private MessageResponse processLessonGet() {
@@ -222,14 +286,25 @@ class MessageProcessor implements Processor {
     }
   }
 
-  private MessageResponse processUnitCopy() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
   private MessageResponse processUnitContentReorder() {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      ProcessorContext context = createContext();
+      if(checkCourseId(context)) {
+        LOGGER.error("Course id not available to reorder lessons. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+      
+      if(checkUnitId(context)) {
+        LOGGER.error("Unit id not available to reorder lessons. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+      
+      LOGGER.info("reordering lessons for unit {} of course {}", context.unitId(), context.courseId());
+      return new RepoBuilder().buildUnitRepo(context).reorderLessonInUnit();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while reordering lessons", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+    }
   }
 
   private MessageResponse processUnitGet() {
@@ -347,21 +422,6 @@ class MessageProcessor implements Processor {
     }
   }
 
-  private MessageResponse processCourseCollaboratorGet() {
-    try {
-      ProcessorContext context = createContext();
-      if (checkCourseId(context)) {
-        LOGGER.error("Invalid request, course id not available. Aborting");
-        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-      }
-
-      LOGGER.info("getting collaborators for course {}", context.courseId());
-      return new RepoBuilder().buildCourseCollaboratorRepo(context).fetchCollaborator();
-    } catch (Throwable t) {
-      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-    }
-  }
-
   private MessageResponse processCourseUnitReorder() {
     try {
       ProcessorContext context = createContext();
@@ -392,22 +452,6 @@ class MessageProcessor implements Processor {
 
       LOGGER.info("deleting course {}", context.courseId());
       return new RepoBuilder().buildCourseRepo(context).deleteCourse();
-    } catch (Throwable t) {
-      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-    }
-  }
-
-  private MessageResponse processCourseCopy() {
-    try {
-      ProcessorContext context = createContext();
-
-      if (checkRequest(context)) {
-        LOGGER.error("Invalid input data, Aborting");
-        return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
-      }
-
-      LOGGER.info("copying course");
-      return new RepoBuilder().buildCourseRepo(context).copyCourse();
     } catch (Throwable t) {
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
@@ -475,10 +519,11 @@ class MessageProcessor implements Processor {
     }
 
     userId = ((JsonObject) message.body()).getString(MessageConstants.MSG_USER_ID);
-    if (userId == null) {
+    if (!validateUser(userId)) {
       LOGGER.error("Invalid user id passed. Not authorized.");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
     }
+    
     prefs = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
     request = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_HTTP_BODY);
 
@@ -494,5 +539,22 @@ class MessageProcessor implements Processor {
 
     // All is well, continue processing
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+  }
+  
+  private boolean validateUser(String userId) {
+    if (userId == null) {
+      return false;
+    } else if (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+      return true;
+    } else {
+      try {
+        UUID.fromString(userId);
+        return true;
+      } catch (IllegalArgumentException e) {
+        return false;
+      } catch (Exception e) {
+        return false;
+      }
+    }
   }
 }

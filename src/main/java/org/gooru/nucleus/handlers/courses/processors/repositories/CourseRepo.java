@@ -12,7 +12,7 @@ public interface CourseRepo {
 
   MessageResponse deleteCourse();
 
-  MessageResponse copyCourse();
-
   MessageResponse reorderUnitInCourse();
+
+  MessageResponse moveUnitToCourse();
 }

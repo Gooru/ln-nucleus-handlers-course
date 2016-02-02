@@ -1,6 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
@@ -39,9 +38,9 @@ public class FetchUnitHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to fetch unit"),
               ExecutionStatus.FAILED);
     }
-    
-    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
-      LOGGER.warn("Anonymous user attempting to fetch unit");
+
+    if (context.userId() == null || context.userId().isEmpty()) {
+      LOGGER.warn("Invalid user id to fetch unit");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
@@ -51,28 +50,14 @@ public class FetchUnitHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
-    if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.warn("course {} is deleted, hence can't fetch unit. Aborting", context.courseId());
-        return new ExecutionResult<>(
-                MessageResponseFactory.createNotFoundResponse("Course is deleted for which you are trying to fetch unit"),
-                ExecutionStatus.FAILED);
-      }
-      
-      //TODO: check whether user is either owner or collaborator of course
-    } else {
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
+    if (ajEntityCourse.isEmpty()) {
       LOGGER.warn("course {} not found to fetch unit, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
-    if (!ajEntityUnit.isEmpty()) {
-      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
-        LOGGER.info("unit {} is deleted. Aborting", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
+    if (ajEntityUnit.isEmpty()) {
       LOGGER.info("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }

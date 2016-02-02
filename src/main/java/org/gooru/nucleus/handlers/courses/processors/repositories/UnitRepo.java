@@ -6,8 +6,6 @@ public interface UnitRepo {
 
   MessageResponse createUnit();
 
-  MessageResponse copyUnitToCourse();
-
   MessageResponse updateUnit();
 
   MessageResponse fetchUnit();
@@ -15,4 +13,6 @@ public interface UnitRepo {
   MessageResponse deleteUnit();
 
   MessageResponse reorderLessonInUnit();
+
+  MessageResponse moveLessonToUnit();
 }

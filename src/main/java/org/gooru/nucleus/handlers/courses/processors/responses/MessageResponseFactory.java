@@ -1,6 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.responses;
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilder;
 
 import io.vertx.core.json.JsonObject;
 
@@ -19,6 +20,11 @@ public class MessageResponseFactory {
 
   public static MessageResponse createForbiddenResponse() {
     return new MessageResponse.Builder().failed().setStatusForbidden().build();
+  }
+  
+  public static MessageResponse createForbiddenResponse(String message) {
+    return new MessageResponse.Builder().failed().setStatusForbidden().setResponseBody(new JsonObject().put(MessageConstants.MSG_MESSAGE, message))
+                                        .build();
   }
 
   public static MessageResponse createInternalErrorResponse() {
@@ -46,13 +52,13 @@ public class MessageResponseFactory {
   public static MessageResponse createPostResponse(String location) {
     return new MessageResponse.Builder().successful().setHeader("Location", location).setStatusCreated().build();
   }
-
-  public static MessageResponse createPutResponse(String location) {
-    return new MessageResponse.Builder().successful().setHeader("Location", location).setStatusNoOutput().build();
+  
+  public static MessageResponse createPostResponse(String location, EventBuilder eventBuilder) {
+    return new MessageResponse.Builder().successful().setHeader("Location", location).setStatusCreated().setEventData(eventBuilder.build()).build();
   }
 
-  public static MessageResponse createDeleteResponse() {
-    return new MessageResponse.Builder().successful().setStatusNoOutput().build();
+  public static MessageResponse createNoContentResponse(EventBuilder eventBuilder) {
+    return new MessageResponse.Builder().successful().setStatusNoOutput().setEventData(eventBuilder.build()).build();
   }
 
   public static MessageResponse createValidationErrorResponse(JsonObject errors) {

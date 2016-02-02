@@ -1,12 +1,8 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -16,16 +12,18 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
-import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CreateLessonHandler implements DBHandler {
 
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateLessonHandler.class);
+  private AJEntityLesson newLesson;
+  private String courseOwner;
 
   public CreateLessonHandler(ProcessorContext context) {
     this.context = context;
@@ -50,25 +48,20 @@ public class CreateLessonHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create lesson"),
               ExecutionStatus.FAILED);
     }
-    
+
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to create lesson");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
-    JsonObject request = context.request();
-    List<String> missingFields = new ArrayList<>();
-    for (String fieldName : AJEntityLesson.NOTNULL_FIELDS) {
-      if (request.getString(fieldName) == null || request.getString(fieldName).isEmpty()) {
-        missingFields.add(fieldName);
-      }
+    JsonObject validateErrors = validateFields();
+    if (validateErrors != null && !validateErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(validateErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
 
-    if (missingFields.size() > 0) {
-      LOGGER.warn("request data validation failed for '{}'", String.join(",", missingFields));
-      return new ExecutionResult<>(
-              MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("missingFields", String.join(",", missingFields))),
-              ExecutionStatus.FAILED);
+    JsonObject notNullErrors = validateNullFields();
+    if (notNullErrors != null && !notNullErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -77,27 +70,24 @@ public class CreateLessonHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
     if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.warn("course {} is deleted, hence can't create lesson. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which you are trying to create lesson"),
-                ExecutionStatus.FAILED);
+      // check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+        }
       }
-
-      //TODO: check whether user is owner or collaborator
     } else {
       LOGGER.warn("course {} not found to create lesson, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
+    
+    courseOwner = ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID);
 
-    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
-    if (!ajEntityUnit.isEmpty()) {
-      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
-        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
+    if (ajEntityUnit.isEmpty()) {
       LOGGER.warn("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
@@ -108,72 +98,39 @@ public class CreateLessonHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    JsonObject request = context.request();
-    AJEntityLesson newLesson = new AJEntityLesson();
-    String mapValue;
-    try {
-      for (Map.Entry<String, Object> entry : request) {
-        mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-        if (mapValue != null && !mapValue.isEmpty()) {
-          if (AJEntityLesson.JSON_FIELDS.contains(entry.getKey())) {
-            PGobject jsonbField = new PGobject();
-            jsonbField.setType("jsonb");
-            jsonbField.setValue(mapValue);
-            newLesson.set(entry.getKey(), jsonbField);
-          } else {
-            newLesson.set(entry.getKey(), entry.getValue());
-          }
-        }
-      }
+    newLesson = new AJEntityLesson();
+    newLesson.setAllFromJson(context.request());
+    newLesson.setCourseId(context.courseId());
+    newLesson.setUnitId(context.unitId());
+    newLesson.setOwnerId(courseOwner);
+    newLesson.setCreatorId(context.userId());
+    newLesson.setModifierId(context.userId());
+    newLesson.set(AJEntityLesson.IS_DELETED, false);
 
-      String id = UUID.randomUUID().toString();
-      boolean isDuplicate = true;
-      while (isDuplicate) {
-        if (AJEntityCourse.exists(id)) {
-          id = UUID.randomUUID().toString();
-        } else {
-          isDuplicate = false;
-        }
-      }
+    Object maxSequenceId = Base.firstCell(AJEntityLesson.SELECT_LESSON_MAX_SEQUENCEID, context.courseId(), context.unitId());
+    int sequenceId = 1;
+    if (maxSequenceId != null) {
+      sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
+    }
+    newLesson.set(AJEntityLesson.SEQUENCE_ID, sequenceId);
 
-      newLesson.setId(id);
-      newLesson.set(AJEntityLesson.COURSE_ID, context.courseId());
-      newLesson.set(AJEntityLesson.UNIT_ID, context.unitId());
-      newLesson.set(AJEntityLesson.CREATOR_ID, context.userId());
-      newLesson.set(AJEntityLesson.MODIFIER_ID, context.userId());
-      newLesson.set(AJEntityLesson.ORIGINAL_CREATOR_ID, context.userId());
-      newLesson.set(AJEntityLesson.IS_DELETED, false);
+    if (newLesson.hasErrors()) {
+      LOGGER.debug("error in creating new lesson");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
 
-      
-      Object maxSequenceId = Base.firstCell(AJEntityLesson.SELECT_LESSON_MAX_SEQUENCEID, context.courseId(), context.unitId());
-      int sequenceId = 1;
-      if (maxSequenceId != null) {
-        sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
-
-      }
-      newLesson.set(AJEntityLesson.SEQUENCE_ID, sequenceId);
-
-      if (newLesson.isValid()) {
-        if (newLesson.insert()) {
-          LOGGER.info("lesson {} created successfully for unit {}", id, context.unitId());
-          return new ExecutionResult<>(MessageResponseFactory.createPostResponse(id), ExecutionStatus.SUCCESSFUL);
-        } else {
-          throw new Exception("Something went wrong, unable to create lesson. Try Again!");
-        }
+    if (newLesson.isValid()) {
+      if (newLesson.save()) {
+        LOGGER.info("lesson {} created successfully for unit {}", newLesson.getId().toString(), context.unitId());
+        return new ExecutionResult<>(MessageResponseFactory.createPostResponse(newLesson.getId().toString(),
+                EventBuilderFactory.getCreateLessonEventBuilder(newLesson.getId().toString())), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.error("Error while creating lesson");
-        if (newLesson.hasErrors()) {
-          Map<String, String> errMap = newLesson.errors();
-          JsonObject errors = new JsonObject();
-          errMap.forEach(errors::put);
-          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
-        } else {
-          return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while creating lesson"), ExecutionStatus.FAILED);
-        }
+        LOGGER.debug("error while saving new lesson");
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
-    } catch (Throwable t) {
-      LOGGER.error("Exception while creating lesson", t);
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(t.getMessage()), ExecutionStatus.FAILED);
+    } else {
+      LOGGER.error("validation errors in new lesson");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
@@ -182,4 +139,26 @@ public class CreateLessonHandler implements DBHandler {
     return false;
   }
 
+  private JsonObject validateFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    AJEntityLesson.INSERT_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
+            .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject validateNullFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    AJEntityLesson.NOTNULL_FIELDS.stream()
+            .filter(notNullField -> (input.getValue(notNullField) == null || input.getValue(notNullField).toString().isEmpty()))
+            .forEach(notNullField -> output.put(notNullField, "Field should not be empty or null"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.newLesson.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
+  }
 }

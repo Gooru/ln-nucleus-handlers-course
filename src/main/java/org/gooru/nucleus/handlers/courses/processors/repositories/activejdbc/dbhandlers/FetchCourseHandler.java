@@ -1,8 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Arrays;
-
-import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -35,8 +32,8 @@ public class FetchCourseHandler implements DBHandler {
               ExecutionStatus.FAILED);
     }
     
-    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
-      LOGGER.warn("Anonymous user attempting to fetch course");
+    if (context.userId() == null || context.userId().isEmpty()) {
+      LOGGER.warn("Invalid user id to fetch course");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
@@ -63,7 +60,7 @@ public class FetchCourseHandler implements DBHandler {
       LOGGER.debug("number of units found {}", units.size());
       if (units.size() > 0) {
         body.put("unitSummary", new JsonArray(
-                new JsonFormatterBuilder().buildSimpleJsonFormatter(false, Arrays.asList(AJEntityUnit.UNIT_SUMMARY_FIELDS)).toJson(units)));
+                new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityUnit.UNIT_SUMMARY_FIELDS).toJson(units)));
       }
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(body), ExecutionStatus.SUCCESSFUL);
     } else {

@@ -1,12 +1,8 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
@@ -14,10 +10,10 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.E
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.LazyList;
-import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class UpdateUnitHandler implements DBHandler {
@@ -55,78 +51,39 @@ public class UpdateUnitHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
+    JsonObject validateErrors = validateFields();
+    if (validateErrors != null && !validateErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(validateErrors), ExecutionResult.ExecutionStatus.FAILED);
+    }
+
+    JsonObject notNullErrors = validateNullFields();
+    if (notNullErrors != null && !notNullErrors.isEmpty()) {
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(notNullErrors), ExecutionResult.ExecutionStatus.FAILED);
+    }
+
     LOGGER.debug("checkSanity() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    unitToUpdate = new AJEntityUnit();
-    try {
-      List<String> invalidFields = new ArrayList<>();
-      List<String> notNullFields = new ArrayList<>();
 
-      String mapValue;
-      for (Map.Entry<String, Object> entry : context.request()) {
-        mapValue = (entry.getValue() != null) ? entry.getValue().toString() : null;
-        if (mapValue != null && !mapValue.isEmpty()) {
-          if (AJEntityUnit.UPDATABLE_FIELDS.contains(entry.getKey())) {
-            if (AJEntityUnit.JSON_FIELDS.contains(entry.getKey())) {
-              PGobject jsonbField = new PGobject();
-              jsonbField.setType("jsonb");
-              jsonbField.setValue(mapValue);
-              unitToUpdate.set(entry.getKey(), jsonbField);
-            } else {
-              unitToUpdate.set(entry.getKey(), entry.getValue());
-            }
-          } else {
-            invalidFields.add(entry.getKey());
-          }
-        } else {
-          if (AJEntityUnit.NOTNULL_FIELDS.contains(entry.getKey())) {
-            notNullFields.add(entry.getKey());
-          }
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
+    if (!ajEntityCourse.isEmpty()) {
+      // check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
       }
-
-      if (invalidFields.size() > 0) {
-        LOGGER.error("not updatable fields present in request : {}", String.join(",", invalidFields));
-        return new ExecutionResult<>(
-                MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("invalidFields", String.join(",", invalidFields))),
-                ExecutionStatus.FAILED);
-      }
-
-      if (notNullFields.size() > 0) {
-        LOGGER.error("trying to update not null fields to null value : {}", String.join(",", notNullFields));
-        return new ExecutionResult<>(
-                MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("notnullFields", String.join(",", notNullFields))),
-                ExecutionStatus.FAILED);
-      }
-    } catch (SQLException e) {
-      LOGGER.error("Exception while updating unit", e.getMessage());
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionStatus.FAILED);
-    }
-
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
-    if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.warn("course {} is deleted. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted"), ExecutionStatus.FAILED);
-      }
-      
-    //TODO: check whether user is either owner or collaborator of course
     } else {
       LOGGER.warn("course {} not found, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
-    if (!ajEntityUnit.isEmpty()) {
-      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
-        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
+    if (ajEntityUnit.isEmpty()) {
       LOGGER.warn("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
@@ -136,27 +93,55 @@ public class UpdateUnitHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    unitToUpdate.setId(context.unitId());
-    unitToUpdate.setString(AJEntityUnit.MODIFIER_ID, context.userId());
+    unitToUpdate = new AJEntityUnit();
+    unitToUpdate.setAllFromJson(context.request());
+    unitToUpdate.setUnitId(context.unitId());
+    unitToUpdate.setModifierId(context.userId());
 
-    if (unitToUpdate.save()) {
-      LOGGER.info("unit {} updated successfully", context.unitId());
-      return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.unitId()), ExecutionStatus.SUCCESSFUL);
-    } else {
-      LOGGER.error("error in updating unit");
-      if (unitToUpdate.hasErrors()) {
-        Map<String, String> errMap = unitToUpdate.errors();
-        JsonObject errors = new JsonObject();
-        errMap.forEach(errors::put);
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+    if (unitToUpdate.hasErrors()) {
+      LOGGER.debug("updating unit has errors");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
+
+    if (unitToUpdate.isValid()) {
+      if (unitToUpdate.save()) {
+        LOGGER.info("unit {} updated successfully", context.unitId());
+        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateUnitEventBuilder(context.unitId())), ExecutionStatus.SUCCESSFUL);
       } else {
+        LOGGER.debug("error while saving udpated unit");
         return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating unit"), ExecutionStatus.FAILED);
       }
+    } else {
+      LOGGER.debug("validation error while updating unit");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+
+  private JsonObject validateFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    AJEntityUnit.UPDATE_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
+            .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject validateNullFields() {
+    JsonObject input = context.request();
+    JsonObject output = new JsonObject();
+    input.fieldNames().stream()
+            .filter(key -> AJEntityUnit.NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+            .forEach(key -> output.put(key, "Field should not be empty or null"));
+    return output.isEmpty() ? null : output;
+  }
+
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.unitToUpdate.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
   }
 }

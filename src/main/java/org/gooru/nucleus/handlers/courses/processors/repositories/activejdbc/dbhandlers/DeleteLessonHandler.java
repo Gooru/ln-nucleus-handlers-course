@@ -1,26 +1,29 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
+import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
-import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class DeleteLessonHandler implements DBHandler {
 
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(DeleteLessonHandler.class);
+  private AJEntityLesson lessonToDelete;
 
   public DeleteLessonHandler(ProcessorContext context) {
     this.context = context;
@@ -45,7 +48,7 @@ public class DeleteLessonHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id provided to delete lesson"),
               ExecutionStatus.FAILED);
     }
-    
+
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
       LOGGER.warn("Anonymous user attempting to delete lesson");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -58,38 +61,28 @@ public class DeleteLessonHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
 
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
     if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.warn("course {} is deleted, hence can't delete lesson. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which you are trying to delete lesson"),
-                ExecutionStatus.FAILED);
+      // check whether user is either owner or collaborator
+      if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+        if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
+          LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
+          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
+        }
       }
-
-      // TODO: Check whether user is owner or collaborator on course
     } else {
       LOGGER.warn("course {} not found to delete lesson, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
-    if (!ajEntityUnit.isEmpty()) {
-      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
-        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
+    if (ajEntityUnit.isEmpty()) {
       LOGGER.warn("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId());
-    if (!ajEntityLesson.isEmpty()) {
-      if (ajEntityLesson.get(0).getBoolean(AJEntityLesson.IS_DELETED)) {
-        LOGGER.warn("Lesson {} is deleted, aborting.", context.lessonId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Lesson is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId(), context.unitId(), context.courseId(), false);
+    if (ajEntityLesson.isEmpty()) {
       LOGGER.warn("Lesson {} not found, aborting", context.lessonId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
@@ -100,31 +93,37 @@ public class DeleteLessonHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    AJEntityLesson lessonToDelete = new AJEntityLesson();
-    lessonToDelete.setId(context.lessonId());
-    lessonToDelete.setString(AJEntityLesson.IS_DELETED, true);
-    lessonToDelete.setString(AJEntityLesson.MODIFIER_ID, context.userId());
+    lessonToDelete = new AJEntityLesson();
+    lessonToDelete.setLessonId(context.lessonId());
+    lessonToDelete.setBoolean(AJEntityLesson.IS_DELETED, true);
+    lessonToDelete.setModifierId(context.userId());
+
+    if (lessonToDelete.hasErrors()) {
+      LOGGER.debug("deleting lesson has errors");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
+    }
 
     if (lessonToDelete.save()) {
-      LOGGER.info("lesson marked as deleted successfully");
-      // TODO: Delete everything underneath this lesson i.e.
-      // Collections/Assessments
-      return new ExecutionResult<>(MessageResponseFactory.createDeleteResponse(), ExecutionStatus.SUCCESSFUL);
+      LOGGER.info("lesson {} marked as deleted successfully", context.lessonId());
+
+      AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true, context.userId(), context.lessonId());
+      AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true, context.userId(), context.lessonId());
+
+      return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getDeleteLessonEventBuilder(lessonToDelete.getId().toString())), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.error("error in delete lesson");
-      if (lessonToDelete.hasErrors()) {
-        Map<String, String> errMap = lessonToDelete.errors();
-        JsonObject errors = new JsonObject();
-        errMap.forEach(errors::put);
-        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
-      } else {
-        return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error in deleting lesson"), ExecutionStatus.FAILED);
-      }
+      LOGGER.debug("error while deleting lesson");
+      return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
 
   @Override
   public boolean handlerReadOnly() {
     return false;
+  }
+
+  private JsonObject getModelErrors() {
+    JsonObject errors = new JsonObject();
+    this.lessonToDelete.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+    return errors;
   }
 }

@@ -1,7 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -14,6 +14,7 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class FetchLessonHandler implements DBHandler {
@@ -44,9 +45,9 @@ public class FetchLessonHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id provided to fetch lesson"),
               ExecutionStatus.FAILED);
     }
-    
-    if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
-      LOGGER.warn("Anonymous user attempting to fetch lesson");
+
+    if (context.userId() == null || context.userId().isEmpty()) {
+      LOGGER.warn("Invalid user id to fetch lesson");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
@@ -57,38 +58,20 @@ public class FetchLessonHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
 
-    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId());
-    if (!ajEntityCourse.isEmpty()) {
-      if (ajEntityCourse.get(0).getBoolean(AJEntityCourse.IS_DELETED)) {
-        LOGGER.warn("course {} is deleted, hence can't fetch lesson. Aborting", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Course is deleted for which you are trying to fetch lesson"),
-                ExecutionStatus.FAILED);
-      }
-
-      // TODO: check whether user is owner or collaborator
-    } else {
+    LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
+    if (ajEntityCourse.isEmpty()) {
       LOGGER.warn("course {} not found to fetch lesson, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId());
-    if (!ajEntityUnit.isEmpty()) {
-      if (ajEntityUnit.get(0).getBoolean(AJEntityUnit.IS_DELETED)) {
-        LOGGER.warn("unit {} is deleted. Aborting", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Unit is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
+    if (ajEntityUnit.isEmpty()) {
       LOGGER.warn("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId());
-    if (!ajEntityLesson.isEmpty()) {
-      if (ajEntityLesson.get(0).getBoolean(AJEntityLesson.IS_DELETED)) {
-        LOGGER.warn("Lesson {} is deleted, aborting.", context.lessonId());
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Lesson is deleted"), ExecutionStatus.FAILED);
-      }
-    } else {
+    LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId(), context.unitId(), context.courseId(), false);
+    if (ajEntityLesson.isEmpty()) {
       LOGGER.warn("Lesson {} not found, aborting", context.lessonId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
@@ -106,7 +89,15 @@ public class FetchLessonHandler implements DBHandler {
       LOGGER.info("lesson {} found, packing into JSON", context.unitId());
       resultBody =
               new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.ALL_FIELDS).toJson(ajEntityLesson.get(0)));
-      // TODO: fetch C/A summary and bundle into response
+      // fetch C/A summary and bundle into response
+      // TODO: include order by sequence_id in query
+      LazyList<AJEntityCollection> collectionSummary = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY, context.lessonId(), false);
+      LOGGER.debug("number of collections found for lesson {} : {}", context.lessonId(), collectionSummary.size());
+      if (collectionSummary.size() > 0) {
+        resultBody.put("collectionSummary", new JsonArray(
+                new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS).toJson(collectionSummary)));
+      }
+      
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody), ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.error("lesson {} not found", context.lessonId());
