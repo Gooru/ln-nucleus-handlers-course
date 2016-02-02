@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -113,7 +114,7 @@ public class UpdateLessonHandler implements DBHandler {
     if (lessonToUpdate.isValid()) {
       if (lessonToUpdate.save()) {
         LOGGER.info("lesson {} updated successfully", context.lessonId());
-        return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.lessonId()), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateLessonEventBuilder(context.lessonId())), ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.debug("error while saving udpated lesson");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);

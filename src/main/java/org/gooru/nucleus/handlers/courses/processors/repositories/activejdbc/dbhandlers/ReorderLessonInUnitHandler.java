@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -116,7 +117,7 @@ public class ReorderLessonInUnitHandler implements DBHandler {
               ExecutionResult.ExecutionStatus.FAILED);
     }
     LOGGER.info("reordered lessons in unit {}", context.unitId());
-    return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.unitId()), ExecutionStatus.SUCCESSFUL);
+    return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getReorderLessonEventBuilder(context.unitId())), ExecutionStatus.SUCCESSFUL);
   }
 
   @Override

@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -173,7 +174,7 @@ public class MoveLessonToUnitHandler implements DBHandler {
               "lesson_id = ?::uuid", context.courseId(), context.unitId(), targetCourseOwner, context.userId(), null, lessonToUpdate.getId());
       AJEntityContent.update("course_id = ?::uuid, unit_id = ?::uuid, modifier_id = ?::uuid", "lesson_id = ?::uuid", context.courseId(),
               context.unitId(), context.userId(), lessonToUpdate.getId());
-      return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
+      return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getMoveLessonEventBuilder(context.unitId())), ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.debug("error while moving lesson to course and unit");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);

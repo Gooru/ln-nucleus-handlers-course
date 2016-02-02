@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -200,7 +201,7 @@ public class MoveCollectionToLessonHandler implements DBHandler {
       LOGGER.info("collection is moved to course");
       AJEntityContent.update("course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, modifier_id = ?::uuid", "collection_id = ?::uuid", context.courseId(),
               context.unitId(), context.lessonId(), context.userId(), collectionToUpdate.getId());
-      return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.courseId()), ExecutionStatus.SUCCESSFUL);
+      return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getMoveCollectionEventBuilder(context.lessonId())), ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.debug("error while moving collection to lesson");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);

@@ -25,13 +25,15 @@ DONE
 * While creating lesson, verify the unit is associated with proper course
 * While creating Unit and Lesson, fetch owner of course and set as owner of Unit/Lesson
 * Update sequence_id in Move APIs
+* Authorization for all APIs
+* input validation for move APIs
+
 
 TODO
 ----
 * Generalize the sanity check, validate request code to be reused (this is not needed now) - Low Priority
 * Validate taxonomy from request data
-* Authorization for all APIs
-* input validation for move and reorder APIs
+* input validation for reorder APIs
 
  
 

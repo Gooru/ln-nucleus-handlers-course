@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
@@ -105,7 +106,7 @@ public class UpdateUnitHandler implements DBHandler {
     if (unitToUpdate.isValid()) {
       if (unitToUpdate.save()) {
         LOGGER.info("unit {} updated successfully", context.unitId());
-        return new ExecutionResult<>(MessageResponseFactory.createPutResponse(context.unitId()), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateUnitEventBuilder(context.unitId())), ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.debug("error while saving udpated unit");
         return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating unit"), ExecutionStatus.FAILED);

@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -90,7 +91,7 @@ public class DeleteCourseHandler implements DBHandler {
       AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid", true, context.userId(), context.courseId());
       AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid", true, context.userId(), context.courseId());
 
-      return new ExecutionResult<>(MessageResponseFactory.createDeleteResponse(), ExecutionStatus.SUCCESSFUL);
+      return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getDeleteCourseEventBuilder(courseToDelete.getId().toString())), ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.debug("error while deleting course");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);

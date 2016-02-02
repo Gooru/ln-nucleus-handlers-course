@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -112,7 +113,7 @@ public class CreateUnitHandler implements DBHandler {
     if (newUnit.isValid()) {
       if (newUnit.save()) {
         LOGGER.info("unit {} created successfully for course {}", newUnit.getId().toString(), context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createPostResponse(newUnit.getId().toString()), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory.createPostResponse(newUnit.getId().toString(), EventBuilderFactory.getCreateUnitEventBuilder(newUnit.getId().toString())), ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.debug("error in saving unit");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
