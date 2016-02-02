@@ -66,9 +66,6 @@ public class AJEntityLesson extends Model {
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 
-  public static final String REORDER_PAYLOAD_KEY = "order";
-  public static final String ID = "id";
-  
   public void setModifierId(String modifierId) {
     setPGObject(MODIFIER_ID, UUID_TYPE, modifierId);
   }

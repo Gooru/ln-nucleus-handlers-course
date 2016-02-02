@@ -38,9 +38,6 @@ public class AJEntityUnit extends Model {
   public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
   
-  public static final String ID = "id";
-  public static final String REORDER_PAYLOAD_KEY = "order";
-
   public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE, BIG_IDEAS, ESSENTIAL_QUESTIONS);
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> JSON_OBJECT_FIELDS = Arrays.asList(METADATA, TAXONOMY);

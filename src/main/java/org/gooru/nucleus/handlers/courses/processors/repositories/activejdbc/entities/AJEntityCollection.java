@@ -26,8 +26,6 @@ public class AJEntityCollection extends Model {
   public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
 
-  public static final String REORDER_PAYLOAD_KEY = "order";
-  
   public static final List<String> COLLECTION_SUMMARY_FIELDS = Arrays.asList(ID, TITLE, SEQUENCE_ID);
 
   public static final String SELECT_COLLECTION_SUMMARY = "SELECT id, title, sequence_id FROM collection WHERE lesson_id = ?::uuid AND is_deleted = ? order by sequence_id asc";

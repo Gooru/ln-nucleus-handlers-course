@@ -27,13 +27,13 @@ DONE
 * Update sequence_id in Move APIs
 * Authorization for all APIs
 * input validation for move APIs
-
+* input validation for reorder APIs
 
 TODO
 ----
 * Generalize the sanity check, validate request code to be reused (this is not needed now) - Low Priority
 * Validate taxonomy from request data
-* input validation for reorder APIs
+
 
  
 
