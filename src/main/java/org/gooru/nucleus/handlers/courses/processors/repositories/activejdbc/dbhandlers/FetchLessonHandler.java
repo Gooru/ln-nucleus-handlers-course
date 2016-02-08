@@ -89,9 +89,8 @@ public class FetchLessonHandler implements DBHandler {
       LOGGER.info("lesson {} found, packing into JSON", context.unitId());
       resultBody =
               new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.ALL_FIELDS).toJson(ajEntityLesson.get(0)));
-      // fetch C/A summary and bundle into response
-      // TODO: include order by sequence_id in query
-      LazyList<AJEntityCollection> collectionSummary = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY, context.lessonId(), false);
+
+      LazyList<AJEntityCollection> collectionSummary = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY, context.lessonId(), context.unitId(), context.courseId(), false);
       LOGGER.debug("number of collections found for lesson {} : {}", context.lessonId(), collectionSummary.size());
       if (collectionSummary.size() > 0) {
         resultBody.put("collectionSummary", new JsonArray(

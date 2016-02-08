@@ -64,7 +64,7 @@ public class CreateCourseHandler implements DBHandler {
     course.setModifierId(context.userId());
 
     if (course.hasErrors()) {
-      LOGGER.debug("errors in course creation");
+      LOGGER.warn("errors in course creation");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -73,11 +73,11 @@ public class CreateCourseHandler implements DBHandler {
         LOGGER.info("course created successfully : {}", course.getId().toString());
         return new ExecutionResult<>(MessageResponseFactory.createPostResponse(course.getId().toString()), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving course");
+        LOGGER.error("error while saving course");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.error("Error while creating course");
+      LOGGER.warn("validation error while creating course");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

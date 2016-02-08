@@ -134,13 +134,13 @@ public class MoveLessonToUnitHandler implements DBHandler {
    lessonToUpdate = lessons.get(0);
 
     if (!lessonToUpdate.getString(AJEntityLesson.UNIT_ID).equalsIgnoreCase(sourceUnitId)) {
-      LOGGER.debug("Lesson is not associated with source unit");
+      LOGGER.warn("Lesson is not associated with source unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Lesson is not associated with source unit"),
               ExecutionStatus.FAILED);
     }
 
     if (!lessonToUpdate.getString(AJEntityLesson.COURSE_ID).equalsIgnoreCase(sourceCourseId)) {
-      LOGGER.debug("lesson is not associated with source course");
+      LOGGER.warn("lesson is not associated with source course");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Lesson is not associated with source course"),
               ExecutionStatus.FAILED);
     }
@@ -164,7 +164,7 @@ public class MoveLessonToUnitHandler implements DBHandler {
     lessonToUpdate.set(AJEntityLesson.SEQUENCE_ID, sequenceId);
     
     if (lessonToUpdate.hasErrors()) {
-      LOGGER.debug("moving lesson has errors");
+      LOGGER.warn("moving lesson has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -176,7 +176,7 @@ public class MoveLessonToUnitHandler implements DBHandler {
               context.unitId(), context.userId(), lessonToUpdate.getId());
       return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getMoveLessonEventBuilder(context.unitId())), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.debug("error while moving lesson to course and unit");
+      LOGGER.error("error while moving lesson to course and unit");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

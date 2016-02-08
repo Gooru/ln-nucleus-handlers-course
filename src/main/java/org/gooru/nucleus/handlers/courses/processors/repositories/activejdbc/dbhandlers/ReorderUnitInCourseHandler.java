@@ -111,6 +111,7 @@ public class ReorderUnitInCourseHandler implements DBHandler {
 
       Base.executeBatch(ps);
     } catch (DBException | ClassCastException e) {
+      LOGGER.error("incorrect payload data type", e);
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Incorrect payload data types"),
               ExecutionResult.ExecutionStatus.FAILED);
     }

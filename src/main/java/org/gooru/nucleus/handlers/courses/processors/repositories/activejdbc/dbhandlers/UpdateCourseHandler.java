@@ -69,7 +69,7 @@ public class UpdateCourseHandler implements DBHandler {
         }
       }
     } else {
-      LOGGER.info("course {} not found to update, aborting", context.courseId());
+      LOGGER.warn("course {} not found to update, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
@@ -85,7 +85,7 @@ public class UpdateCourseHandler implements DBHandler {
     courseToUpdate.setModifierId(context.userId());
 
     if (courseToUpdate.hasErrors()) {
-      LOGGER.debug("updating course has errors");
+      LOGGER.warn("updating course has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -94,11 +94,11 @@ public class UpdateCourseHandler implements DBHandler {
         LOGGER.info("course {} updated successfully", context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving udpated course");
+        LOGGER.error("error while saving udpated course");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.debug("validation error while updating course");
+      LOGGER.warn("validation error while updating course");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

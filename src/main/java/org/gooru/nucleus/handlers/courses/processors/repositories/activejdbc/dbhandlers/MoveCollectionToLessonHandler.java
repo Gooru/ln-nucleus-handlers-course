@@ -81,19 +81,19 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     
     LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, targetCourseId, false);
     if (targetCourses.isEmpty()) {
-      LOGGER.debug("target course is not found in database");
+      LOGGER.warn("target course is not found in database");
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target course is not found"), ExecutionStatus.FAILED);
     }
     
     LazyList<AJEntityUnit> targetUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, targetUnitId, targetCourseId, false);
     if (targetUnits.isEmpty()) {
-      LOGGER.debug("target unit is not found in database");
+      LOGGER.warn("target unit is not found in database");
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target unit is not found"), ExecutionStatus.FAILED);
     }
     
     LazyList<AJEntityLesson> targetLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, targetLessonId, targetUnitId, targetCourseId, false);
     if (targetLessons.isEmpty()) {
-      LOGGER.debug("target lesson is not found in database");
+      LOGGER.warn("target lesson is not found in database");
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target lesson is not found"), ExecutionStatus.FAILED);
     }
     
@@ -118,13 +118,23 @@ public class MoveCollectionToLessonHandler implements DBHandler {
       
       //Check whether source course id is also exists in db
       if(!sourceCourseId.equalsIgnoreCase(collectionToUpdate.getString(AJEntityCollection.COURSE_ID))) {
-        LOGGER.debug("collection is not associated with source course");
+        LOGGER.warn("collection is not associated with source course");
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Collection is not associated with source course"), ExecutionStatus.FAILED);
+      }
+      
+      if(!sourceUnitId.equalsIgnoreCase(collectionToUpdate.getString(AJEntityCollection.UNIT_ID))) {
+        LOGGER.warn("collection is not associated with source unit");
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Collection is not associated with source unit"), ExecutionStatus.FAILED);
+      }
+      
+      if(!sourceLessonId.equalsIgnoreCase(collectionToUpdate.getString(AJEntityCollection.LESSON_ID))) {
+        LOGGER.warn("collection is not associated with source lesson");
+        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("Collection is not associated with source lesson"), ExecutionStatus.FAILED);
       }
       
       LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, sourceCourseId);
       if (sourceCourses.isEmpty()) {
-        LOGGER.debug("source course is not found in database");
+        LOGGER.warn("source course is not found in database");
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("source course is not found"), ExecutionStatus.FAILED);
       }
       
@@ -146,27 +156,27 @@ public class MoveCollectionToLessonHandler implements DBHandler {
       
       LazyList<AJEntityUnit> sourcetUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, sourceUnitId, sourceCourseId, false);
       if (sourcetUnits.isEmpty()) {
-        LOGGER.debug("source unit is not found in database");
+        LOGGER.warn("source unit is not found in database");
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("source unit is not found"), ExecutionStatus.FAILED);
       }
       
       LazyList<AJEntityLesson> sourceLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, sourceLessonId, sourceUnitId, sourceCourseId, false);
       if (sourceLessons.isEmpty()) {
-        LOGGER.debug("source lesson is not found in database");
+        LOGGER.warn("source lesson is not found in database");
         return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("source lesson is not found"), ExecutionStatus.FAILED);
       }
     } else {
       //if the course_id is null in request, then its not associated with CUL
       //As the collection is not part of CUL, check whether the user is owner of collection to move it
       if (!collectionToUpdate.getString("owner_id").equalsIgnoreCase(context.userId())) {
-        LOGGER.debug("user is not owner of collection to move");
+        LOGGER.warn("user is not owner of collection to move");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner of course"), ExecutionStatus.FAILED);
       }
       
       //Also check whether the user is either owner or collaborator on course
       if (!targetCourses.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
         if (!new JsonArray(targetCourses.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
-          LOGGER.debug("user is not owner or collaborator of target course to move collection");
+          LOGGER.warn("user is not owner or collaborator of target course to move collection");
           return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner or collaborator of target course"), ExecutionStatus.FAILED);
         }
       }
@@ -193,7 +203,7 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     collectionToUpdate.set(AJEntityCollection.SEQUENCE_ID, sequenceId);
     
     if(collectionToUpdate.hasErrors()) {
-      LOGGER.debug("moving collection has errors");
+      LOGGER.warn("moving collection has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
     
@@ -203,7 +213,7 @@ public class MoveCollectionToLessonHandler implements DBHandler {
               context.unitId(), context.lessonId(), context.userId(), collectionToUpdate.getId());
       return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getMoveCollectionEventBuilder(context.lessonId())), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.debug("error while moving collection to lesson");
+      LOGGER.error("error while moving collection to lesson");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

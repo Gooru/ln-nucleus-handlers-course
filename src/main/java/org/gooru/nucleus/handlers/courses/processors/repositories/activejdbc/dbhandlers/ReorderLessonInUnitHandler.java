@@ -46,7 +46,7 @@ public class ReorderLessonInUnitHandler implements DBHandler {
     }
 
     if (context.unitId() == null || context.unitId().isEmpty()) {
-      LOGGER.info("invalid unit id to reorder lessons");
+      LOGGER.warn("invalid unit id to reorder lessons");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to reorder lessons"),
               ExecutionStatus.FAILED);
     }
@@ -123,6 +123,7 @@ public class ReorderLessonInUnitHandler implements DBHandler {
 
       Base.executeBatch(ps);
     } catch (DBException | ClassCastException e) {
+      LOGGER.error("incorrect payload data type", e);
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Incorrect payload data types"),
               ExecutionResult.ExecutionStatus.FAILED);
     }

@@ -115,7 +115,7 @@ public class CreateLessonHandler implements DBHandler {
     newLesson.set(AJEntityLesson.SEQUENCE_ID, sequenceId);
 
     if (newLesson.hasErrors()) {
-      LOGGER.debug("error in creating new lesson");
+      LOGGER.warn("error in creating new lesson");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -125,11 +125,11 @@ public class CreateLessonHandler implements DBHandler {
         return new ExecutionResult<>(MessageResponseFactory.createPostResponse(newLesson.getId().toString(),
                 EventBuilderFactory.getCreateLessonEventBuilder(newLesson.getId().toString())), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving new lesson");
+        LOGGER.error("error while saving new lesson");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.error("validation errors in new lesson");
+      LOGGER.warn("validation errors in creating new lesson");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

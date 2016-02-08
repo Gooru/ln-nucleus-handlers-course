@@ -107,7 +107,7 @@ public class UpdateLessonHandler implements DBHandler {
     lessonToUpdate.setModifierId(context.userId());
 
     if (lessonToUpdate.hasErrors()) {
-      LOGGER.debug("updating lesson has errors");
+      LOGGER.warn("updating lesson has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -116,11 +116,11 @@ public class UpdateLessonHandler implements DBHandler {
         LOGGER.info("lesson {} updated successfully", context.lessonId());
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateLessonEventBuilder(context.lessonId())), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving udpated lesson");
+        LOGGER.error("error while saving udpated lesson");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.debug("validation error while updating lesson");
+      LOGGER.warn("validation error while updating lesson");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

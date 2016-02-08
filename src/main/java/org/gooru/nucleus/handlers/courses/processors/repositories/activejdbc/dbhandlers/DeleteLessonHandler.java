@@ -99,7 +99,7 @@ public class DeleteLessonHandler implements DBHandler {
     lessonToDelete.setModifierId(context.userId());
 
     if (lessonToDelete.hasErrors()) {
-      LOGGER.debug("deleting lesson has errors");
+      LOGGER.warn("deleting lesson has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -111,7 +111,7 @@ public class DeleteLessonHandler implements DBHandler {
 
       return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getDeleteLessonEventBuilder(lessonToDelete.getId().toString())), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.debug("error while deleting lesson");
+      LOGGER.error("error while deleting lesson");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

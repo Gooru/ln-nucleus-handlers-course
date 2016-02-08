@@ -106,7 +106,7 @@ public class CreateUnitHandler implements DBHandler {
     newUnit.set(AJEntityUnit.SEQUENCE_ID, sequenceId);
 
     if (newUnit.hasErrors()) {
-      LOGGER.debug("error in creating new unit");
+      LOGGER.warn("error in creating new unit");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -115,11 +115,11 @@ public class CreateUnitHandler implements DBHandler {
         LOGGER.info("unit {} created successfully for course {}", newUnit.getId().toString(), context.courseId());
         return new ExecutionResult<>(MessageResponseFactory.createPostResponse(newUnit.getId().toString(), EventBuilderFactory.getCreateUnitEventBuilder(newUnit.getId().toString())), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error in saving unit");
+        LOGGER.error("error in saving unit");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.debug("validation error in saving unit");
+      LOGGER.warn("validation error in saving unit");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

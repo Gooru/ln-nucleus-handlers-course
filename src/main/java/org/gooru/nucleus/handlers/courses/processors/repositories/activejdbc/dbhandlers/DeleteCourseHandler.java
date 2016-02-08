@@ -78,7 +78,7 @@ public class DeleteCourseHandler implements DBHandler {
     courseToDelete.setBoolean(AJEntityCourse.IS_DELETED, true);
 
     if (courseToDelete.hasErrors()) {
-      LOGGER.debug("deleting course has errors");
+      LOGGER.warn("deleting course has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -93,7 +93,7 @@ public class DeleteCourseHandler implements DBHandler {
 
       return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getDeleteCourseEventBuilder(courseToDelete.getId().toString())), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.debug("error while deleting course");
+      LOGGER.error("error while deleting course");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
