@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-@Table("course_unit")
+@Table("unit")
 @IdName("unit_id")
 public class AJEntityUnit extends Model {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AJEntityUnit.class);
 
-  public static final String TABLE_UNIT = "course_unit";
+  public static final String TABLE_UNIT = "unit";
   public static final String UNIT_ID = "unit_id";
   public static final String COURSE_ID = "course_id";
   public static final String TITLE = "title";
@@ -38,7 +38,7 @@ public class AJEntityUnit extends Model {
   public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
   
-  public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE, BIG_IDEAS, ESSENTIAL_QUESTIONS);
+  public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> JSON_OBJECT_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> ALL_FIELDS = Arrays.asList(UNIT_ID, COURSE_ID, TITLE, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
@@ -56,16 +56,16 @@ public class AJEntityUnit extends Model {
   
   public static final String SELECT_UNIT =
           "SELECT course_id, unit_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_unit_id,"
-                  + " big_ideas, essential_questions, metadata, taxonomy, sequence_id, is_deleted FROM course_unit WHERE course_id = ?::uuid AND"
+                  + " big_ideas, essential_questions, metadata, taxonomy, sequence_id, is_deleted FROM unit WHERE course_id = ?::uuid AND"
                   + " unit_id = ?::uuid AND is_deleted = ?";
 
-  public static final String SELECT_UNIT_TO_VALIDATE = "SELECT unit_id, course_id FROM course_unit WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+  public static final String SELECT_UNIT_TO_VALIDATE = "SELECT unit_id, course_id FROM unit WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_UNIT_SUMMARY =
-          "SELECT unit_id, title, sequence_id FROM course_unit WHERE course_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
-  public static final String SELECT_UNIT_MAX_SEQUENCEID = "SELECT max(sequence_id) FROM course_unit WHERE course_id = ?::uuid";
-  public static final String SELECT_UNIT_OF_COURSE = "SELECT unit_id FROM course_unit WHERE course_id = ?::uuid AND is_deleted = ?";
+          "SELECT unit_id, title, sequence_id FROM unit WHERE course_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
+  public static final String SELECT_UNIT_MAX_SEQUENCEID = "SELECT max(sequence_id) FROM unit WHERE course_id = ?::uuid";
+  public static final String SELECT_UNIT_OF_COURSE = "SELECT unit_id FROM unit WHERE course_id = ?::uuid AND is_deleted = ?";
   public static final String REORDER_QUERY =
-          "UPDATE course_unit SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE unit_id = ?::uuid and course_id = ?::uuid and is_deleted = ?";
+          "UPDATE unit SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE unit_id = ?::uuid and course_id = ?::uuid and is_deleted = ?";
   
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
