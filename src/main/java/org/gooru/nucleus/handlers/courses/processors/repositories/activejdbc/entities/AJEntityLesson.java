@@ -41,7 +41,6 @@ public class AJEntityLesson extends Model {
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> ALL_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, TITLE, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID,
           OWNER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, METADATA, TAXONOMY, SEQUENCE_ID, IS_DELETED);
-  public static final List<String> UPDATABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
   public static final List<String> LESSON_SUMMARY_FIELDS = Arrays.asList(LESSON_ID, TITLE, SEQUENCE_ID);
 
   public static final String SELECT_LESSON_TO_VALIDATE =
@@ -57,10 +56,12 @@ public class AJEntityLesson extends Model {
   public static final String REORDER_QUERY =
           "UPDATE lesson SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   
-  public static final List<String> INSERT_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
+  public static final List<String> INSERTABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
+  public static final List<String> UPDATABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
+  /*public static final List<String> INSERT_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
           ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);
   public static final List<String> UPDATE_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
-          ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);
+          ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);*/
   public static final List<String> COLLECTION_MOVE_NOTNULL_FIELDS = Arrays.asList("collection_id");
   
   public static final String UUID_TYPE = "uuid";
