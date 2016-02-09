@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -9,8 +10,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonObject;
 
 public class CreateCourseHandler implements DBHandler {
 
@@ -27,7 +26,7 @@ public class CreateCourseHandler implements DBHandler {
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("invalid request received to create course");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to create course"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
@@ -98,8 +97,8 @@ public class CreateCourseHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     AJEntityCourse.NOTNULL_FIELDS.stream()
-            .filter(notNullField -> (input.getValue(notNullField) == null || input.getValue(notNullField).toString().isEmpty()))
-            .forEach(notNullField -> output.put(notNullField, "Field should not be empty or null"));
+                                 .filter(notNullField -> (input.getValue(notNullField) == null || input.getValue(notNullField).toString().isEmpty()))
+                                 .forEach(notNullField -> output.put(notNullField, "Field should not be empty or null"));
     return output.isEmpty() ? null : output;
   }
 

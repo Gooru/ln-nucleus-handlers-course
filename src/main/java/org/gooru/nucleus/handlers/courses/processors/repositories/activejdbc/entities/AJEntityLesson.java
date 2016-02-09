@@ -1,9 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
-
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.IdName;
 import org.javalite.activejdbc.annotations.Table;
@@ -11,15 +9,15 @@ import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 @Table("lesson")
 @IdName("lesson_id")
 public class AJEntityLesson extends Model {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AJEntityLesson.class);
-  
   public static final String TABLE_LESSON = "lesson";
   public static final String LESSON_ID = "lesson_id";
   public static final String UNIT_ID = "unit_id";
@@ -40,30 +38,30 @@ public class AJEntityLesson extends Model {
   public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> ALL_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, TITLE, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID,
-          OWNER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, METADATA, TAXONOMY, SEQUENCE_ID, IS_DELETED);
+    OWNER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, METADATA, TAXONOMY, SEQUENCE_ID, IS_DELETED);
   public static final List<String> LESSON_SUMMARY_FIELDS = Arrays.asList(LESSON_ID, TITLE, SEQUENCE_ID);
 
   public static final String SELECT_LESSON_TO_VALIDATE =
-          "SELECT lesson_id, unit_id, course_id FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+    "SELECT lesson_id, unit_id, course_id FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_LESSON =
-          "SELECT lesson_id, unit_id, course_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_lesson_id, "
-                  + "metadata, taxonomy, sequence_id, is_deleted FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid and is_deleted = ?";
+    "SELECT lesson_id, unit_id, course_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, "
+    + "original_lesson_id, metadata, taxonomy, sequence_id, is_deleted FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND "
+    + "course_id = ?::uuid and is_deleted = ?";
   public static final String SELECT_LESSON_SUMMARY =
-          "SELECT lesson_id, title, sequence_id FROM lesson WHERE unit_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
+    "SELECT lesson_id, title, sequence_id FROM lesson WHERE unit_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
   public static final String SELECT_LESSON_MAX_SEQUENCEID =
-          "SELECT max(sequence_id) FROM lesson WHERE course_id = ?::uuid AND unit_id = ?::uuid";
-  public static final String SELECT_LESSON_OF_COURSE = "SELECT lesson_id FROM lesson WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+    "SELECT max(sequence_id) FROM lesson WHERE course_id = ?::uuid AND unit_id = ?::uuid";
+  public static final String SELECT_LESSON_OF_COURSE = "SELECT lesson_id FROM lesson WHERE unit_id = ?::uuid AND course_id = ?::uuid AND"
+    + " is_deleted = ?";
   public static final String REORDER_QUERY =
-          "UPDATE lesson SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
+    "UPDATE lesson SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id"
+    + " = ?::uuid AND is_deleted = ?";
   
   public static final List<String> INSERTABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
   public static final List<String> UPDATABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
-  /*public static final List<String> INSERT_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
-          ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);
-  public static final List<String> UPDATE_FORBIDDEN_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, CREATED_AT, UPDATED_AT, OWNER_ID, CREATOR_ID, MODIFIER_ID,
-          ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, SEQUENCE_ID, IS_DELETED);*/
+
   public static final List<String> COLLECTION_MOVE_NOTNULL_FIELDS = Arrays.asList("collection_id");
-  
+
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 
@@ -74,19 +72,19 @@ public class AJEntityLesson extends Model {
   public void setCreatorId(String creatorId) {
     setPGObject(CREATOR_ID, UUID_TYPE, creatorId);
   }
-  
+
   public void setOwnerId(String ownerId) {
     setPGObject(OWNER_ID, UUID_TYPE, ownerId);
   }
-  
+
   public void setCourseId(String courseId) {
     setPGObject(COURSE_ID, UUID_TYPE, courseId);
   }
-  
+
   public void setUnitId(String unitId) {
     setPGObject(UNIT_ID, UUID_TYPE, unitId);
   }
-  
+
   public void setLessonId(String lessonId) {
     setPGObject(LESSON_ID, UUID_TYPE, lessonId);
   }
@@ -98,9 +96,9 @@ public class AJEntityLesson extends Model {
     input.getMap().forEach((s, o) -> {
       // Note that special UUID cases for modifier and creator should be handled internally and not via map, so we do not care
       if (o instanceof JsonObject) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonObject) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else if (o instanceof JsonArray) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonArray) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else {
         this.set(s, o);
       }

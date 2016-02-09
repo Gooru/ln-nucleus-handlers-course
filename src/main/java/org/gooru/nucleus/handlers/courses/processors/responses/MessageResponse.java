@@ -155,10 +155,8 @@ public class MessageResponse {
     private JsonObject buildErrorResponse() {
       JsonObject result = new JsonObject().put(MessageConstants.MSG_OP_STATUS, MessageConstants.MSG_OP_STATUS_ERROR);
       result.put(MessageConstants.RESP_CONTAINER_MBUS,
-        new JsonObject()
-          .put(MessageConstants.MSG_HTTP_STATUS, HttpConstants.HttpStatus.ERROR.getCode())
-          .put(MessageConstants.MSG_HTTP_BODY, new JsonObject().put(MessageConstants.MSG_OP_STATUS_ERROR, new JsonObject()))
-      );
+        new JsonObject().put(MessageConstants.MSG_HTTP_STATUS, HttpConstants.HttpStatus.ERROR.getCode())
+                        .put(MessageConstants.MSG_HTTP_BODY, new JsonObject().put(MessageConstants.MSG_OP_STATUS_ERROR, new JsonObject())));
       return result;
     }
 

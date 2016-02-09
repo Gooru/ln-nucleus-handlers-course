@@ -53,17 +53,16 @@ public class TransactionExecutor {
       return executionResult;
     } catch (Throwable e) {
       Base.rollbackTransaction();
-      LOGGER.error("Caught exeption, need to rollback and abort", e);
+      LOGGER.error("Caught exception, need to rollback and abort", e);
       // Most probably we do not know what to do with this, so send internal error
-      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()),
-        ExecutionResult.ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse(e.getMessage()), ExecutionResult.ExecutionStatus.FAILED);
     } finally {
       if (handler.handlerReadOnly()) {
         // restore the settings
         try {
           Base.connection().setReadOnly(false);
         } catch (SQLException e) {
-          LOGGER.error("Exception while marking connetion to be read/write", e);
+          LOGGER.error("Exception while marking connection to be read/write", e);
         }
       }
       Base.close();

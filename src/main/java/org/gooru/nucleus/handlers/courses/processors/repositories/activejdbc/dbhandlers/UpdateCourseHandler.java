@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -11,9 +13,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class UpdateCourseHandler implements DBHandler {
 
@@ -35,7 +34,7 @@ public class UpdateCourseHandler implements DBHandler {
     if (context.request() == null || context.request().isEmpty()) {
       LOGGER.warn("invalid data provided to update course {}", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid data provided to update course"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
@@ -92,9 +91,11 @@ public class UpdateCourseHandler implements DBHandler {
     if (courseToUpdate.isValid()) {
       if (courseToUpdate.save()) {
         LOGGER.info("course {} updated successfully", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(
+          MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())),
+          ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.error("error while saving udpated course");
+        LOGGER.error("error while saving updated course");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {
@@ -119,8 +120,8 @@ public class UpdateCourseHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     input.fieldNames().stream()
-            .filter(key -> AJEntityCourse.NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
-            .forEach(key -> output.put(key, "Field should not be empty or null"));
+         .filter(key -> AJEntityCourse.NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+         .forEach(key -> output.put(key, "Field should not be empty or null"));
     return output.isEmpty() ? null : output;
   }
 

@@ -1,21 +1,20 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
-
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 @Table("course")
 public class AJEntityCourse extends Model {
-  
+
   private static final Logger LOGGER = LoggerFactory.getLogger(AJEntityCourse.class);
 
   public static final String TABLE_COURSE = "course";
@@ -42,25 +41,27 @@ public class AJEntityCourse extends Model {
   public static final List<String> JSON_OBJECT_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> JSON_ARRAY_FIELDS = Arrays.asList(AUDIENCE, COLLABORATOR);
   public static final List<String> ALL_FIELDS = Arrays.asList(ID, TITLE, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID, ORIGINAL_COURSE_ID,
-          PUBLISH_DATE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, IS_DELETED, CREATED_AT, UPDATED_AT);
+    PUBLISH_DATE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, IS_DELETED, CREATED_AT, UPDATED_AT);
 
   public static final List<String> INSERTABLE_FIELDS =
-          Arrays.asList(TITLE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE);
+    Arrays.asList(TITLE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE);
   public static final List<String> UPDATABLE_FIELDS =
-          Arrays.asList(TITLE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE);
+    Arrays.asList(TITLE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE);
+
   public static final List<String> COLLABORATOR_FIELD = Arrays.asList(COLLABORATOR);
   public static final List<String> UNIT_MOVE_NOTNULL_FIELDS = Arrays.asList("course_id", "unit_id");
 
   public static final String SELECT_COLLABORATOR = "SELECT collaborator FROM course WHERE id = ?::uuid";
   //TODO: update it to include is_deleted
-  public static final String SELECT_COURSE_TO_VALIDATE = "SELECT id, owner_id, publish_date, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ?";
+  public static final String SELECT_COURSE_TO_VALIDATE =
+    "SELECT id, owner_id, publish_date, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_COURSE =
-          "SELECT id, title, created_at, updated_at, owner_id, creator_id, original_creator_id, original_course_id, publish_date, thumbnail, audience,"
-                  + " metadata, taxonomy, collaborator, visible_on_profile, is_deleted FROM course WHERE id = ?::uuid AND is_deleted = ?";
-  
+    "SELECT id, title, created_at, updated_at, owner_id, creator_id, original_creator_id, original_course_id, publish_date, thumbnail, audience,"
+      + " metadata, taxonomy, collaborator, visible_on_profile, is_deleted FROM course WHERE id = ?::uuid AND is_deleted = ?";
+
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
-  
+
   public void setModifierId(String modifierId) {
     setPGObject(MODIFIER_ID, UUID_TYPE, modifierId);
   }
@@ -68,15 +69,15 @@ public class AJEntityCourse extends Model {
   public void setCreatorId(String creatorId) {
     setPGObject(CREATOR_ID, UUID_TYPE, creatorId);
   }
-  
+
   public void setOwnerId(String ownerId) {
     setPGObject(OWNER_ID, UUID_TYPE, ownerId);
   }
-  
+
   public void setCourseId(String courseId) {
     setPGObject(ID, UUID_TYPE, courseId);
   }
-  
+
   public void setCollaborator(String collaborator) {
     setPGObject(COLLABORATOR, JSONB_TYPE, collaborator);
   }
@@ -88,9 +89,9 @@ public class AJEntityCourse extends Model {
     input.getMap().forEach((s, o) -> {
       // Note that special UUID cases for modifier and creator should be handled internally and not via map, so we do not care
       if (o instanceof JsonObject) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonObject) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else if (o instanceof JsonArray) {
-        this.setPGObject(s, JSONB_TYPE, ((JsonArray) o).toString());
+        this.setPGObject(s, JSONB_TYPE, o.toString());
       } else {
         this.set(s, o);
       }

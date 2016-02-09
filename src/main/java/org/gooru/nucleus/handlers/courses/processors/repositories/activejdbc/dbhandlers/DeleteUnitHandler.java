@@ -1,13 +1,11 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.*;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -15,9 +13,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class DeleteUnitHandler implements DBHandler {
 
@@ -34,13 +29,13 @@ public class DeleteUnitHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.warn("invalid course id to delete unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to delete unit"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.unitId() == null || context.unitId().isEmpty()) {
       LOGGER.warn("invalid unit id to delete unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to delete unit"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty() || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
@@ -96,7 +91,9 @@ public class DeleteUnitHandler implements DBHandler {
       AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true, context.userId(), context.unitId());
       AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true, context.userId(), context.unitId());
 
-      return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getDeleteUnitEventBuilder(unitToDelete.getId().toString())), ExecutionStatus.SUCCESSFUL);
+      return new ExecutionResult<>(
+        MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getDeleteUnitEventBuilder(unitToDelete.getId().toString())),
+        ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.error("error while deleting unit");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);

@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -13,9 +15,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class FetchLessonHandler implements DBHandler {
 
@@ -31,19 +30,19 @@ public class FetchLessonHandler implements DBHandler {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.warn("invalid course id to fetch lesson");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to fetch lesson"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.unitId() == null || context.unitId().isEmpty()) {
       LOGGER.warn("invalid unit id to fetch lesson");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to fetch lesson"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.lessonId() == null || context.lessonId().isEmpty()) {
       LOGGER.warn("invalid lesson id to fetch lesson");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id provided to fetch lesson"),
-              ExecutionStatus.FAILED);
+        ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty()) {
@@ -70,7 +69,8 @@ public class FetchLessonHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId(), context.unitId(), context.courseId(), false);
+    LazyList<AJEntityLesson> ajEntityLesson =
+      AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId(), context.unitId(), context.courseId(), false);
     if (ajEntityLesson.isEmpty()) {
       LOGGER.warn("Lesson {} not found, aborting", context.lessonId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
@@ -84,19 +84,21 @@ public class FetchLessonHandler implements DBHandler {
   public ExecutionResult<MessageResponse> executeRequest() {
     JsonObject resultBody;
     LazyList<AJEntityLesson> ajEntityLesson =
-            AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON, context.lessonId(), context.unitId(), context.courseId(), false);
+      AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON, context.lessonId(), context.unitId(), context.courseId(), false);
     if (!ajEntityLesson.isEmpty()) {
       LOGGER.info("lesson {} found, packing into JSON", context.unitId());
       resultBody =
-              new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.ALL_FIELDS).toJson(ajEntityLesson.get(0)));
+        new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.ALL_FIELDS).toJson(ajEntityLesson.get(0)));
 
-      LazyList<AJEntityCollection> collectionSummary = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY, context.lessonId(), context.unitId(), context.courseId(), false);
+      LazyList<AJEntityCollection> collectionSummary = 
+        AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY, context.lessonId(), context.unitId(), context.courseId(), false);
+
       LOGGER.debug("number of collections found for lesson {} : {}", context.lessonId(), collectionSummary.size());
       if (collectionSummary.size() > 0) {
         resultBody.put("collectionSummary", new JsonArray(
-                new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS).toJson(collectionSummary)));
+          new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS).toJson(collectionSummary)));
       }
-      
+
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody), ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.error("lesson {} not found", context.lessonId());

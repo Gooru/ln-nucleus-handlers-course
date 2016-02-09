@@ -1,7 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors;
 
-import java.util.UUID;
-
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidRequestException;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidUserException;
@@ -12,8 +12,7 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
 
 class MessageProcessor implements Processor {
 
@@ -115,70 +114,70 @@ class MessageProcessor implements Processor {
 
   private MessageResponse processCollectionMove() {
     ProcessorContext context = createContext();
-    
-    if(checkCourseId(context)) {
+
+    if (checkCourseId(context)) {
       LOGGER.error("Course id not available to move collection. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
     }
-    
-    if(checkUnitId(context)) {
+
+    if (checkUnitId(context)) {
       LOGGER.error("Unit id not available to move collection. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
     }
-    
-    if(checkLessonId(context)) {
+
+    if (checkLessonId(context)) {
       LOGGER.error("Lesson id not available to move collection. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
     }
-    
+
     return new RepoBuilder().buildLessonRepo(context).moveCollectionToLesson();
   }
 
   private MessageResponse processLessonMove() {
     ProcessorContext context = createContext();
-    
-    if(checkCourseId(context)) {
+
+    if (checkCourseId(context)) {
       LOGGER.error("Course id not available to move lesson. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
     }
-    
-    if(checkUnitId(context)) {
+
+    if (checkUnitId(context)) {
       LOGGER.error("Unit id not available to move lesson. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
     }
-    
+
     return new RepoBuilder().buildUnitRepo(context).moveLessonToUnit();
   }
 
   private MessageResponse processUnitMove() {
     ProcessorContext context = createContext();
-    
-    if(checkCourseId(context)) {
+
+    if (checkCourseId(context)) {
       LOGGER.error("Course id not available to move unit. Aborting");
       return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
     }
-    
+
     return new RepoBuilder().buildCourseRepo(context).moveUnitToCourse();
   }
 
   private MessageResponse processLessonContentReorder() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to reorder lesson content. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkUnitId(context)) {
+
+      if (checkUnitId(context)) {
         LOGGER.error("Unit id not available to reorder lesson content. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
       }
-      
-      if(checkLessonId(context)) {
+
+      if (checkLessonId(context)) {
         LOGGER.error("Lesson id not available to reorder lesson content. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
       }
-      
+
       LOGGER.info("reorder content of lesson {} of unit {}", context.lessonId(), context.unitId());
       return new RepoBuilder().buildLessonRepo(context).reorderCollectionsAssessmentsInLesson();
     } catch (Throwable t) {
@@ -190,21 +189,21 @@ class MessageProcessor implements Processor {
   private MessageResponse processLessonGet() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to get lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkUnitId(context)) {
+
+      if (checkUnitId(context)) {
         LOGGER.error("Unit id not available to get lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
       }
-      
-      if(checkLessonId(context)) {
+
+      if (checkLessonId(context)) {
         LOGGER.error("Lesson id not available to get lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
       }
-      
+
       LOGGER.info("getting lesson {} of unit {}", context.lessonId(), context.unitId());
       return new RepoBuilder().buildLessonRepo(context).fetchLesson();
     } catch (Throwable t) {
@@ -216,21 +215,21 @@ class MessageProcessor implements Processor {
   private MessageResponse processLessonDelete() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to delete lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkUnitId(context)) {
+
+      if (checkUnitId(context)) {
         LOGGER.error("Unit id not available to delete lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
       }
-      
-      if(checkLessonId(context)) {
+
+      if (checkLessonId(context)) {
         LOGGER.error("Lesson id not available to delete lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
       }
-      
+
       LOGGER.info("deleting lesson {} of unit {}", context.lessonId(), context.unitId());
       return new RepoBuilder().buildLessonRepo(context).deleteLesson();
     } catch (Throwable t) {
@@ -242,21 +241,21 @@ class MessageProcessor implements Processor {
   private MessageResponse processLessonUpdate() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to update lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkUnitId(context)) {
+
+      if (checkUnitId(context)) {
         LOGGER.error("Unit id not available to update lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
       }
-      
-      if(checkLessonId(context)) {
+
+      if (checkLessonId(context)) {
         LOGGER.error("Lesson id not available to update lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
       }
-      
+
       LOGGER.info("updating lesson {} of unit {}", context.lessonId(), context.unitId());
       return new RepoBuilder().buildLessonRepo(context).updateLesson();
     } catch (Throwable t) {
@@ -268,16 +267,16 @@ class MessageProcessor implements Processor {
   private MessageResponse processLessonCreate() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to create lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkUnitId(context)) {
+
+      if (checkUnitId(context)) {
         LOGGER.error("Unit id not available to create lesson. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
       }
-      
+
       LOGGER.info("creating lesson for unit {} of course {}", context.unitId(), context.courseId());
       return new RepoBuilder().buildLessonRepo(context).createLesson();
     } catch (Throwable t) {
@@ -289,16 +288,16 @@ class MessageProcessor implements Processor {
   private MessageResponse processUnitContentReorder() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to reorder lessons. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkUnitId(context)) {
+
+      if (checkUnitId(context)) {
         LOGGER.error("Unit id not available to reorder lessons. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
       }
-      
+
       LOGGER.info("reordering lessons for unit {} of course {}", context.unitId(), context.courseId());
       return new RepoBuilder().buildUnitRepo(context).reorderLessonInUnit();
     } catch (Throwable t) {
@@ -310,16 +309,16 @@ class MessageProcessor implements Processor {
   private MessageResponse processUnitGet() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to get unit. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkUnitId(context)) {
+
+      if (checkUnitId(context)) {
         LOGGER.error("Unit id not available to get unit. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
       }
-      
+
       LOGGER.info("getting unit {} of course {}", context.unitId(), context.courseId());
       return new RepoBuilder().buildUnitRepo(context).fetchUnit();
     } catch (Throwable t) {
@@ -331,16 +330,16 @@ class MessageProcessor implements Processor {
   private MessageResponse processUnitDelete() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to delete unit. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkUnitId(context)) {
+
+      if (checkUnitId(context)) {
         LOGGER.error("Unit id not available to delete unit. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
       }
-      
+
       LOGGER.info("deleting unit {} of course {}", context.unitId(), context.courseId());
       return new RepoBuilder().buildUnitRepo(context).deleteUnit();
     } catch (Throwable t) {
@@ -352,16 +351,16 @@ class MessageProcessor implements Processor {
   private MessageResponse processUnitUpdate() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to update unit. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
-      if(checkUnitId(context)) {
+
+      if (checkUnitId(context)) {
         LOGGER.error("Unit id not available to update unit. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
       }
-      
+
       LOGGER.info("updating unit {} of course {}", context.unitId(), context.courseId());
       return new RepoBuilder().buildUnitRepo(context).updateUnit();
     } catch (Throwable t) {
@@ -373,11 +372,11 @@ class MessageProcessor implements Processor {
   private MessageResponse processUnitCreate() {
     try {
       ProcessorContext context = createContext();
-      if(checkCourseId(context)) {
+      if (checkCourseId(context)) {
         LOGGER.error("Course id not available to create unit. Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
       }
-      
+
       LOGGER.info("creating new unit for course {}", context.courseId());
       return new RepoBuilder().buildUnitRepo(context).createUnit();
     } catch (Throwable t) {
@@ -385,15 +384,15 @@ class MessageProcessor implements Processor {
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
   }
-  
+
   private boolean checkLessonId(ProcessorContext context) {
     return (context.lessonId() == null || context.lessonId().isEmpty());
   }
-  
+
   private boolean checkUnitId(ProcessorContext context) {
     return (context.unitId() == null || context.unitId().isEmpty());
   }
-  
+
   private boolean checkCourseId(ProcessorContext context) {
     return (context.courseId() == null || context.courseId().isEmpty());
   }
@@ -469,7 +468,7 @@ class MessageProcessor implements Processor {
         LOGGER.error("Invalid input data, Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
       }
-      
+
       LOGGER.info("updating course {}", context.courseId());
       return new RepoBuilder().buildCourseRepo(context).updateCourse();
     } catch (Throwable t) {
@@ -496,7 +495,7 @@ class MessageProcessor implements Processor {
         LOGGER.error("Invalid input data, Aborting");
         return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
       }
-      
+
       LOGGER.info("Creating new course");
       return new RepoBuilder().buildCourseRepo(context).createCourse();
     } catch (Throwable t) {
@@ -523,7 +522,7 @@ class MessageProcessor implements Processor {
       LOGGER.error("Invalid user id passed. Not authorized.");
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionResult.ExecutionStatus.FAILED);
     }
-    
+
     prefs = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_PREFS);
     request = ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_HTTP_BODY);
 
@@ -540,7 +539,7 @@ class MessageProcessor implements Processor {
     // All is well, continue processing
     return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
   }
-  
+
   private boolean validateUser(String userId) {
     if (userId == null) {
       return false;
