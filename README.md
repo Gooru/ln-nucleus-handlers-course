@@ -28,12 +28,13 @@ DONE
 * Authorization for all APIs
 * input validation for move APIs
 * input validation for reorder APIs
+* Remove unused classes - AJResponseJsoTransformer
+
 
 TODO
 ----
 * Generalize the sanity check, validate request code to be reused (this is not needed now) - Low Priority
 * Validate taxonomy from request data
-
 
  
 

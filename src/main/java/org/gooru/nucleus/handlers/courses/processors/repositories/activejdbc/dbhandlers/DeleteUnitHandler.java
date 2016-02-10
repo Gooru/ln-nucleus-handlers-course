@@ -65,7 +65,7 @@ public class DeleteUnitHandler implements DBHandler {
 
     LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
     if (ajEntityUnit.isEmpty()) {
-      LOGGER.info("Unit {} not found, aborting", context.unitId());
+      LOGGER.warn("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
@@ -80,7 +80,7 @@ public class DeleteUnitHandler implements DBHandler {
     unitToDelete.setModifierId(context.userId());
 
     if (unitToDelete.hasErrors()) {
-      LOGGER.debug("deleting unit has errors");
+      LOGGER.warn("deleting unit has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -95,7 +95,7 @@ public class DeleteUnitHandler implements DBHandler {
         MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getDeleteUnitEventBuilder(unitToDelete.getId().toString())),
         ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.debug("error while deleting unit");
+      LOGGER.error("error while deleting unit");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

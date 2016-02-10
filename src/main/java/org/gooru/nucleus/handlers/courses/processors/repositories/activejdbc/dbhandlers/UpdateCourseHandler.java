@@ -68,7 +68,7 @@ public class UpdateCourseHandler implements DBHandler {
         }
       }
     } else {
-      LOGGER.info("course {} not found to update, aborting", context.courseId());
+      LOGGER.warn("course {} not found to update, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
@@ -84,7 +84,7 @@ public class UpdateCourseHandler implements DBHandler {
     courseToUpdate.setModifierId(context.userId());
 
     if (courseToUpdate.hasErrors()) {
-      LOGGER.debug("updating course has errors");
+      LOGGER.warn("updating course has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -95,11 +95,11 @@ public class UpdateCourseHandler implements DBHandler {
           MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())),
           ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving updated course");
+        LOGGER.error("error while saving updated course");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.debug("validation error while updating course");
+      LOGGER.warn("validation error while updating course");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
@@ -112,8 +112,7 @@ public class UpdateCourseHandler implements DBHandler {
   private JsonObject validateFields() {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
-    AJEntityCourse.UPDATE_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
-                                          .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    input.fieldNames().stream().filter(key -> !AJEntityCourse.UPDATABLE_FIELDS.contains(key)).forEach(key -> output.put(key, "Field not allowed"));
     return output.isEmpty() ? null : output;
   }
 

@@ -27,13 +27,13 @@ public class FetchUnitHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
-      LOGGER.info("invalid course id to fetch unit");
+      LOGGER.warn("invalid course id to fetch unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to fetch unit"),
         ExecutionStatus.FAILED);
     }
 
     if (context.unitId() == null || context.unitId().isEmpty()) {
-      LOGGER.info("invalid unit id to fetch unit");
+      LOGGER.warn("invalid unit id to fetch unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to fetch unit"),
         ExecutionStatus.FAILED);
     }
@@ -57,7 +57,7 @@ public class FetchUnitHandler implements DBHandler {
 
     LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
     if (ajEntityUnit.isEmpty()) {
-      LOGGER.info("Unit {} not found, aborting", context.unitId());
+      LOGGER.warn("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
@@ -80,7 +80,7 @@ public class FetchUnitHandler implements DBHandler {
       }
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody), ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.info("unit {} not found", context.unitId());
+      LOGGER.error("unit {} not found", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
   }

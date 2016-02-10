@@ -27,7 +27,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
   public ExecutionResult<MessageResponse> checkSanity() {
 
     if (context.courseId() == null || context.courseId().isEmpty()) {
-      LOGGER.info("invalid course id to update collaborator");
+      LOGGER.warn("invalid course id to update collaborator");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to update collaborator"),
         ExecutionStatus.FAILED);
     }
@@ -83,7 +83,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
     courseUpdateCollab.setCollaborator(context.request().getJsonArray(AJEntityCourse.COLLABORATOR).toString());
 
     if (courseUpdateCollab.hasErrors()) {
-      LOGGER.debug("updating course collaborator has errors");
+      LOGGER.warn("updating course collaborator has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -93,7 +93,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
         MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())),
         ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.debug("error while updating course collaborator");
+      LOGGER.error("error while updating course collaborator");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

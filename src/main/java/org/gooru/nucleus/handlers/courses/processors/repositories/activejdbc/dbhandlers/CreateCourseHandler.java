@@ -63,7 +63,7 @@ public class CreateCourseHandler implements DBHandler {
     course.setModifierId(context.userId());
 
     if (course.hasErrors()) {
-      LOGGER.debug("errors in course creation");
+      LOGGER.warn("errors in course creation");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -72,11 +72,11 @@ public class CreateCourseHandler implements DBHandler {
         LOGGER.info("course created successfully : {}", course.getId().toString());
         return new ExecutionResult<>(MessageResponseFactory.createPostResponse(course.getId().toString()), ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving course");
+        LOGGER.error("error while saving course");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.error("Error while creating course");
+      LOGGER.warn("validation error while creating course");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
@@ -89,8 +89,7 @@ public class CreateCourseHandler implements DBHandler {
   private JsonObject validateFields() {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
-    AJEntityCourse.INSERT_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
-                                          .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    input.fieldNames().stream().filter(key -> !AJEntityCourse.INSERTABLE_FIELDS.contains(key)).forEach(key -> output.put(key, "Field not allowed"));
     return output.isEmpty() ? null : output;
   }
 

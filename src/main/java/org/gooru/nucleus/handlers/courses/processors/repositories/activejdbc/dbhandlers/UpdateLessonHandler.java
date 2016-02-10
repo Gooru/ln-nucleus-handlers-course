@@ -107,7 +107,7 @@ public class UpdateLessonHandler implements DBHandler {
     lessonToUpdate.setModifierId(context.userId());
 
     if (lessonToUpdate.hasErrors()) {
-      LOGGER.debug("updating lesson has errors");
+      LOGGER.warn("updating lesson has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -118,11 +118,11 @@ public class UpdateLessonHandler implements DBHandler {
           MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateLessonEventBuilder(context.lessonId())),
           ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving updated lesson");
+        LOGGER.error("error while saving udpated lesson");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.debug("validation error while updating lesson");
+      LOGGER.warn("validation error while updating lesson");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
@@ -135,8 +135,7 @@ public class UpdateLessonHandler implements DBHandler {
   private JsonObject validateFields() {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
-    AJEntityLesson.UPDATE_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
-                                          .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    input.fieldNames().stream().filter(key -> !AJEntityLesson.UPDATABLE_FIELDS.contains(key)).forEach(key -> output.put(key, "Field not allowed"));
     return output.isEmpty() ? null : output;
   }
 

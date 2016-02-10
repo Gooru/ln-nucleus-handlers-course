@@ -74,7 +74,7 @@ public class MoveUnitToCourseHandler implements DBHandler {
     String unitToMove = context.request().getString("unit_id");
 
     if (sourceCourseId == null || unitToMove == null || sourceCourseId.isEmpty() || unitToMove.isEmpty()) {
-      LOGGER.debug("missing required fields");
+      LOGGER.warn("missing required fields");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(new JsonObject().put("message", "missing required fields")),
         ExecutionResult.ExecutionStatus.FAILED);
     }
@@ -83,7 +83,7 @@ public class MoveUnitToCourseHandler implements DBHandler {
     LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, sourceCourseId, false);
 
     if (targetCourses.isEmpty() || sourceCourses.isEmpty()) {
-      LOGGER.debug("source or target course is not found in database");
+      LOGGER.warn("source or target course is not found in database");
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("source or target course is deleted"), ExecutionStatus.FAILED);
     }
 
@@ -130,7 +130,7 @@ public class MoveUnitToCourseHandler implements DBHandler {
     unitToUpdate.set(AJEntityUnit.SEQUENCE_ID, sequenceId);
 
     if (unitToUpdate.hasErrors()) {
-      LOGGER.debug("moving unit has errors");
+      LOGGER.warn("moving unit has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -148,7 +148,7 @@ public class MoveUnitToCourseHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getMoveUnitEventBuilder(context.courseId())),
         ExecutionStatus.SUCCESSFUL);
     } else {
-      LOGGER.debug("error while moving unit to course");
+      LOGGER.error("error while moving unit to course");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }

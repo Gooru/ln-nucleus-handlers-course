@@ -28,13 +28,13 @@ public class UpdateUnitHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
-      LOGGER.info("invalid course id to update unit");
+      LOGGER.warn("invalid course id to update unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid course id provided to update unit"),
         ExecutionStatus.FAILED);
     }
 
     if (context.unitId() == null || context.unitId().isEmpty()) {
-      LOGGER.info("invalid unit id to update unit");
+      LOGGER.warn("invalid unit id to update unit");
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Invalid unit id provided to update unit"),
         ExecutionStatus.FAILED);
     }
@@ -98,7 +98,7 @@ public class UpdateUnitHandler implements DBHandler {
     unitToUpdate.setModifierId(context.userId());
 
     if (unitToUpdate.hasErrors()) {
-      LOGGER.debug("updating unit has errors");
+      LOGGER.warn("updating unit has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
 
@@ -108,11 +108,11 @@ public class UpdateUnitHandler implements DBHandler {
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateUnitEventBuilder(context.unitId())),
           ExecutionStatus.SUCCESSFUL);
       } else {
-        LOGGER.debug("error while saving updated unit");
+        LOGGER.error("error while saving udpated unit");
         return new ExecutionResult<>(MessageResponseFactory.createInternalErrorResponse("Error while updating unit"), ExecutionStatus.FAILED);
       }
     } else {
-      LOGGER.debug("validation error while updating unit");
+      LOGGER.warn("validation error while updating unit");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
     }
   }
@@ -125,8 +125,7 @@ public class UpdateUnitHandler implements DBHandler {
   private JsonObject validateFields() {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
-    AJEntityUnit.UPDATE_FORBIDDEN_FIELDS.stream().filter(invalidField -> input.getValue(invalidField) != null)
-                                        .forEach(invalidField -> output.put(invalidField, "Field not allowed"));
+    input.fieldNames().stream().filter(key -> !AJEntityUnit.UPDATABLE_FIELDS.contains(key)).forEach(key -> output.put(key, "Field not allowed"));
     return output.isEmpty() ? null : output;
   }
 

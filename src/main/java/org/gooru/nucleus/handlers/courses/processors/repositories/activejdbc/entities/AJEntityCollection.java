@@ -20,16 +20,18 @@ public class AJEntityCollection extends Model {
   public static final String UNIT_ID = "unit_id";
   public static final String LESSON_ID = "lesson_id";
   public static final String TITLE = "title";
+  public static final String FORMAT = "format";
   public static final String MODIFIER_ID = "modifier_id";
   public static final String OWNER_ID = "owner_id";
   public static final String COLLABORATOR = "collaborator";
   public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
 
-  public static final List<String> COLLECTION_SUMMARY_FIELDS = Arrays.asList(ID, TITLE, SEQUENCE_ID);
+  public static final List<String> COLLECTION_SUMMARY_FIELDS = Arrays.asList(ID, TITLE, FORMAT, SEQUENCE_ID);
 
   public static final String SELECT_COLLECTION_SUMMARY =
-    "SELECT id, title, sequence_id FROM collection WHERE lesson_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
+    "SELECT id, title, format, sequence_id FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND "
+    + "is_deleted = ? order by sequence_id asc";
   public static final String SELECT_COLLECTION_TO_MOVE =
     "SELECT id, course_id, unit_id, lesson_id, owner_id, collaborator FROM collection WHERE id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_COLLECTION_OF_COURSE =
