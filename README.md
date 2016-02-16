@@ -35,7 +35,7 @@ TODO
 ----
 * Generalize the sanity check, validate request code to be reused (this is not needed now) - Low Priority
 * Validate taxonomy from request data
-
+* Verify collaborator existance in db before saving/updating course or collaborator
  
 
 To understand build related stuff, take a look at **BUILD_README.md**.

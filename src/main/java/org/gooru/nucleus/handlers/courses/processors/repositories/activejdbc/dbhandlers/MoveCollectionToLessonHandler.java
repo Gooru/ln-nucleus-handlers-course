@@ -1,11 +1,13 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.*;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -14,6 +16,8 @@ import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class MoveCollectionToLessonHandler implements DBHandler {
 
@@ -79,10 +83,11 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     String collectionToMove = context.request().getString("collection_id");
     // String type = context.request().getString("type");
 
-    LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, targetCourseId, false);
+    LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE, targetCourseId, false,
+      context.userId(), context.userId());
     if (targetCourses.isEmpty()) {
-      LOGGER.warn("target course is not found in database");
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target course is not found"), ExecutionStatus.FAILED);
+      LOGGER.warn("user is not owner or collaborator of target course to move collection. aborting");
+      return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
     LazyList<AJEntityUnit> targetUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, targetUnitId, targetCourseId, false);
@@ -137,28 +142,14 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                 ExecutionStatus.FAILED);
       }
 
-      LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, sourceCourseId);
+      LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE, sourceCourseId, false,
+        context.userId(), context.userId());
       if (sourceCourses.isEmpty()) {
-        LOGGER.warn("source course is not found in database");
-        return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("source course is not found"), ExecutionStatus.FAILED);
+        LOGGER.warn("user is not owner or collaborator of source course to move collection. aborting");
+        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
 
-      // as the collection is part of CUL, check whether user is
-      // owner/collaborator of target and source course
       targetCourseOwner = targetCourses.get(0).getString(AJEntityCourse.OWNER_ID);
-      if (!targetCourseOwner.equalsIgnoreCase(context.userId())) {
-        if (!new JsonArray(targetCourses.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
-          LOGGER.warn("user is not owner or collaborator of target course to move collection. aborting");
-          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
-        }
-      }
-
-      if (!sourceCourses.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
-        if (!new JsonArray(sourceCourses.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
-          LOGGER.warn("user is not owner or collaborator of source course to move collection. aborting");
-          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
-        }
-      }
 
       LazyList<AJEntityUnit> sourceUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, sourceUnitId, sourceCourseId, false);
       if (sourceUnits.isEmpty()) {
@@ -179,15 +170,6 @@ public class MoveCollectionToLessonHandler implements DBHandler {
       if (!collectionToUpdate.getString("owner_id").equalsIgnoreCase(context.userId())) {
         LOGGER.warn("user is not owner of collection to move");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner of course"), ExecutionStatus.FAILED);
-      }
-
-      // Also check whether the user is either owner or collaborator on course
-      if (!targetCourses.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
-        if (!new JsonArray(targetCourses.get(0).getString(AJEntityCourse.COLLABORATOR)).contains(context.userId())) {
-          LOGGER.warn("user is not owner or collaborator of target course to move collection");
-          return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("user is not owner or collaborator of target course"),
-                  ExecutionStatus.FAILED);
-        }
       }
     }
 
