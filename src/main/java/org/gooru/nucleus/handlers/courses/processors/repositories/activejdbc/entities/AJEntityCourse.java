@@ -52,9 +52,10 @@ public class AJEntityCourse extends Model {
   public static final List<String> UNIT_MOVE_NOTNULL_FIELDS = Arrays.asList("course_id", "unit_id");
 
   public static final String SELECT_COLLABORATOR = "SELECT collaborator FROM course WHERE id = ?::uuid";
-  //TODO: update it to include is_deleted
+  public static final String SELECT_COURSE_TO_AUTHORIZE =
+    "SELECT id, owner_id, publish_date, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ? AND (owner_id = ?::uuid OR collaborator ?? ?)";
   public static final String SELECT_COURSE_TO_VALIDATE =
-    "SELECT id, owner_id, publish_date, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ?";
+          "SELECT id, owner_id, publish_date, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_COURSE =
     "SELECT id, title, created_at, updated_at, owner_id, creator_id, original_creator_id, original_course_id, publish_date, thumbnail, audience,"
       + " metadata, taxonomy, collaborator, visible_on_profile, is_deleted FROM course WHERE id = ?::uuid AND is_deleted = ?";
