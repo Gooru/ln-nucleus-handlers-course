@@ -96,12 +96,13 @@ public class MoveUnitToCourseHandler implements DBHandler {
     AJEntityCourse targetCourse = targetCourses.get(0);
     targetCourseOwner = targetCourse.getString(AJEntityCourse.OWNER_ID);
 
-    LazyList<AJEntityUnit> units = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, unitToMove, targetCourseId, false);
+    LazyList<AJEntityUnit> units = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, unitToMove, sourceCourseId, false);
     if (units.isEmpty()) {
-      LOGGER.warn("Unit {} not found to move, aborting", context.unitId());
+      LOGGER.warn("Unit {} not found to move, aborting", unitToMove);
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
 
+    unitToUpdate = units.get(0);
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
   }
