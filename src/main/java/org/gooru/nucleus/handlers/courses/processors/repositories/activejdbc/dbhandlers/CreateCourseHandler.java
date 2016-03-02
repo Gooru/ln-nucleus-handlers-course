@@ -1,6 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -8,8 +7,11 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class CreateCourseHandler implements DBHandler {
 
@@ -61,7 +63,23 @@ public class CreateCourseHandler implements DBHandler {
     course.setOwnerId(context.userId());
     course.setCreatorId(context.userId());
     course.setModifierId(context.userId());
+    course.setPublishStatus(AJEntityCourse.PUBLISH_STATUS_TYPE_UNPUBLISHED);
 
+    // Get max sequence id of course for subject bucket
+    Object maxSequenceId;
+    int sequenceId = 1;
+    String subjectBucket = course.getString(AJEntityCourse.SUBJECT_BUCKET);
+    if (subjectBucket != null && !subjectBucket.isEmpty()) {
+      maxSequenceId = Base.firstCell(AJEntityCourse.SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET, context.userId(), subjectBucket);
+    } else {
+      maxSequenceId = Base.firstCell(AJEntityCourse.SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET, context.userId());
+    }
+    
+    if (maxSequenceId != null) {
+      sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
+    }
+    course.setInteger(AJEntityCourse.SEQUENCE_ID, sequenceId);
+    
     if (course.hasErrors()) {
       LOGGER.warn("errors in course creation");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
