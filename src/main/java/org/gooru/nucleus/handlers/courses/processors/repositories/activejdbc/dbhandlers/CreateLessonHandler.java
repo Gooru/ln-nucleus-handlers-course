@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import java.sql.Timestamp;
+
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -114,6 +116,12 @@ public class CreateLessonHandler implements DBHandler {
     if (newLesson.isValid()) {
       if (newLesson.save()) {
         LOGGER.info("lesson {} created successfully for unit {}", newLesson.getId().toString(), context.unitId());
+        
+        AJEntityCourse courseToUpdate = new AJEntityCourse();
+        courseToUpdate.setCourseId(context.courseId());
+        courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
+        courseToUpdate.save();
+        
         return new ExecutionResult<>(MessageResponseFactory
           .createPostResponse(newLesson.getId().toString(), EventBuilderFactory.getCreateLessonEventBuilder(newLesson.getId().toString())),
           ExecutionStatus.SUCCESSFUL);

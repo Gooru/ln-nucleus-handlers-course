@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import java.sql.Timestamp;
+
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -202,6 +204,12 @@ public class MoveCollectionToLessonHandler implements DBHandler {
       LOGGER.info("collection is moved to course");
       AJEntityContent.update("course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, modifier_id = ?::uuid", "collection_id = ?::uuid",
               context.courseId(), context.unitId(), context.lessonId(), context.userId(), collectionToUpdate.getId());
+      
+      AJEntityCourse courseToUpdate = new AJEntityCourse();
+      courseToUpdate.setCourseId(context.courseId());
+      courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
+      courseToUpdate.save();
+      
       return new ExecutionResult<>(
               MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getMoveCollectionEventBuilder(context.lessonId())),
               ExecutionStatus.SUCCESSFUL);

@@ -1,6 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
 import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -116,6 +117,12 @@ public class ReorderLessonInUnitHandler implements DBHandler {
       }
 
       Base.executeBatch(ps);
+      
+      AJEntityCourse courseToUpdate = new AJEntityCourse();
+      courseToUpdate.setCourseId(context.courseId());
+      courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
+      courseToUpdate.save();
+      
     } catch (DBException | ClassCastException e) {
       LOGGER.error("incorrect payload data type", e);
       return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse("Incorrect payload data types"),
