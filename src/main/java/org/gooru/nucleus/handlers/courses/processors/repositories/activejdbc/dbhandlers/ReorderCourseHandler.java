@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
@@ -14,7 +15,6 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.DBException;
-import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +93,7 @@ public class ReorderCourseHandler implements DBHandler {
         ExecutionResult.ExecutionStatus.FAILED);
     }
     LOGGER.info("reordered courses for subject bucket {}", subjectBucket);
-    return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(), ExecutionStatus.SUCCESSFUL);
+    return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getReorderCourseEventBuilder(subjectBucket)), ExecutionStatus.SUCCESSFUL);
   }
 
   @Override

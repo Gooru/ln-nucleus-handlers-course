@@ -90,7 +90,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
     if (courseUpdateCollab.save()) {
       LOGGER.info("updated collaborators of course {} successfully", context.courseId());
       return new ExecutionResult<>(
-        MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())),
+        MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseCollaboratorEventBuilder(context.courseId())),
         ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.error("error while updating course collaborator");

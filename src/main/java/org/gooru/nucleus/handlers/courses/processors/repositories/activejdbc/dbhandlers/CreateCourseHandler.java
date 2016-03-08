@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
@@ -88,7 +89,8 @@ public class CreateCourseHandler implements DBHandler {
     if (course.isValid()) {
       if (course.insert()) {
         LOGGER.info("course created successfully : {}", course.getId().toString());
-        return new ExecutionResult<>(MessageResponseFactory.createPostResponse(course.getId().toString()), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory.createPostResponse(course.getId().toString(),
+                EventBuilderFactory.getCreateCourseEventBuilder(course.getId().toString())), ExecutionStatus.SUCCESSFUL);
       } else {
         LOGGER.error("error while saving course");
         return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);
