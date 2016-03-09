@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
@@ -136,7 +137,16 @@ public class ReorderCollectionsAssessmentsInLessonHandler implements DBHandler {
       AJEntityCourse courseToUpdate = new AJEntityCourse();
       courseToUpdate.setCourseId(context.courseId());
       courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
-      courseToUpdate.save();
+      boolean result = courseToUpdate.save(); 
+      if (!result) {
+        LOGGER.error("Course with id '{}' failed to save modified time stamp", context.courseId());
+        if (courseToUpdate.hasErrors()) {
+          Map<String, String> map = courseToUpdate.errors();
+          JsonObject errors = new JsonObject();
+          map.forEach(errors::put);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+        }
+      }
       
     } catch (DBException | ClassCastException e) {
       LOGGER.error("incorrect payload data type", e);

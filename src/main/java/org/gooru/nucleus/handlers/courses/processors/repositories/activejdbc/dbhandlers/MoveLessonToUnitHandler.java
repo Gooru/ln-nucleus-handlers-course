@@ -1,6 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
 import java.sql.Timestamp;
+import java.util.Map;
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
@@ -155,7 +156,16 @@ public class MoveLessonToUnitHandler implements DBHandler {
       AJEntityCourse courseToUpdate = new AJEntityCourse();
       courseToUpdate.setCourseId(context.courseId());
       courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
-      courseToUpdate.save();
+      boolean result = courseToUpdate.save(); 
+      if (!result) {
+        LOGGER.error("Course with id '{}' failed to save modified time stamp", context.courseId());
+        if (courseToUpdate.hasErrors()) {
+          Map<String, String> map = courseToUpdate.errors();
+          JsonObject errors = new JsonObject();
+          map.forEach(errors::put);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+        }
+      }
       
       return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getMoveLessonEventBuilder(context.unitId())),
         ExecutionStatus.SUCCESSFUL);

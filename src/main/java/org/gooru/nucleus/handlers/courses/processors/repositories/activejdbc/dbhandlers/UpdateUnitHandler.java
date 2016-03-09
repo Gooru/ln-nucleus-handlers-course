@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.Timestamp;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -100,12 +98,6 @@ public class UpdateUnitHandler implements DBHandler {
     if (unitToUpdate.isValid()) {
       if (unitToUpdate.save()) {
         LOGGER.info("unit {} updated successfully", context.unitId());
-        
-        AJEntityCourse courseToUpdate = new AJEntityCourse();
-        courseToUpdate.setCourseId(context.courseId());
-        courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
-        courseToUpdate.save();
-        
         return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateUnitEventBuilder(context.unitId())),
           ExecutionStatus.SUCCESSFUL);
       } else {
