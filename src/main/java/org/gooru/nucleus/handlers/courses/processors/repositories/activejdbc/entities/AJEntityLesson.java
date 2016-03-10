@@ -34,18 +34,19 @@ public class AJEntityLesson extends Model {
   public static final String TAXONOMY = "taxonomy";
   public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
+  public static final String CREATOR_SYSTEM = "creator_system";
 
   public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> ALL_FIELDS = Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, TITLE, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID,
-    OWNER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, METADATA, TAXONOMY, SEQUENCE_ID, IS_DELETED);
+    OWNER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, METADATA, TAXONOMY, SEQUENCE_ID, IS_DELETED, CREATOR_SYSTEM);
   public static final List<String> LESSON_SUMMARY_FIELDS = Arrays.asList(LESSON_ID, TITLE, SEQUENCE_ID);
 
   public static final String SELECT_LESSON_TO_VALIDATE =
     "SELECT lesson_id, unit_id, course_id FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_LESSON =
     "SELECT lesson_id, unit_id, course_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, "
-    + "original_lesson_id, metadata, taxonomy, sequence_id, is_deleted FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND "
+    + "original_lesson_id, metadata, taxonomy, sequence_id, is_deleted, creator_system FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND "
     + "course_id = ?::uuid and is_deleted = ?";
   public static final String SELECT_LESSON_SUMMARY =
     "SELECT lesson_id, title, sequence_id FROM lesson WHERE unit_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
@@ -57,7 +58,7 @@ public class AJEntityLesson extends Model {
     "UPDATE lesson SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id"
     + " = ?::uuid AND is_deleted = ?";
   
-  public static final List<String> INSERTABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
+  public static final List<String> INSERTABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY, CREATOR_SYSTEM);
   public static final List<String> UPDATABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
 
   public static final List<String> COLLECTION_MOVE_NOTNULL_FIELDS = Arrays.asList("collection_id");

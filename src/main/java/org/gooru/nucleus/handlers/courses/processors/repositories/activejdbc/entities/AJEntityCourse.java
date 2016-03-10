@@ -50,8 +50,9 @@ public class AJEntityCourse extends Model {
   public static final List<String> JSON_FIELDS = Arrays.asList(AUDIENCE, METADATA, TAXONOMY, COLLABORATOR);
   public static final List<String> JSON_OBJECT_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> JSON_ARRAY_FIELDS = Arrays.asList(AUDIENCE, COLLABORATOR);
-  public static final List<String> ALL_FIELDS = Arrays.asList(ID, TITLE, DESCRIPTION, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID, ORIGINAL_COURSE_ID,
-    PUBLISH_STATUS, PUBLISH_DATE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, IS_DELETED, CREATED_AT, UPDATED_AT);
+  public static final List<String> ALL_FIELDS = Arrays.asList(ID, TITLE, DESCRIPTION, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID, 
+    ORIGINAL_COURSE_ID, PUBLISH_STATUS, PUBLISH_DATE, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, IS_DELETED,
+    CREATED_AT, UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, CREATOR_SYSTEM);
 
   public static final List<String> INSERTABLE_FIELDS =
     Arrays.asList(TITLE, DESCRIPTION, THUMBNAIL, AUDIENCE, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, SUBJECT_BUCKET, CREATOR_SYSTEM);
@@ -67,12 +68,17 @@ public class AJEntityCourse extends Model {
   public static final String SELECT_COURSE_TO_VALIDATE =
     "SELECT id, owner_id, publish_status, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_COURSE =
-    "SELECT id, title, description, created_at, updated_at, owner_id, creator_id, original_creator_id, original_course_id, publish_status, publish_date, thumbnail,"
-    + " audience, metadata, taxonomy, collaborator, visible_on_profile, is_deleted FROM course WHERE id = ?::uuid AND is_deleted = ?";
-  public static final String SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET = "SELECT MAX(sequence_id) FROM course WHERE owner_id = ?::uuid AND subject_bucket = ?";
-  public static final String SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET = "SELECT MAX(sequence_id) FROM course WHERE owner_id = ?::uuid AND subject_bucket IS NULL";
-  public static final String SELECT_COURSE_TO_REORDER = "SELECT id FROM course WHERE owner_id = ?::uuid AND subject_bucket = ? AND is_deleted = false";
-  public static final String REORDER_QUERY = "UPDATE course SET sequence_id = ?, updated_at = now() WHERE id = ?::uuid AND subject_bucket = ? AND owner_id = ?::uuid";
+    "SELECT id, title, description, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_course_id, publish_status,"
+    + " publish_date, thumbnail, audience, metadata, taxonomy, collaborator, visible_on_profile, is_deleted, sequence_id, subject_bucket,"
+    + " creator_system FROM course WHERE id = ?::uuid AND is_deleted = ?";
+  public static final String SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET = "SELECT MAX(sequence_id) FROM course WHERE owner_id = ?::uuid AND"
+    + " subject_bucket = ?";
+  public static final String SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET = "SELECT MAX(sequence_id) FROM course WHERE owner_id = ?::uuid"
+    + " AND subject_bucket IS NULL";
+  public static final String SELECT_COURSE_TO_REORDER = "SELECT id FROM course WHERE owner_id = ?::uuid AND subject_bucket = ? AND"
+    + " is_deleted = false";
+  public static final String REORDER_QUERY = "UPDATE course SET sequence_id = ?, updated_at = now() WHERE id = ?::uuid AND subject_bucket"
+    + " = ? AND owner_id = ?::uuid";
   public static final String SELECT_SUBJECT_BUCKET = "SELECT subject_bucket FROM course WHERE id = ?::uuid";
 
   public static final String UUID_TYPE = "uuid";
