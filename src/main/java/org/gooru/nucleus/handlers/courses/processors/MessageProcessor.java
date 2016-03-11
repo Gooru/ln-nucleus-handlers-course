@@ -59,6 +59,9 @@ class MessageProcessor implements Processor {
         case MessageConstants.MSG_OP_COURSE_MOVE_UNIT:
           result = processUnitMove();
           break;
+        case MessageConstants.MSG_OP_COURSE_REORDER:
+          result = processCourseReorder();
+          break;
         case MessageConstants.MSG_OP_UNIT_CREATE:
           result = processUnitCreate();
           break;
@@ -110,6 +113,11 @@ class MessageProcessor implements Processor {
       LOGGER.error("Exception while processing request");
       return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
+  }
+
+  private MessageResponse processCourseReorder() {
+    ProcessorContext context = createContext();
+    return new RepoBuilder().buildCourseRepo(context).reorderCourse();
   }
 
   private MessageResponse processCollectionMove() {

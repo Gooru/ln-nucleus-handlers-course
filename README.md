@@ -29,13 +29,16 @@ DONE
 * input validation for move APIs
 * input validation for reorder APIs
 * Remove unused classes - AJResponseJsoTransformer
-
+* Changes for publish status - We are now maintaining publish status in table
+* Mechanism for subject_bucket and sequence_id column added in course table. sequence_id will be assigned to course based on which subject bucket it falls. All the courses without subject bucket should be sequenced together. (changes in create/update course APIs)s
+* Implementation of reorder API for course. This API will reorder all the courses in same subject bucket based on the payload passed in request.
 
 TODO
 ----
 * Generalize the sanity check, validate request code to be reused (this is not needed now) - Low Priority
 * Validate taxonomy from request data
 * Verify collaborator existance in db before saving/updating course or collaborator
+
  
 
 To understand build related stuff, take a look at **BUILD_README.md**.

@@ -15,4 +15,6 @@ public interface CourseRepo {
   MessageResponse reorderUnitInCourse();
 
   MessageResponse moveUnitToCourse();
+
+  MessageResponse reorderCourse();
 }

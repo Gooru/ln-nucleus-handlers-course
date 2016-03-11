@@ -2,6 +2,10 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import java.sql.Timestamp;
+import java.util.Map;
+
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -104,7 +108,21 @@ public class DeleteLessonHandler implements DBHandler {
 
       AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true, context.userId(), context.lessonId());
       AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true, context.userId(), context.lessonId());
-
+      
+      AJEntityCourse courseToUpdate = new AJEntityCourse();
+      courseToUpdate.setCourseId(context.courseId());
+      courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
+      boolean result = courseToUpdate.save(); 
+      if (!result) {
+        LOGGER.error("Course with id '{}' failed to save modified time stamp", context.courseId());
+        if (courseToUpdate.hasErrors()) {
+          Map<String, String> map = courseToUpdate.errors();
+          JsonObject errors = new JsonObject();
+          map.forEach(errors::put);
+          return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors), ExecutionStatus.FAILED);
+        }
+      }
+      
       return new ExecutionResult<>(
         MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getDeleteLessonEventBuilder(lessonToDelete.getId().toString())),
         ExecutionStatus.SUCCESSFUL);

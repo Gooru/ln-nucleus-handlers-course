@@ -51,9 +51,9 @@ public class DeleteCourseHandler implements DBHandler {
       }
 
       //published course can not be deleted
-      if (ajEntityCourse.get(0).getDate(AJEntityCourse.PUBLISH_DATE) != null) {
+      if (ajEntityCourse.get(0).getString(AJEntityCourse.PUBLISH_STATUS).equalsIgnoreCase(AJEntityCourse.PUBLISH_STATUS_TYPE_PUBLISHED)) {
         LOGGER.warn("course {} is published hence can't deleted");
-        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Course is published"), ExecutionResult.ExecutionStatus.FAILED);
+        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Course is published hence can't be deleted"), ExecutionResult.ExecutionStatus.FAILED);
       }
     } else {
       LOGGER.warn("course {} not found to delete, aborting", context.courseId());

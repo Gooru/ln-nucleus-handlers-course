@@ -8,6 +8,7 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +77,33 @@ public class UpdateCourseHandler implements DBHandler {
     courseToUpdate.setCourseId(context.courseId());
     courseToUpdate.setModifierId(context.userId());
 
+    Object maxSequenceId = null;
+    int sequenceId = 1;
+    Object objSubjectBucket = Base.firstCell(AJEntityCourse.SELECT_SUBJECT_BUCKET, context.courseId());
+    String subjectBucketFromPaylaod = courseToUpdate.getString(AJEntityCourse.SUBJECT_BUCKET);
+    // User is trying to update subject bucket to different subject
+    if (subjectBucketFromPaylaod != null && !subjectBucketFromPaylaod.isEmpty()) {
+      if (objSubjectBucket != null) {
+        String subjectBucket = objSubjectBucket.toString();
+        if (!subjectBucketFromPaylaod.equalsIgnoreCase(subjectBucket)) {
+          maxSequenceId = Base.firstCell(AJEntityCourse.SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET, context.userId(), subjectBucketFromPaylaod);
+        }
+      } else {
+        maxSequenceId = Base.firstCell(AJEntityCourse.SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET, context.userId(), subjectBucketFromPaylaod);
+      }
+    } else {
+      // User is trying to update subject bucket to null
+      if (objSubjectBucket != null) {
+        maxSequenceId = Base.firstCell(AJEntityCourse.SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET, context.userId());
+      }
+    }
+    
+    if (maxSequenceId != null) {
+      sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
+      courseToUpdate.setInteger(AJEntityCourse.SEQUENCE_ID, sequenceId);
+    }
+    
+    
     if (courseToUpdate.hasErrors()) {
       LOGGER.warn("updating course has errors");
       return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()), ExecutionStatus.FAILED);

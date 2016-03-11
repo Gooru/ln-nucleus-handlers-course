@@ -41,6 +41,9 @@ public class AJEntityCollection extends Model {
       "?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_COLLECTION_MAX_SEQUENCEID = "SELECT max(sequence_id) FROM collection WHERE lesson_id = ?::uuid";
 
+  public static final String SELECT_COLLECTION_CONTENT_COUNT = "SELECT count(id) as contentCount, content_format, collection_id FROM content WHERE"
+    +" collection_id = ANY(?::uuid[]) AND course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid AND is_deleted = false GROUP BY collection_id, content_format";
+  //select count(id), content_format, collection_id from content where collection_id IN ('259b732c-2672-4780-9616-2c7a35d2d526', '2daec488-370c-424f-b0e9-062c5fd274be')^Croup by collection_id, content_format;
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 

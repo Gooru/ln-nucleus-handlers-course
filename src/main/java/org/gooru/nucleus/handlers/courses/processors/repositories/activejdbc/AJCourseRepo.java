@@ -42,4 +42,9 @@ public class AJCourseRepo implements CourseRepo {
   public MessageResponse moveUnitToCourse() {
     return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildMoveUnitToCourseHandler(context));
   }
+
+  @Override
+  public MessageResponse reorderCourse() {
+    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildReorderCourseHandler(context));
+  }
 }

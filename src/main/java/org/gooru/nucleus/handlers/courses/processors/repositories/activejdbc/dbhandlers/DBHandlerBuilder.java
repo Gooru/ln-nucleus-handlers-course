@@ -84,4 +84,8 @@ public class DBHandlerBuilder {
   public DBHandler buildMoveCollectionToLessonHandler(ProcessorContext context) {
     return new MoveCollectionToLessonHandler(context);
   }
+
+  public DBHandler buildReorderCourseHandler(ProcessorContext context) {
+    return new ReorderCourseHandler(context);
+  }
 }

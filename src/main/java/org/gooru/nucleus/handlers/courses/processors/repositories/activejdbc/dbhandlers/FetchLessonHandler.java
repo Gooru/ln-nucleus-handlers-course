@@ -2,6 +2,13 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -12,9 +19,12 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.sun.org.apache.bcel.internal.generic.CPInstruction;
 
 public class FetchLessonHandler implements DBHandler {
 
@@ -95,8 +105,28 @@ public class FetchLessonHandler implements DBHandler {
 
       LOGGER.debug("number of collections found for lesson {} : {}", context.lessonId(), collectionSummary.size());
       if (collectionSummary.size() > 0) {
-        resultBody.put("collectionSummary", new JsonArray(
-          new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS).toJson(collectionSummary)));
+        List<String> collectionIds = new ArrayList<>();
+        collectionSummary.stream().forEach(collection -> collectionIds.add(collection.getString(AJEntityCollection.ID)));
+        
+        List<Map> collectionContentCount = Base.findAll(AJEntityCollection.SELECT_COLLECTION_CONTENT_COUNT, listToPostgresArrayString(collectionIds),
+                context.courseId(), context.unitId(), context.lessonId());
+        Map<String, Integer> resourceCountMap = new HashMap<>();
+        collectionContentCount.stream()
+                .filter(map -> map.get("content_format") != null && map.get("content_format").toString().equalsIgnoreCase("resource"))
+                .forEach(map -> resourceCountMap.put(map.get("collection_id").toString(), Integer.valueOf(map.get("contentCount").toString())));
+        
+        Map<String, Integer> questionCountMap = new HashMap<>();
+        collectionContentCount.stream()
+                .filter(map -> map.get("content_format") != null && map.get("content_format").toString().equalsIgnoreCase("question"))
+                .forEach(map -> questionCountMap.put(map.get("collection_id").toString(), Integer.valueOf(map.get("contentCount").toString())));
+        
+        JsonArray collectionSummaryArray = new JsonArray();
+        collectionSummary.stream()
+                .forEach(collection -> collectionSummaryArray.add(new JsonObject(
+                        new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS).toJson(collection))
+                                .put("resource_count", resourceCountMap.get(collection.getString(AJEntityCollection.ID)))
+                                .put("question_count", questionCountMap.get(collection.getString(AJEntityCollection.ID)))));
+        resultBody.put("collectionSummary", collectionSummaryArray);
       }
 
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody), ExecutionStatus.SUCCESSFUL);
@@ -109,6 +139,26 @@ public class FetchLessonHandler implements DBHandler {
   @Override
   public boolean handlerReadOnly() {
     return true;
+  }
+  
+  private String listToPostgresArrayString(List<String> input) {
+    int approxSize = ((input.size() + 1) * 36); // Length of UUID is around 36
+                                                // chars
+    Iterator<String> it = input.iterator();
+    if (!it.hasNext()) {
+      return "{}";
+    }
+
+    StringBuilder sb = new StringBuilder(approxSize);
+    sb.append('{');
+    for (;;) {
+      String s = it.next();
+      sb.append('"').append(s).append('"');
+      if (!it.hasNext()) {
+        return sb.append('}').toString();
+      }
+      sb.append(',');
+    }
   }
 
 }
