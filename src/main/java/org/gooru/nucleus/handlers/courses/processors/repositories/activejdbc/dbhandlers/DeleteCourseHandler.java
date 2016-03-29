@@ -1,10 +1,14 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.*;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityClass;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -12,6 +16,8 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class DeleteCourseHandler implements DBHandler {
 
@@ -49,12 +55,6 @@ public class DeleteCourseHandler implements DBHandler {
         LOGGER.warn("user is anonymous or not owner of course for delete. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
-
-      //published course can not be deleted
-      if (ajEntityCourse.get(0).getString(AJEntityCourse.PUBLISH_STATUS).equalsIgnoreCase(AJEntityCourse.PUBLISH_STATUS_TYPE_PUBLISHED)) {
-        LOGGER.warn("course {} is published hence can't deleted");
-        return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse("Course is published hence can't be deleted"), ExecutionResult.ExecutionStatus.FAILED);
-      }
     } else {
       LOGGER.warn("course {} not found to delete, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
@@ -86,6 +86,11 @@ public class DeleteCourseHandler implements DBHandler {
       AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid", true, context.userId(), context.courseId());
       AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid", true, context.userId(), context.courseId());
 
+      // Remove the association of this course from class
+      // class is not archived and not delete and version is current version 
+      AJEntityClass.update("course_id = null", "course_id = ?::uuid AND is_deleted = ? AND is_archived = ? AND gooru_version = ?", context.courseId(),
+              false, false, AJEntityClass.CURRENT_VERSION);
+      
       return new ExecutionResult<>(
         MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getDeleteCourseEventBuilder(courseToDelete.getId().toString())),
         ExecutionStatus.SUCCESSFUL);
