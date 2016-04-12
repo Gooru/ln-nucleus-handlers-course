@@ -88,8 +88,8 @@ public class EventBuilderFactory {
     return () -> new JsonObject().put(EVENT_NAME, EVT_COURSE_UPDATE).put(EVENT_BODY, new JsonObject().put(ID, courseId));
   }
   
-  public static EventBuilder getUpdateCourseCollaboratorEventBuilder(String courseId) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_COURSE_COLLABORATOR_UPDATE).put(EVENT_BODY, new JsonObject().put(ID, courseId));
+  public static EventBuilder getUpdateCourseCollaboratorEventBuilder(String courseId, JsonObject collaborators) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_COURSE_COLLABORATOR_UPDATE).put(EVENT_BODY, collaborators.put(ID, courseId));
   }
 
   public static EventBuilder getUpdateLessonEventBuilder(String lessonId) {
