@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -106,25 +107,25 @@ public class FetchLessonHandler implements DBHandler {
         List<String> collectionIds = new ArrayList<>();
         collectionSummary.stream().forEach(collection -> collectionIds.add(collection.getString(AJEntityCollection.ID)));
         
-        List<Map> collectionContentCount = Base.findAll(AJEntityCollection.SELECT_COLLECTION_CONTENT_COUNT, listToPostgresArrayString(collectionIds),
+        List<Map> collectionContentCount = Base.findAll(AJEntityContent.SELECT_CONTENT_COUNT_BY_COLLECTION, listToPostgresArrayString(collectionIds),
                 context.courseId(), context.unitId(), context.lessonId());
         Map<String, Integer> resourceCountMap = new HashMap<>();
         collectionContentCount.stream()
-                .filter(map -> map.get("content_format") != null && map.get("content_format").toString().equalsIgnoreCase("resource"))
-                .forEach(map -> resourceCountMap.put(map.get("collection_id").toString(), Integer.valueOf(map.get("contentCount").toString())));
+                .filter(map -> map.get(AJEntityContent.CONTENT_FORMAT) != null && map.get(AJEntityContent.CONTENT_FORMAT).toString().equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_RESOURCE))
+                .forEach(map -> resourceCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(), Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString())));
         
         Map<String, Integer> questionCountMap = new HashMap<>();
         collectionContentCount.stream()
-                .filter(map -> map.get("content_format") != null && map.get("content_format").toString().equalsIgnoreCase("question"))
-                .forEach(map -> questionCountMap.put(map.get("collection_id").toString(), Integer.valueOf(map.get("contentCount").toString())));
+                .filter(map -> map.get(AJEntityContent.CONTENT_FORMAT) != null && map.get(AJEntityContent.CONTENT_FORMAT).toString().equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_QUESTION))
+                .forEach(map -> questionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(), Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString())));
         
         JsonArray collectionSummaryArray = new JsonArray();
         collectionSummary.stream()
                 .forEach(collection -> collectionSummaryArray.add(new JsonObject(
                         new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS).toJson(collection))
-                                .put("resource_count", resourceCountMap.get(collection.getString(AJEntityCollection.ID)))
-                                .put("question_count", questionCountMap.get(collection.getString(AJEntityCollection.ID)))));
-        resultBody.put("collectionSummary", collectionSummaryArray);
+                                .put(AJEntityContent.RESOURCE_COUNT, resourceCountMap.get(collection.getString(AJEntityCollection.ID)))
+                                .put(AJEntityContent.QUESTION_COUNT, questionCountMap.get(collection.getString(AJEntityCollection.ID)))));
+        resultBody.put(AJEntityCollection.COLLECTION_SUMMARY, collectionSummaryArray);
       }
 
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody), ExecutionStatus.SUCCESSFUL);

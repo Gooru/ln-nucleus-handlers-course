@@ -93,6 +93,8 @@ public class MoveCollectionToLessonHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
     }
 
+    targetCourseOwner = targetCourses.get(0).getString(AJEntityCourse.OWNER_ID);
+    
     LazyList<AJEntityUnit> targetUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, targetUnitId, targetCourseId, false);
     if (targetUnits.isEmpty()) {
       LOGGER.warn("target unit is not found in database");
@@ -151,8 +153,6 @@ public class MoveCollectionToLessonHandler implements DBHandler {
         LOGGER.warn("user is not owner or collaborator of source course to move collection. aborting");
         return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
       }
-
-      targetCourseOwner = targetCourses.get(0).getString(AJEntityCourse.OWNER_ID);
 
       LazyList<AJEntityUnit> sourceUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, sourceUnitId, sourceCourseId, false);
       if (sourceUnits.isEmpty()) {

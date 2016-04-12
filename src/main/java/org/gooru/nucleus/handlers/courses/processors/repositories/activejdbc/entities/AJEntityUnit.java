@@ -38,6 +38,8 @@ public class AJEntityUnit extends Model {
   public static final String IS_DELETED = "is_deleted";
   public static final String CREATOR_SYSTEM = "creator_system";
   
+  public static final String UNIT_SUMMARY = "unit_summary";
+  
   public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
   public static final List<String> JSON_OBJECT_FIELDS = Arrays.asList(METADATA, TAXONOMY);
