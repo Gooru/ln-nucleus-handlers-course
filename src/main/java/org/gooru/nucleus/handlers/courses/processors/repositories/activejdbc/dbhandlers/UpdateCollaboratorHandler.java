@@ -1,6 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
@@ -13,12 +12,18 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 public class UpdateCollaboratorHandler implements DBHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCollaboratorHandler.class);
   private final ProcessorContext context;
   private AJEntityCourse courseUpdateCollab;
-
+  private AJEntityCourse course;
+  private static final String COLLABORATORS_REMOVED = "collaborators.removed";
+  private static final String COLLABORATORS_ADDED = "collaborators.added";
+  
   public UpdateCollaboratorHandler(ProcessorContext context) {
     this.context = context;
   }
@@ -70,6 +75,8 @@ public class UpdateCollaboratorHandler implements DBHandler {
       LOGGER.warn("course {} not found to update collaborators, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
     }
+    
+    course = ajEntityCourse.get(0);
 
     LOGGER.debug("validateRequest() OK");
     return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
@@ -77,6 +84,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
+    JsonObject diffCollaborators = calculateDiffOfCollaborators();
     courseUpdateCollab = new AJEntityCourse();
     courseUpdateCollab.setCourseId(context.courseId());
     courseUpdateCollab.setModifierId(context.userId());
@@ -90,7 +98,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
     if (courseUpdateCollab.save()) {
       LOGGER.info("updated collaborators of course {} successfully", context.courseId());
       return new ExecutionResult<>(
-        MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseCollaboratorEventBuilder(context.courseId())),
+        MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getUpdateCourseCollaboratorEventBuilder(context.courseId(), diffCollaborators)),
         ExecutionStatus.SUCCESSFUL);
     } else {
       LOGGER.error("error while updating course collaborator");
@@ -123,6 +131,44 @@ public class UpdateCollaboratorHandler implements DBHandler {
     JsonObject errors = new JsonObject();
     this.courseUpdateCollab.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
     return errors;
+  }
+  
+  private JsonObject calculateDiffOfCollaborators() {
+    JsonObject result = new JsonObject();
+    // Find current collaborators
+    String currentCollaboratorsAsString = this.course.getString(AJEntityCourse.COLLABORATOR);
+    JsonArray currentCollaborators;
+    currentCollaborators =
+      currentCollaboratorsAsString != null && !currentCollaboratorsAsString.isEmpty() ? new JsonArray(currentCollaboratorsAsString) : new JsonArray();
+    JsonArray newCollaborators = this.context.request().getJsonArray(AJEntityCourse.COLLABORATOR);
+    if (currentCollaborators.isEmpty() && !newCollaborators.isEmpty()) {
+      // Adding all
+      result.put(COLLABORATORS_ADDED, newCollaborators.copy());
+      result.put(COLLABORATORS_REMOVED, new JsonArray());
+    } else if (!currentCollaborators.isEmpty() && newCollaborators.isEmpty()) {
+      // Removing all
+      result.put(COLLABORATORS_ADDED, new JsonArray());
+      result.put(COLLABORATORS_REMOVED, currentCollaborators.copy());
+    } else if (!currentCollaborators.isEmpty() && !newCollaborators.isEmpty()) {
+      // Do the diffing
+      JsonArray toBeAdded = new JsonArray();
+      JsonArray toBeDeleted = currentCollaborators.copy();
+      for (Object o : newCollaborators) {
+        if (toBeDeleted.contains(o)) {
+          toBeDeleted.remove(o);
+        } else {
+          toBeAdded.add(o);
+        }
+      }
+      result.put(COLLABORATORS_ADDED, toBeAdded);
+      result.put(COLLABORATORS_REMOVED, toBeDeleted);
+    } else {
+      // WHAT ????
+      LOGGER.warn("Updating collaborator with empty payload when current collaborator is empty for course '{}'", this.context.courseId());
+      result.put(COLLABORATORS_ADDED, new JsonArray());
+      result.put(COLLABORATORS_REMOVED, new JsonArray());
+    }
+    return result;
   }
 
 }
