@@ -26,6 +26,10 @@ public class AJEntityCollection extends Model {
   public static final String COLLABORATOR = "collaborator";
   public static final String SEQUENCE_ID = "sequence_id";
   public static final String IS_DELETED = "is_deleted";
+  
+  public static final String COLLECTION_SUMMARY = "collection_summary";
+  public static final String COLLECTION_COUNT = "collection_count";
+  public static final String ASSESSMENT_COUNT = "assessment_count";
 
   public static final List<String> COLLECTION_SUMMARY_FIELDS = Arrays.asList(ID, TITLE, FORMAT, SEQUENCE_ID);
 
@@ -41,13 +45,17 @@ public class AJEntityCollection extends Model {
       "?::uuid AND course_id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_COLLECTION_MAX_SEQUENCEID = "SELECT max(sequence_id) FROM collection WHERE lesson_id = ?::uuid";
 
-  public static final String SELECT_COLLECTION_CONTENT_COUNT = "SELECT count(id) as contentCount, content_format, collection_id FROM content WHERE"
-    +" collection_id = ANY(?::uuid[]) AND course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid AND is_deleted = false GROUP BY collection_id, content_format";
-  //select count(id), content_format, collection_id from content where collection_id IN ('259b732c-2672-4780-9616-2c7a35d2d526', '2daec488-370c-424f-b0e9-062c5fd274be')^Croup by collection_id, content_format;
+  public static final String SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON =
+    "SELECT count(id) as collection_count, format, lesson_id FROM collection WHERE lesson_id = ANY(?::uuid[]) AND unit_id = ?::uuid AND course_id = ?::uuid"
+    + " AND is_deleted = false GROUP BY lesson_id, format";
+  
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 
   public static final List<String> COLLECTION_MOVE_NOTNULL_FIELDS = Arrays.asList(COURSE_ID, UNIT_ID, LESSON_ID);
+
+  public static final String FORMAT_COLLECTION = "collection";
+  public static final String FORMAT_ASSESSMENT = "assessment";
 
   public void setCourseId(String courseId) {
     setPGObject(COURSE_ID, UUID_TYPE, courseId);

@@ -2,7 +2,17 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -11,6 +21,7 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,11 +83,32 @@ public class FetchUnitHandler implements DBHandler {
       LOGGER.info("unit {} found, packing into JSON", context.unitId());
       resultBody = new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityUnit.ALL_FIELDS).toJson(ajEntityUnits.get(0)));
 
-      LazyList<AJEntityLesson> lessonSummary = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), false);
-      LOGGER.debug("number of lessons found for unit {} : {}", context.unitId(), lessonSummary.size());
-      if (lessonSummary.size() > 0) {
-        resultBody.put("lessonSummary",
-          new JsonArray(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS).toJson(lessonSummary)));
+      LazyList<AJEntityLesson> lessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), false);
+      LOGGER.debug("number of lessons found for unit {} : {}", context.unitId(), lessons.size());
+      if (lessons.size() > 0) {
+        List<String> lessonIds = new ArrayList<>();
+        lessons.stream().forEach(lesson -> lessonIds.add(lesson.getString(AJEntityLesson.LESSON_ID)));
+        
+        List<Map> collectionCount = Base.findAll(AJEntityCollection.SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON, toPostgresArrayString(lessonIds), context.unitId(), context.courseId());
+        LOGGER.debug("collection count: {}", collectionCount.size());
+        Map<String, Integer> collectionCountByLesson = new HashMap<>();
+        collectionCount.stream()
+          .filter(map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT).toString().equalsIgnoreCase(AJEntityCollection.FORMAT_COLLECTION))
+          .forEach(map -> collectionCountByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(), Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
+        
+        Map<String, Integer> assessmentCountByLesson = new HashMap<>();
+        collectionCount.stream()
+        .filter(map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT).toString().equalsIgnoreCase(AJEntityCollection.FORMAT_ASSESSMENT))
+        .forEach(map -> assessmentCountByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(), Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
+        
+        JsonArray lessonSummaryArray = new JsonArray();
+        lessons.stream().forEach(lesson -> {
+          JsonObject lessonSummary = new JsonObject(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS).toJson(lesson));
+          lessonSummary.put(AJEntityCollection.COLLECTION_COUNT, collectionCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()));
+          lessonSummary.put(AJEntityCollection.ASSESSMENT_COUNT, assessmentCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()));          
+          lessonSummaryArray.add(lessonSummary);
+        });
+        resultBody.put(AJEntityLesson.LESSON_SUMMARY, lessonSummaryArray);
       }
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody), ExecutionStatus.SUCCESSFUL);
     } else {
@@ -88,6 +120,26 @@ public class FetchUnitHandler implements DBHandler {
   @Override
   public boolean handlerReadOnly() {
     return true;
+  }
+  
+  private String toPostgresArrayString(Collection<String> input) {
+    int approxSize = ((input.size() + 1) * 36); // Length of UUID is around 36
+                                                // chars
+    Iterator<String> it = input.iterator();
+    if (!it.hasNext()) {
+      return "{}";
+    }
+
+    StringBuilder sb = new StringBuilder(approxSize);
+    sb.append('{');
+    for (;;) {
+      String s = it.next();
+      sb.append('"').append(s).append('"');
+      if (!it.hasNext()) {
+        return sb.append('}').toString();
+      }
+      sb.append(',');
+    }
   }
 
 }
