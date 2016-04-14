@@ -7,8 +7,8 @@ import java.util.List;
  */
 public class JsonFormatterBuilder {
 
-  public JsonFormatter buildSimpleJsonFormatter(boolean pretty, List<String> attributes) {
+    public JsonFormatter buildSimpleJsonFormatter(boolean pretty, List<String> attributes) {
 
-    return new SimpleJsonFormatter(pretty, attributes);
-  }
+        return new SimpleJsonFormatter(pretty, attributes);
+    }
 }

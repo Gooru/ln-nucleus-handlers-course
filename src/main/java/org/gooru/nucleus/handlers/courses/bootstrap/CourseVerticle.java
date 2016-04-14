@@ -20,82 +20,81 @@ import org.slf4j.LoggerFactory;
  */
 public class CourseVerticle extends AbstractVerticle {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(CourseVerticle.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CourseVerticle.class);
 
-  @Override
-  public void start(Future<Void> voidFuture) throws Exception {
+    @Override
+    public void start(Future<Void> voidFuture) throws Exception {
 
-    vertx.executeBlocking(blockingFuture -> {
-      startApplication();
-      blockingFuture.complete();
-    }, future -> {
-      if (future.succeeded()) {
-        voidFuture.complete();
-      } else {
-        voidFuture.fail("Not able to initialize the Course machinery properly");
-      }
-    });
+        vertx.executeBlocking(blockingFuture -> {
+            startApplication();
+            blockingFuture.complete();
+        } , future -> {
+            if (future.succeeded()) {
+                voidFuture.complete();
+            } else {
+                voidFuture.fail("Not able to initialize the Course machinery properly");
+            }
+        });
 
-    EventBus eb = vertx.eventBus();
+        EventBus eb = vertx.eventBus();
 
-    eb.consumer(MessagebusEndpoints.MBEP_COURSE, message -> {
+        eb.consumer(MessagebusEndpoints.MBEP_COURSE, message -> {
 
-      LOGGER.debug("Received message: " + message.body());
+            LOGGER.debug("Received message: " + message.body());
 
-      vertx.executeBlocking(future -> {
-        MessageResponse result = new ProcessorBuilder(message).build().process();
-        LOGGER.info("got response :" + result.reply());
-        future.complete(result);
-      }, res -> {
-        MessageResponse result = (MessageResponse) res.result();
-        message.reply(result.reply(), result.deliveryOptions());
+            vertx.executeBlocking(future -> {
+                MessageResponse result = new ProcessorBuilder(message).build().process();
+                LOGGER.info("got response :" + result.reply());
+                future.complete(result);
+            } , res -> {
+                MessageResponse result = (MessageResponse) res.result();
+                message.reply(result.reply(), result.deliveryOptions());
 
-        JsonObject eventData = result.event();
-        if (eventData != null) {
-          String sessionToken = ((JsonObject) message.body()).getString(MessageConstants.MSG_HEADER_TOKEN);
-          if (sessionToken != null && !sessionToken.isEmpty()) {
-            eventData.put(MessageConstants.MSG_HEADER_TOKEN, sessionToken);
-          } else {
-            LOGGER.warn("Invalid session token received");
-          }
-          eb.publish(MessagebusEndpoints.MBEP_EVENT, eventData);
+                JsonObject eventData = result.event();
+                if (eventData != null) {
+                    String sessionToken = ((JsonObject) message.body()).getString(MessageConstants.MSG_HEADER_TOKEN);
+                    if (sessionToken != null && !sessionToken.isEmpty()) {
+                        eventData.put(MessageConstants.MSG_HEADER_TOKEN, sessionToken);
+                    } else {
+                        LOGGER.warn("Invalid session token received");
+                    }
+                    eb.publish(MessagebusEndpoints.MBEP_EVENT, eventData);
+                }
+            });
+
+        }).completionHandler(result -> {
+            if (result.succeeded()) {
+                LOGGER.info("Course end point ready to listen");
+            } else {
+                LOGGER.error("Error registering the course handler. Halting the Course machinery");
+                Runtime.getRuntime().halt(1);
+            }
+        });
+    }
+
+    @Override
+    public void stop() throws Exception {
+        shutDownApplication();
+        super.stop();
+    }
+
+    private void startApplication() {
+        Initializers initializers = new Initializers();
+        try {
+            for (Initializer initializer : initializers) {
+                initializer.initializeComponent(vertx, config());
+            }
+        } catch (IllegalStateException ie) {
+            LOGGER.error("Error initializing application", ie);
+            Runtime.getRuntime().halt(1);
         }
-      });
-
-
-    }).completionHandler(result -> {
-      if (result.succeeded()) {
-        LOGGER.info("Course end point ready to listen");
-      } else {
-        LOGGER.error("Error registering the course handler. Halting the Course machinery");
-        Runtime.getRuntime().halt(1);
-      }
-    });
-  }
-
-  @Override
-  public void stop() throws Exception {
-    shutDownApplication();
-    super.stop();
-  }
-
-  private void startApplication() {
-    Initializers initializers = new Initializers();
-    try {
-      for (Initializer initializer : initializers) {
-        initializer.initializeComponent(vertx, config());
-      }
-    } catch (IllegalStateException ie) {
-      LOGGER.error("Error initializing application", ie);
-      Runtime.getRuntime().halt(1);
-    }
-  }
-
-  private void shutDownApplication() {
-    Finalizers finalizers = new Finalizers();
-    for (Finalizer finalizer : finalizers) {
-      finalizer.finalizeComponent();
     }
 
-  }
+    private void shutDownApplication() {
+        Finalizers finalizers = new Finalizers();
+        for (Finalizer finalizer : finalizers) {
+            finalizer.finalizeComponent();
+        }
+
+    }
 }

@@ -7,15 +7,16 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.tra
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 
 public class AJCourseCollaboratorRepo implements CourseCollaboratorRepo {
-  private final ProcessorContext context;
+    private final ProcessorContext context;
 
-  public AJCourseCollaboratorRepo(ProcessorContext context) {
-    this.context = context;
-  }
+    public AJCourseCollaboratorRepo(ProcessorContext context) {
+        this.context = context;
+    }
 
-  @Override
-  public MessageResponse updateCollaborator() {
-    return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildUpdateCollaboratorHandler(context));
-  }
+    @Override
+    public MessageResponse updateCollaborator() {
+        return new TransactionExecutor()
+            .executeTransaction(new DBHandlerBuilder().buildUpdateCollaboratorHandler(context));
+    }
 
 }
