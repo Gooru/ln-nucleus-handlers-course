@@ -8,19 +8,19 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.UnitRepo;
 
 public class AJRepoBuilder {
 
-  public CourseRepo buildCourseRepo(ProcessorContext context) {
-    return new AJCourseRepo(context);
-  }
+    public CourseRepo buildCourseRepo(ProcessorContext context) {
+        return new AJCourseRepo(context);
+    }
 
-  public CourseCollaboratorRepo buildCourseCollaboratorRepo(ProcessorContext context) {
-    return new AJCourseCollaboratorRepo(context);
-  }
+    public CourseCollaboratorRepo buildCourseCollaboratorRepo(ProcessorContext context) {
+        return new AJCourseCollaboratorRepo(context);
+    }
 
-  public UnitRepo buildUnitRepo(ProcessorContext context) {
-    return new AJUnitRepo(context);
-  }
+    public UnitRepo buildUnitRepo(ProcessorContext context) {
+        return new AJUnitRepo(context);
+    }
 
-  public LessonRepo buildLessonRepo(ProcessorContext context) {
-    return new AJLessonRepo(context);
-  }
+    public LessonRepo buildLessonRepo(ProcessorContext context) {
+        return new AJLessonRepo(context);
+    }
 }

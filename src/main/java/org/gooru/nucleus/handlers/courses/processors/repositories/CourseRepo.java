@@ -4,17 +4,17 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 
 public interface CourseRepo {
 
-  MessageResponse fetchCourse();
+    MessageResponse fetchCourse();
 
-  MessageResponse createCourse();
+    MessageResponse createCourse();
 
-  MessageResponse updateCourse();
+    MessageResponse updateCourse();
 
-  MessageResponse deleteCourse();
+    MessageResponse deleteCourse();
 
-  MessageResponse reorderUnitInCourse();
+    MessageResponse reorderUnitInCourse();
 
-  MessageResponse moveUnitToCourse();
+    MessageResponse moveUnitToCourse();
 
-  MessageResponse reorderCourse();
+    MessageResponse reorderCourse();
 }
