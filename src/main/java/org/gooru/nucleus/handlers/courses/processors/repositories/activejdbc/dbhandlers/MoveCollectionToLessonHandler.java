@@ -246,8 +246,10 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                 }
             }
 
-            return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
-                EventBuilderFactory.getMoveCollectionEventBuilder(context.lessonId())), ExecutionStatus.SUCCESSFUL);
+            return new ExecutionResult<>(
+                MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getMoveCollectionEventBuilder(
+                    context.courseId(), context.unitId(), context.lessonId(), context.request())),
+                ExecutionStatus.SUCCESSFUL);
         } else {
             LOGGER.error("error while moving collection to lesson");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),

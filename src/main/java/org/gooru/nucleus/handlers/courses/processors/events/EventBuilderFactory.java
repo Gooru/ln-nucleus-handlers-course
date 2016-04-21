@@ -31,6 +31,11 @@ public class EventBuilderFactory {
     private static final String EVENT_BODY = "event.body";
     private static final String ID = "id";
     private static final String SUBJECT_BUCKET = "subject_bucket";
+    private static final String SOURCE = "source";
+    private static final String TARGET = "target";    
+    private static final String COURSE_ID = "course_id";
+    private static final String UNIT_ID = "unit_id";
+    private static final String LESSON_ID = "lesson_id";
 
     public static EventBuilder getCreateCourseEventBuilder(String courseId) {
         return () -> new JsonObject().put(EVENT_NAME, EVT_COURSE_CREATE).put(EVENT_BODY,
@@ -62,19 +67,22 @@ public class EventBuilderFactory {
             new JsonObject().put(ID, unitId));
     }
 
-    public static EventBuilder getMoveCollectionEventBuilder(String lessonId) {
+    public static EventBuilder getMoveCollectionEventBuilder(String courseId, String unitId, String lessonId,
+        JsonObject source) {
         return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_MOVE).put(EVENT_BODY,
-            new JsonObject().put(ID, lessonId));
+            new JsonObject()
+                .put(TARGET, new JsonObject().put(COURSE_ID, courseId).put(UNIT_ID, unitId).put(LESSON_ID, lessonId))
+                .put(SOURCE, source));
     }
 
-    public static EventBuilder getMoveLessonEventBuilder(String unitId) {
-        return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_MOVE).put(EVENT_BODY,
-            new JsonObject().put(ID, unitId));
+    public static EventBuilder getMoveLessonEventBuilder(String courseId, String unitId, JsonObject source) {
+        return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_MOVE).put(EVENT_BODY, new JsonObject()
+            .put(TARGET, new JsonObject().put(COURSE_ID, courseId).put(UNIT_ID, unitId)).put(SOURCE, source));
     }
 
-    public static EventBuilder getMoveUnitEventBuilder(String courseId) {
+    public static EventBuilder getMoveUnitEventBuilder(String courseId, JsonObject source) {
         return () -> new JsonObject().put(EVENT_NAME, EVT_UNIT_MOVE).put(EVENT_BODY,
-            new JsonObject().put(ID, courseId));
+            new JsonObject().put(TARGET, new JsonObject().put(COURSE_ID, courseId)).put(SOURCE, source));
     }
 
     public static EventBuilder getReorderCollectionEventBuilder(String lessonId) {

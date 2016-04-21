@@ -185,8 +185,10 @@ public class MoveLessonToUnitHandler implements DBHandler {
                 }
             }
 
-            return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
-                EventBuilderFactory.getMoveLessonEventBuilder(context.unitId())), ExecutionStatus.SUCCESSFUL);
+            return new ExecutionResult<>(
+                MessageResponseFactory.createNoContentResponse(EventBuilderFactory
+                    .getMoveLessonEventBuilder(context.courseId(), context.unitId(), context.request())),
+                ExecutionStatus.SUCCESSFUL);
         } else {
             LOGGER.error("error while moving lesson to course and unit");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
