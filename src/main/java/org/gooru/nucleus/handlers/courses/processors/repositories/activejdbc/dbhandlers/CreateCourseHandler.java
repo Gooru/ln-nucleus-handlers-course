@@ -4,6 +4,7 @@ import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityMetadataReference;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -69,6 +70,17 @@ public class CreateCourseHandler implements DBHandler {
         course.setCreatorId(context.userId());
         course.setModifierId(context.userId());
         course.setPublishStatus(AJEntityCourse.PUBLISH_STATUS_TYPE_UNPUBLISHED);
+
+        Integer licenseFromRequest = course.getInteger(AJEntityCourse.LICENSE);
+        if (licenseFromRequest == null) {
+            AJEntityMetadataReference metadataReference = AJEntityMetadataReference
+                .findFirst(AJEntityMetadataReference.SELECT_LICENSE, AJEntityMetadataReference.DEFAULT_LICENSE_LABEL);
+            if (metadataReference != null) {
+                Integer license = metadataReference.getInteger(AJEntityMetadataReference.ID);
+                LOGGER.debug("metadata ref found for default license: {}", license);
+                course.setInteger(AJEntityCourse.LICENSE, license);
+            }
+        }
 
         // Get max sequence id of course for subject bucket
         Object maxSequenceId;

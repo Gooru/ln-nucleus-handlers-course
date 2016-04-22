@@ -1,16 +1,20 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.formatter;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
 import org.javalite.activejdbc.LazyList;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.ModelDelegate;
 import org.javalite.common.Convert;
 import org.javalite.common.Escape;
 import org.postgresql.util.PGobject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import io.vertx.core.impl.StringEscapeUtils;
 
 /**
  * Created by ashish on 20/1/16. Simple Json formatter is not aware of any
@@ -21,7 +25,8 @@ import java.util.Set;
 class SimpleJsonFormatter implements JsonFormatter {
     private final String[] attributes;
     private final boolean pretty;
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleJsonFormatter.class);
+    
     public SimpleJsonFormatter(boolean pretty, List<String> attributes) {
         this.pretty = pretty;
         this.attributes = (attributes != null && attributes.size() > 0) ? lowerCased(attributes) : null;
@@ -74,36 +79,43 @@ class SimpleJsonFormatter implements JsonFormatter {
         } else {
             names = this.attributes;
         }
-
-        for (int i = 0; i < names.length; i++) {
-            if (i > 0) {
-                sb.append(',');
+        try {
+            for (int i = 0; i < names.length; i++) {
+                if (i > 0) {
+                    sb.append(',');
+                }
+                if (pretty) {
+                    sb.append("\n  ").append(indent);
+                }
+                String name = names[i];
+                sb.append('"').append(name).append("\":");
+                Object v = model.get(name);
+                if (v == null) {
+                    sb.append("null");
+                } else if (v instanceof Number || v instanceof Boolean) {
+                    sb.append(v);
+                } else if (v instanceof Date) {
+                    sb.append('"').append(Convert.toIsoString((Date) v)).append('"');
+                } else if (v instanceof PGobject && ((PGobject) v).getType().equalsIgnoreCase("jsonb")) {
+                    sb.append(Convert.toString(v));
+                } else {
+                    sb.append('"');
+                    LOGGER.debug("before escaping the data:{}", v);
+                    Escape.json(sb, StringEscapeUtils.escapeJava(Convert.toString(v)));
+                    LOGGER.debug("after escape: {}", sb.toString());
+                    // sb.append(v);
+                    sb.append('"');
+                }
             }
-            if (pretty) {
-                sb.append("\n  ").append(indent);
-            }
-            String name = names[i];
-            sb.append('"').append(name).append("\":");
-            Object v = model.get(name);
-            if (v == null) {
-                sb.append("null");
-            } else if (v instanceof Number || v instanceof Boolean) {
-                sb.append(v);
-            } else if (v instanceof Date) {
-                sb.append('"').append(Convert.toIsoString((Date) v)).append('"');
-            } else if (v instanceof PGobject && ((PGobject) v).getType().equalsIgnoreCase("jsonb")) {
-                sb.append(Convert.toString(v));
-            } else {
-                sb.append('"');
-                Escape.json(sb, Convert.toString(v));
-                sb.append('"');
-            }
-
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         if (pretty) {
             sb.append('\n').append(indent);
         }
         sb.append('}');
+
+        LOGGER.debug("## COMPLETE JSON: {}", sb.toString());
     }
 
     private String[] lowerCased(Collection<String> collection) {
