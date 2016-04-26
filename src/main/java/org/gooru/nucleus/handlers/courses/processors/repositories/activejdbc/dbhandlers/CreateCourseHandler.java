@@ -71,15 +71,13 @@ public class CreateCourseHandler implements DBHandler {
         course.setModifierId(context.userId());
         course.setPublishStatus(AJEntityCourse.PUBLISH_STATUS_TYPE_UNPUBLISHED);
 
-        Integer licenseFromRequest = course.getInteger(AJEntityCourse.LICENSE);
-        if (licenseFromRequest == null) {
-            AJEntityMetadataReference metadataReference = AJEntityMetadataReference
-                .findFirst(AJEntityMetadataReference.SELECT_LICENSE, AJEntityMetadataReference.DEFAULT_LICENSE_LABEL);
-            if (metadataReference != null) {
-                Integer license = metadataReference.getInteger(AJEntityMetadataReference.ID);
-                LOGGER.debug("metadata ref found for default license: {}", license);
-                course.setInteger(AJEntityCourse.LICENSE, license);
-            }
+        //TODO: cache id, value of licenses and avoid DB lookup every time.
+        AJEntityMetadataReference metadataReference = AJEntityMetadataReference
+            .findFirst(AJEntityMetadataReference.SELECT_LICENSE, AJEntityMetadataReference.DEFAULT_LICENSE_LABEL);
+        if (metadataReference != null) {
+            Integer license = metadataReference.getInteger(AJEntityMetadataReference.ID);
+            LOGGER.debug("metadata ref found for default license: {}", license);
+            course.setInteger(AJEntityCourse.LICENSE, license);
         }
 
         // Get max sequence id of course for subject bucket
