@@ -118,9 +118,11 @@ public class FetchUnitHandler implements DBHandler {
                     JsonObject lessonSummary = new JsonObject(new JsonFormatterBuilder()
                         .buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS).toJson(lesson));
                     lessonSummary.put(AJEntityCollection.COLLECTION_COUNT,
-                        collectionCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()));
+                        collectionCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()) != null
+                            ? collectionCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()) : 0);
                     lessonSummary.put(AJEntityCollection.ASSESSMENT_COUNT,
-                        assessmentCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()));
+                        assessmentCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()) != null
+                            ? assessmentCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()) : 0);
                     lessonSummaryArray.add(lessonSummary);
                 });
                 resultBody.put(AJEntityLesson.LESSON_SUMMARY, lessonSummaryArray);
