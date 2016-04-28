@@ -1,8 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,7 +9,6 @@ import java.util.Map;
 
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -25,6 +21,9 @@ import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class FetchUnitHandler implements DBHandler {
 
@@ -117,10 +116,11 @@ public class FetchUnitHandler implements DBHandler {
                 lessons.stream().forEach(lesson -> {
                     JsonObject lessonSummary = new JsonObject(new JsonFormatterBuilder()
                         .buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS).toJson(lesson));
-                    lessonSummary.put(AJEntityCollection.COLLECTION_COUNT,
-                        collectionCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()));
-                    lessonSummary.put(AJEntityCollection.ASSESSMENT_COUNT,
-                        assessmentCountByLesson.get(lesson.get(AJEntityCollection.ID).toString()));
+                    String lessonId = lesson.get(AJEntityCollection.ID).toString();
+                    Integer collectionCnt = collectionCountByLesson.get(lessonId);
+                    Integer assessmentCnt = assessmentCountByLesson.get(lessonId);
+                    lessonSummary.put(AJEntityCollection.COLLECTION_COUNT, collectionCnt != null ? collectionCnt : 0);
+                    lessonSummary.put(AJEntityCollection.ASSESSMENT_COUNT, assessmentCnt != null ? assessmentCnt : 0);
                     lessonSummaryArray.add(lessonSummary);
                 });
                 resultBody.put(AJEntityLesson.LESSON_SUMMARY, lessonSummaryArray);

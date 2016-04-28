@@ -1,8 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,6 +20,9 @@ import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class FetchCourseHandler implements DBHandler {
 
@@ -84,8 +84,8 @@ public class FetchCourseHandler implements DBHandler {
                 units.stream().forEach(unit -> {
                     JsonObject unitSummary = new JsonObject(new JsonFormatterBuilder()
                         .buildSimpleJsonFormatter(false, AJEntityUnit.UNIT_SUMMARY_FIELDS).toJson(unit));
-                    unitSummary.put(AJEntityLesson.LESSON_COUNT,
-                        lessonCountByUnit.get(unit.get(AJEntityLesson.UNIT_ID).toString()));
+                    Integer lessonCount = lessonCountByUnit.get(unit.get(AJEntityLesson.UNIT_ID).toString());
+                    unitSummary.put(AJEntityLesson.LESSON_COUNT, lessonCount != null ? lessonCount : 0);
                     unitSummaryArray.add(unitSummary);
                 });
 
