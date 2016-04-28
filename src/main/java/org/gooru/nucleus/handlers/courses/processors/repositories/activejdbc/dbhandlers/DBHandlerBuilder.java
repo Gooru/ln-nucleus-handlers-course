@@ -88,4 +88,8 @@ public class DBHandlerBuilder {
     public DBHandler buildReorderCourseHandler(ProcessorContext context) {
         return new ReorderCourseHandler(context);
     }
+
+    public DBHandler buildFetchResourcesForCourse(ProcessorContext context) {
+        return new FetchResourcesForCourseHandler(context);
+    }
 }
