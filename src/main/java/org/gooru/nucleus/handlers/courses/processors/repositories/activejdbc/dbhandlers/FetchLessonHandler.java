@@ -134,14 +134,16 @@ public class FetchLessonHandler implements DBHandler {
                         Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString())));
 
                 JsonArray collectionSummaryArray = new JsonArray();
-                collectionSummary.stream()
-                    .forEach(collection -> collectionSummaryArray.add(new JsonObject(new JsonFormatterBuilder()
+                collectionSummary.stream().forEach(collection -> {
+                    String collectionId = collection.getString(AJEntityCollection.ID);
+                    Integer resourceCount = resourceCountMap.get(collectionId);
+                    Integer questionCount = questionCountMap.get(collectionId);
+                    collectionSummaryArray.add(new JsonObject(new JsonFormatterBuilder()
                         .buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS)
                         .toJson(collection))
-                            .put(AJEntityContent.RESOURCE_COUNT,
-                                resourceCountMap.get(collection.getString(AJEntityCollection.ID)))
-                            .put(AJEntityContent.QUESTION_COUNT,
-                                questionCountMap.get(collection.getString(AJEntityCollection.ID)))));
+                            .put(AJEntityContent.RESOURCE_COUNT, resourceCount != null ? resourceCount : 0)
+                            .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0));
+                });
                 resultBody.put(AJEntityCollection.COLLECTION_SUMMARY, collectionSummaryArray);
             }
 
