@@ -144,6 +144,7 @@ public class FetchLessonHandler implements DBHandler {
                             .put(AJEntityContent.RESOURCE_COUNT, resourceCount != null ? resourceCount : 0)
                             .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0));
                 });
+
                 resultBody.put(AJEntityCollection.COLLECTION_SUMMARY, collectionSummaryArray);
             }
 
