@@ -37,6 +37,7 @@ class MessageProcessor implements Processor {
             }
 
             final String msgOp = message.headers().get(MessageConstants.MSG_HEADER_OP);
+            LOGGER.debug("## Processing Request : {} ##", msgOp);
             switch (msgOp) {
             case MessageConstants.MSG_OP_COURSE_CREATE:
                 result = processCourseCreate();
@@ -61,6 +62,9 @@ class MessageProcessor implements Processor {
                 break;
             case MessageConstants.MSG_OP_COURSE_REORDER:
                 result = processCourseReorder();
+                break;
+            case MessageConstants.MSG_OP_COURSE_RESOURCES_GET:
+                result = processCourseResourcesGet();
                 break;
             case MessageConstants.MSG_OP_UNIT_CREATE:
                 result = processUnitCreate();
@@ -119,7 +123,12 @@ class MessageProcessor implements Processor {
         ProcessorContext context = createContext();
         return new RepoBuilder().buildCourseRepo(context).reorderCourse();
     }
-
+    
+    private MessageResponse processCourseResourcesGet() {
+        ProcessorContext context = createContext();
+        return new RepoBuilder().buildCourseRepo(context).fetchResourcesForCourse();
+    }
+    
     private MessageResponse processCollectionMove() {
         ProcessorContext context = createContext();
 

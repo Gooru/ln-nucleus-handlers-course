@@ -17,4 +17,6 @@ public interface CourseRepo {
     MessageResponse moveUnitToCourse();
 
     MessageResponse reorderCourse();
+    
+    MessageResponse fetchResourcesForCourse();
 }
