@@ -1,7 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors;
 
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
+
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidRequestException;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.InvalidUserException;
@@ -12,7 +12,8 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFa
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonObject;
 
 class MessageProcessor implements Processor {
 
@@ -109,13 +110,13 @@ class MessageProcessor implements Processor {
             return result;
         } catch (InvalidRequestException e) {
             LOGGER.error("Invalid request");
-            return MessageResponseFactory.createInternalErrorResponse(e.getMessage());
+            return MessageResponseFactory.createInternalErrorResponse("Invalid request");
         } catch (InvalidUserException e) {
             LOGGER.error("User is not valid");
             return MessageResponseFactory.createForbiddenResponse();
         } catch (Throwable t) {
             LOGGER.error("Exception while processing request");
-            return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
+            return MessageResponseFactory.createInternalErrorResponse("Something wrong in database transaction");
         }
     }
 
@@ -206,17 +207,17 @@ class MessageProcessor implements Processor {
     private MessageResponse processLessonGet() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to get lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkUnitId(context)) {
+            if (!checkUnitId(context)) {
                 LOGGER.error("Unit id not available to get lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
             }
 
-            if (checkLessonId(context)) {
+            if (!checkLessonId(context)) {
                 LOGGER.error("Lesson id not available to get lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
             }
@@ -403,19 +404,15 @@ class MessageProcessor implements Processor {
     }
 
     private boolean checkLessonId(ProcessorContext context) {
-        return (context.lessonId() == null || context.lessonId().isEmpty());
+        return validateId(context.lessonId());
     }
 
     private boolean checkUnitId(ProcessorContext context) {
-        return (context.unitId() == null || context.unitId().isEmpty());
+        return validateId(context.unitId());
     }
 
     private boolean checkCourseId(ProcessorContext context) {
-        return (context.courseId() == null || context.courseId().isEmpty());
-    }
-
-    private boolean checkRequest(ProcessorContext context) {
-        return (context.request() == null || context.request().isEmpty());
+        return validateId(context.courseId());
     }
 
     private MessageResponse processCourseCollaboratorUpdate() {
@@ -424,11 +421,6 @@ class MessageProcessor implements Processor {
             if (checkCourseId(context)) {
                 LOGGER.error("Invalid request, course id not available. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-            }
-
-            if (checkRequest(context)) {
-                LOGGER.error("Invalid input data, Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
             }
 
             LOGGER.info("updating collaborators for course {}", context.courseId());
@@ -444,11 +436,6 @@ class MessageProcessor implements Processor {
             if (checkCourseId(context)) {
                 LOGGER.error("Invalid request, course id not available. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-            }
-
-            if (checkRequest(context)) {
-                LOGGER.error("Invalid input data, Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
             }
 
             LOGGER.info("reordering units in course {}", context.courseId());
@@ -481,11 +468,6 @@ class MessageProcessor implements Processor {
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkRequest(context)) {
-                LOGGER.error("Invalid input data, Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
-            }
-
             LOGGER.info("updating course {}", context.courseId());
             return new RepoBuilder().buildCourseRepo(context).updateCourse();
         } catch (Throwable t) {
@@ -508,11 +490,6 @@ class MessageProcessor implements Processor {
     private MessageResponse processCourseCreate() {
         try {
             ProcessorContext context = createContext();
-            if (checkRequest(context)) {
-                LOGGER.error("Invalid input data, Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid input data");
-            }
-
             LOGGER.info("Creating new course");
             return new RepoBuilder().buildCourseRepo(context).createCourse();
         } catch (Throwable t) {
@@ -562,19 +539,22 @@ class MessageProcessor implements Processor {
     }
 
     private boolean validateUser(String userId) {
-        if (userId == null) {
-            return false;
-        } else if (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        return !(userId == null || userId.isEmpty())
+            && (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS) || validateUuid(userId));
+    }
+
+    private boolean validateId(String id) {
+        return !(id == null || id.isEmpty()) && validateUuid(id);
+    }
+
+    private boolean validateUuid(String uuidString) {
+        try {
+            UUID.fromString(uuidString);
             return true;
-        } else {
-            try {
-                UUID.fromString(userId);
-                return true;
-            } catch (IllegalArgumentException e) {
-                return false;
-            } catch (Exception e) {
-                return false;
-            }
+        } catch (IllegalArgumentException e) {
+            return false;
+        } catch (Exception e) {
+            return false;
         }
     }
 }
