@@ -133,17 +133,17 @@ class MessageProcessor implements Processor {
     private MessageResponse processCollectionMove() {
         ProcessorContext context = createContext();
 
-        if (checkCourseId(context)) {
+        if (!checkCourseId(context)) {
             LOGGER.error("Course id not available to move collection. Aborting");
             return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
         }
 
-        if (checkUnitId(context)) {
+        if (!checkUnitId(context)) {
             LOGGER.error("Unit id not available to move collection. Aborting");
             return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
         }
 
-        if (checkLessonId(context)) {
+        if (!checkLessonId(context)) {
             LOGGER.error("Lesson id not available to move collection. Aborting");
             return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
         }
@@ -154,12 +154,12 @@ class MessageProcessor implements Processor {
     private MessageResponse processLessonMove() {
         ProcessorContext context = createContext();
 
-        if (checkCourseId(context)) {
+        if (!checkCourseId(context)) {
             LOGGER.error("Course id not available to move lesson. Aborting");
             return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
         }
 
-        if (checkUnitId(context)) {
+        if (!checkUnitId(context)) {
             LOGGER.error("Unit id not available to move lesson. Aborting");
             return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
         }
@@ -170,7 +170,7 @@ class MessageProcessor implements Processor {
     private MessageResponse processUnitMove() {
         ProcessorContext context = createContext();
 
-        if (checkCourseId(context)) {
+        if (!checkCourseId(context)) {
             LOGGER.error("Course id not available to move unit. Aborting");
             return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
         }
@@ -181,17 +181,17 @@ class MessageProcessor implements Processor {
     private MessageResponse processLessonContentReorder() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to reorder lesson content. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkUnitId(context)) {
+            if (!checkUnitId(context)) {
                 LOGGER.error("Unit id not available to reorder lesson content. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
             }
 
-            if (checkLessonId(context)) {
+            if (!checkLessonId(context)) {
                 LOGGER.error("Lesson id not available to reorder lesson content. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
             }
@@ -233,17 +233,17 @@ class MessageProcessor implements Processor {
     private MessageResponse processLessonDelete() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to delete lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkUnitId(context)) {
+            if (!checkUnitId(context)) {
                 LOGGER.error("Unit id not available to delete lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
             }
 
-            if (checkLessonId(context)) {
+            if (!checkLessonId(context)) {
                 LOGGER.error("Lesson id not available to delete lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
             }
@@ -259,17 +259,17 @@ class MessageProcessor implements Processor {
     private MessageResponse processLessonUpdate() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to update lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkUnitId(context)) {
+            if (!checkUnitId(context)) {
                 LOGGER.error("Unit id not available to update lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
             }
 
-            if (checkLessonId(context)) {
+            if (!checkLessonId(context)) {
                 LOGGER.error("Lesson id not available to update lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
             }
@@ -285,12 +285,12 @@ class MessageProcessor implements Processor {
     private MessageResponse processLessonCreate() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to create lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkUnitId(context)) {
+            if (!checkUnitId(context)) {
                 LOGGER.error("Unit id not available to create lesson. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
             }
@@ -306,12 +306,12 @@ class MessageProcessor implements Processor {
     private MessageResponse processUnitContentReorder() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to reorder lessons. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkUnitId(context)) {
+            if (!checkUnitId(context)) {
                 LOGGER.error("Unit id not available to reorder lessons. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
             }
@@ -327,12 +327,12 @@ class MessageProcessor implements Processor {
     private MessageResponse processUnitGet() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to get unit. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkUnitId(context)) {
+            if (!checkUnitId(context)) {
                 LOGGER.error("Unit id not available to get unit. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
             }
@@ -348,12 +348,12 @@ class MessageProcessor implements Processor {
     private MessageResponse processUnitDelete() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to delete unit. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkUnitId(context)) {
+            if (!checkUnitId(context)) {
                 LOGGER.error("Unit id not available to delete unit. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
             }
@@ -369,12 +369,12 @@ class MessageProcessor implements Processor {
     private MessageResponse processUnitUpdate() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to update unit. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
 
-            if (checkUnitId(context)) {
+            if (!checkUnitId(context)) {
                 LOGGER.error("Unit id not available to update unit. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
             }
@@ -390,7 +390,7 @@ class MessageProcessor implements Processor {
     private MessageResponse processUnitCreate() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Course id not available to create unit. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
@@ -418,7 +418,7 @@ class MessageProcessor implements Processor {
     private MessageResponse processCourseCollaboratorUpdate() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Invalid request, course id not available. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
@@ -433,7 +433,7 @@ class MessageProcessor implements Processor {
     private MessageResponse processCourseUnitReorder() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Invalid request, course id not available. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
@@ -448,7 +448,7 @@ class MessageProcessor implements Processor {
     private MessageResponse processCourseDelete() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Invalid request, course id not available. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
@@ -463,7 +463,7 @@ class MessageProcessor implements Processor {
     private MessageResponse processCourseUpdate() {
         try {
             ProcessorContext context = createContext();
-            if (checkCourseId(context)) {
+            if (!checkCourseId(context)) {
                 LOGGER.error("Invalid request, course id not available. Aborting");
                 return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
             }
@@ -478,7 +478,7 @@ class MessageProcessor implements Processor {
 
     private MessageResponse processCourseGet() {
         ProcessorContext context = createContext();
-        if (checkCourseId(context)) {
+        if (!checkCourseId(context)) {
             LOGGER.error("Invalid request, course id not available. Aborting");
             return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
         }
