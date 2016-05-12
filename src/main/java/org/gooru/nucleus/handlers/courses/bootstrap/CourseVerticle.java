@@ -50,7 +50,7 @@ public class CourseVerticle extends AbstractVerticle {
                             } else {
                                 LOGGER.warn("Invalid session token received");
                             }
-                            eb.publish(MessagebusEndpoints.MBEP_EVENT, eventData);
+                            eb.send(MessagebusEndpoints.MBEP_EVENT, eventData);
                         }
                     });
                 }).completionHandler(result -> {
