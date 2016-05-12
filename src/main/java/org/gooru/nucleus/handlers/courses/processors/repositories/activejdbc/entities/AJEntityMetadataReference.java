@@ -8,9 +8,9 @@ import org.javalite.activejdbc.annotations.Table;
 @IdName("id")
 public class AJEntityMetadataReference extends Model {
 
-    public final static String ID = "id";
+    public static final String ID = "id";
     
-    public final static String SELECT_LICENSE = "label = ? AND format = 'license'::metadata_reference_type"; 
+    public static final String SELECT_LICENSE = "label = ? AND format = 'license'::metadata_reference_type"; 
     
     public static final String DEFAULT_LICENSE_LABEL = "Public Domain";
 }
