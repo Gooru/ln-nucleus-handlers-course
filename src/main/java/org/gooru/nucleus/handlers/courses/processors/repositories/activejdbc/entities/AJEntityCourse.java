@@ -35,6 +35,7 @@ public class AJEntityCourse extends Model {
     public static final String TAXONOMY = "taxonomy";
     public static final String COLLABORATOR = "collaborator";
     public static final String VISIBLE_ON_PROFILE = "visible_on_profile";
+    public static final String USE_CASE = "use_case";
     public static final String IS_DELETED = "is_deleted";
     public static final String SEQUENCE_ID = "sequence_id";
     public static final String SUBJECT_BUCKET = "subject_bucket";
@@ -53,12 +54,12 @@ public class AJEntityCourse extends Model {
     public static final List<String> ALL_FIELDS =
         Arrays.asList(ID, TITLE, DESCRIPTION, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID,
             ORIGINAL_COURSE_ID, PUBLISH_STATUS, PUBLISH_DATE, THUMBNAIL, METADATA, TAXONOMY, COLLABORATOR,
-            VISIBLE_ON_PROFILE, CREATED_AT, UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, LICENSE, CREATOR_SYSTEM);
+            VISIBLE_ON_PROFILE, CREATED_AT, UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, LICENSE, CREATOR_SYSTEM, USE_CASE);
 
     public static final List<String> INSERTABLE_FIELDS = Arrays.asList(TITLE, DESCRIPTION, THUMBNAIL,
-        METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET, CREATOR_SYSTEM);
+        METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET, CREATOR_SYSTEM, USE_CASE);
     public static final List<String> UPDATABLE_FIELDS =
-        Arrays.asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET);
+        Arrays.asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET, USE_CASE);
 
     public static final List<String> COLLABORATOR_FIELD = Arrays.asList(COLLABORATOR);
     public static final List<String> UNIT_MOVE_NOTNULL_FIELDS = Arrays.asList("course_id", "unit_id");
@@ -71,7 +72,7 @@ public class AJEntityCourse extends Model {
     public static final String SELECT_COURSE =
         "SELECT id, title, description, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_course_id, publish_status,"
             + " publish_date, thumbnail, metadata, taxonomy, collaborator, visible_on_profile, sequence_id, subject_bucket,"
-            + " license, creator_system FROM course WHERE id = ?::uuid AND is_deleted = ?";
+            + " license, creator_system, use_case FROM course WHERE id = ?::uuid AND is_deleted = ?";
     public static final String SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET =
         "SELECT MAX(sequence_id) FROM course WHERE owner_id = ?::uuid AND" + " subject_bucket = ?";
     public static final String SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET =
