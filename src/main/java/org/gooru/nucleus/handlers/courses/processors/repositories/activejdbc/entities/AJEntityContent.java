@@ -13,6 +13,7 @@ public class AJEntityContent extends Model {
     public static final String TITLE = "title";
     public static final String IS_DELETED = "is_deleted";
     public static final String CONTENT_FORMAT = "content_format";
+    public static final String CONTENT_SUBFORMAT = "content_subformat";
     public static final Object COLLECTION_ID = "collection_id";
 
     public static final String CONTENT_FORMAT_RESOURCE = "resource";
@@ -27,8 +28,8 @@ public class AJEntityContent extends Model {
             + " collection_id, content_format";
 
     public static final String SELECT_RESOURCES_BY_COURSE = 
-        "SELECT distinct(id), title FROM content con, jsonb_array_elements_text(con.taxonomy) as tx WHERE course_id = ?::uuid AND content_format ="
+        "SELECT distinct(id), title, content_format, content_subformat FROM content con, jsonb_array_elements_text(con.taxonomy) as tx WHERE course_id = ?::uuid AND content_format ="
             + " 'resource'::content_format_type AND is_deleted = false AND tx like ?";
     
-    public static final List<String> RESOURCES_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE);
+    public static final List<String> RESOURCES_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, CONTENT_FORMAT, CONTENT_SUBFORMAT);
 }
