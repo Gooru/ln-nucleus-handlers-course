@@ -53,7 +53,7 @@ public class AJEntityLesson extends Model {
             + "original_lesson_id, metadata, taxonomy, sequence_id, creator_system FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND "
             + "course_id = ?::uuid and is_deleted = ?";
     public static final String SELECT_LESSON_SUMMARY =
-        "SELECT lesson_id, title, sequence_id FROM lesson WHERE unit_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
+        "SELECT lesson_id, title, sequence_id FROM lesson WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
     public static final String SELECT_LESSON_MAX_SEQUENCEID =
         "SELECT max(sequence_id) FROM lesson WHERE course_id = ?::uuid AND unit_id = ?::uuid";
     public static final String SELECT_LESSON_OF_COURSE =

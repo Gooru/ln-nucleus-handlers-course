@@ -89,7 +89,7 @@ public class FetchUnitHandler implements DBHandler {
                 .buildSimpleJsonFormatter(false, AJEntityUnit.ALL_FIELDS).toJson(ajEntityUnits.get(0)));
 
             LazyList<AJEntityLesson> lessons =
-                AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), false);
+                AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), context.courseId(), false);
             LOGGER.debug("number of lessons found for unit {} : {}", context.unitId(), lessons.size());
             if (lessons.size() > 0) {
                 List<String> lessonIds = new ArrayList<>();
