@@ -64,9 +64,6 @@ class MessageProcessor implements Processor {
             case MessageConstants.MSG_OP_COURSE_REORDER:
                 result = processCourseReorder();
                 break;
-            case MessageConstants.MSG_OP_COURSE_RESOURCES_GET:
-                result = processCourseResourcesGet();
-                break;
             case MessageConstants.MSG_OP_UNIT_CREATE:
                 result = processUnitCreate();
                 break;
@@ -123,11 +120,6 @@ class MessageProcessor implements Processor {
     private MessageResponse processCourseReorder() {
         ProcessorContext context = createContext();
         return new RepoBuilder().buildCourseRepo(context).reorderCourse();
-    }
-    
-    private MessageResponse processCourseResourcesGet() {
-        ProcessorContext context = createContext();
-        return new RepoBuilder().buildCourseRepo(context).fetchResourcesForCourse();
     }
     
     private MessageResponse processCollectionMove() {

@@ -27,9 +27,6 @@ public class AJEntityContent extends Model {
             + " collection_id = ANY(?::uuid[]) AND course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid AND is_deleted = false GROUP BY"
             + " collection_id, content_format";
 
-    public static final String SELECT_RESOURCES_BY_COURSE = 
-        "SELECT distinct(id), title, content_format, content_subformat FROM content con, jsonb_array_elements_text(con.taxonomy) as tx WHERE course_id = ?::uuid AND content_format ="
-            + " 'resource'::content_format_type AND is_deleted = false AND tx like ?";
-    
-    public static final List<String> RESOURCES_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, CONTENT_FORMAT, CONTENT_SUBFORMAT);
+    public static final List<String> RESOURCES_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, CONTENT_FORMAT,
+            CONTENT_SUBFORMAT);
 }
