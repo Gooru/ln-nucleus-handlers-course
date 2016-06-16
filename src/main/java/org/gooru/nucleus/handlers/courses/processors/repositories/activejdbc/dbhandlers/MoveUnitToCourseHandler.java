@@ -171,7 +171,7 @@ public class MoveUnitToCourseHandler implements DBHandler {
             }
 
             return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
-                EventBuilderFactory.getMoveUnitEventBuilder(context.courseId(), context.request())), ExecutionStatus.SUCCESSFUL);
+                EventBuilderFactory.getMoveUnitEventBuilder(context.courseId(), unitToUpdate.getId().toString(), context.request())), ExecutionStatus.SUCCESSFUL);
         } else {
             LOGGER.error("error while moving unit to course");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
