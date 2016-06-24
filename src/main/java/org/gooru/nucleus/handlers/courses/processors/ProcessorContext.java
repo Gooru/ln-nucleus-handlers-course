@@ -13,9 +13,10 @@ public class ProcessorContext {
     private final String courseId;
     private final String unitId;
     private final String lessonId;
+    private final String collectionId;
 
     public ProcessorContext(String userId, JsonObject prefs, JsonObject request, String courseId, String unitId,
-        String lessonId) {
+        String lessonId, String collectionId) {
         if (prefs == null || userId == null || prefs.isEmpty()) {
             throw new IllegalStateException("Processor Context creation failed because of invalid values");
         }
@@ -25,6 +26,7 @@ public class ProcessorContext {
         this.courseId = courseId;
         this.unitId = unitId;
         this.lessonId = lessonId;
+        this.collectionId = collectionId;
     }
 
     public String userId() {
@@ -49,6 +51,10 @@ public class ProcessorContext {
 
     public String lessonId() {
         return this.lessonId;
+    }
+
+    public String collectionId() {
+        return this.collectionId;
     }
 
 }

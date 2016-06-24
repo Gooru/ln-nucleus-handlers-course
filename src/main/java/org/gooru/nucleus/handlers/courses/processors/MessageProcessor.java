@@ -100,6 +100,9 @@ class MessageProcessor implements Processor {
             case MessageConstants.MSG_OP_LESSON_MOVE_COLLECTION:
                 result = processCollectionMove();
                 break;
+            case MessageConstants.MSG_OP_LESSON_REMOVE_COLLECTION:
+                result = processCollectionRemove();
+                break;
             default:
                 LOGGER.error("Invalid operation type passed in, not able to handle");
                 throw new InvalidRequestException();
@@ -120,6 +123,32 @@ class MessageProcessor implements Processor {
     private MessageResponse processCourseReorder() {
         ProcessorContext context = createContext();
         return new RepoBuilder().buildCourseRepo(context).reorderCourse();
+    }
+    
+    private MessageResponse processCollectionRemove() {
+        ProcessorContext context = createContext();
+
+        if (!checkCourseId(context)) {
+            LOGGER.error("Course id not available to remove collection. Aborting");
+            return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+        }
+
+        if (!checkUnitId(context)) {
+            LOGGER.error("Unit id not available to remove collection. Aborting");
+            return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+        }
+
+        if (!checkLessonId(context)) {
+            LOGGER.error("Lesson id not available to remove collection. Aborting");
+            return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
+        }
+        
+        if (!checkCollectionId(context)) {
+            LOGGER.error("Collection id not available to remove collection. Aborting");
+            return MessageResponseFactory.createInvalidRequestResponse("Invalid collection id");
+        }
+
+        return new RepoBuilder().buildLessonRepo(context).removeCollectionFromLesson();
     }
     
     private MessageResponse processCollectionMove() {
@@ -395,6 +424,10 @@ class MessageProcessor implements Processor {
         }
     }
 
+    private boolean checkCollectionId(ProcessorContext context) {
+        return validateId(context.collectionId());
+    }
+    
     private boolean checkLessonId(ProcessorContext context) {
         return validateId(context.lessonId());
     }
@@ -494,7 +527,8 @@ class MessageProcessor implements Processor {
         String courseId = message.headers().get(MessageConstants.COURSE_ID);
         String unitId = message.headers().get(MessageConstants.UNIT_ID);
         String lessonId = message.headers().get(MessageConstants.LESSON_ID);
-        return new ProcessorContext(userId, prefs, request, courseId, unitId, lessonId);
+        String collectionId = message.headers().get(MessageConstants.COLLECTION_ID);
+        return new ProcessorContext(userId, prefs, request, courseId, unitId, lessonId, collectionId);
     }
 
     private ExecutionResult<MessageResponse> validateAndInitialize() {
