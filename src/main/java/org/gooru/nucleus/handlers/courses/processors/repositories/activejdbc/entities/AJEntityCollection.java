@@ -48,11 +48,16 @@ public class AJEntityCollection extends Model {
             + "?::uuid AND course_id = ?::uuid AND is_deleted = ?";
     public static final String SELECT_COLLECTION_MAX_SEQUENCEID =
         "SELECT max(sequence_id) FROM collection WHERE lesson_id = ?::uuid";
+    public static final String SELECT_COLLECTION_TO_VALIDATE =
+        "SELECT id FROM collection where id = ?::uuid AND is_deleted = false AND course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid";
 
     public static final String SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON =
         "SELECT count(id) as collection_count, format, lesson_id FROM collection WHERE lesson_id = ANY(?::uuid[]) AND unit_id = ?::uuid AND course_id = ?::uuid"
             + " AND is_deleted = false GROUP BY lesson_id, format";
-
+    
+    public static final String UPDATE_COLLECTION_REMOVE_CUL = "course_id = null, unit_id = null, lesson_id = null";
+    public static final String UPDATE_COLLECTION_REMOVE_CUL_WHERE = "id = ?::uuid";
+    
     public static final String UUID_TYPE = "uuid";
     public static final String JSONB_TYPE = "jsonb";
 

@@ -46,4 +46,10 @@ public class AJLessonRepo implements LessonRepo {
             .executeTransaction(new DBHandlerBuilder().buildMoveCollectionToLessonHandler(context));
     }
 
+    @Override
+    public MessageResponse removeCollectionFromLesson() {
+        return new TransactionExecutor()
+            .executeTransaction(new DBHandlerBuilder().buildRemoveCollectionFromLessonHandler(context));
+    }
+
 }
