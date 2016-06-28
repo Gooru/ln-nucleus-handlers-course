@@ -30,5 +30,5 @@ public class AJEntityContent extends Model {
     public static final List<String> RESOURCES_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, CONTENT_FORMAT,
             CONTENT_SUBFORMAT);
     public static final String UPDATE_CONTENT_REMOVE_CULC = "course_id = null, unit_id = null, lesson_id = null, collection_id = null";
-    public static final String UPDATE_CONTENT_REMOVE_CULC_WHERE = "course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, collection_id = ?::uuid";
+    public static final String UPDATE_CONTENT_REMOVE_CULC_WHERE = "course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid AND collection_id = ?::uuid";
 }
