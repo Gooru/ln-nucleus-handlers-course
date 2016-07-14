@@ -1,11 +1,9 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.Timestamp;
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -18,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class RemoveCollectionFromLessonHandler implements DBHandler {
 
@@ -31,8 +28,8 @@ public class RemoveCollectionFromLessonHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> checkSanity() {
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to remove collection");
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
@@ -49,7 +46,7 @@ public class RemoveCollectionFromLessonHandler implements DBHandler {
             LOGGER.warn("course {} not found to remove collection, aborting", context.courseId());
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
         }
-        
+
         AJEntityCourse course = ajEntityCourse.get(0);
         if (!course.getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
             String strCollaborators = course.getString(AJEntityCourse.COLLABORATOR);
@@ -57,17 +54,17 @@ public class RemoveCollectionFromLessonHandler implements DBHandler {
                 LOGGER.warn("user is not owner or collaborator of course to remove collection. aborting");
                 return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
             }
-            
+
             JsonArray collaborators = new JsonArray(strCollaborators);
             if (!collaborators.contains(context.userId())) {
                 LOGGER.warn("user is not owner or collaborator of course to remove collection. aborting");
-                return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);        
+                return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
             }
         }
 
-        LazyList<AJEntityCollection> collections =
-            AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_TO_VALIDATE, context.collectionId(),
-                context.courseId(), context.unitId(), context.lessonId());
+        LazyList<AJEntityCollection> collections = AJEntityCollection
+            .findBySQL(AJEntityCollection.SELECT_COLLECTION_TO_VALIDATE, context.collectionId(), context.courseId(),
+                context.unitId(), context.lessonId());
         if (collections.isEmpty()) {
             LOGGER.warn("{} collection not found to remove", context.collectionId());
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
@@ -79,6 +76,11 @@ public class RemoveCollectionFromLessonHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
+
+        ExecutionResult<MessageResponse> errors = DbHelperUtil.updateCourseTimestamp(context, LOGGER);
+        if (errors != null) {
+            return errors;
+        }
         int updateColCount = AJEntityCollection.update(AJEntityCollection.UPDATE_COLLECTION_REMOVE_CUL,
             AJEntityCollection.UPDATE_COLLECTION_REMOVE_CUL_WHERE, context.collectionId());
 
@@ -89,30 +91,14 @@ public class RemoveCollectionFromLessonHandler implements DBHandler {
                 ExecutionStatus.FAILED);
         }
 
-        int updateConCount = AJEntityContent.update(AJEntityContent.UPDATE_CONTENT_REMOVE_CULC,
-            AJEntityContent.UPDATE_CONTENT_REMOVE_CULC_WHERE, context.courseId(), context.unitId(), context.lessonId(),
-            context.collectionId());
+        int updateConCount = AJEntityContent
+            .update(AJEntityContent.UPDATE_CONTENT_REMOVE_CULC, AJEntityContent.UPDATE_CONTENT_REMOVE_CULC_WHERE,
+                context.courseId(), context.unitId(), context.lessonId(), context.collectionId());
         LOGGER.debug("{} contents updated to remove collection {}", updateConCount, context.collectionId());
-        
-        AJEntityCourse courseToUpdate = new AJEntityCourse();
-        courseToUpdate.setCourseId(context.courseId());
-        courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
-        boolean result = courseToUpdate.save();
-        if (!result) {
-            LOGGER.error("Course with id '{}' failed to save modified time stamp", context.courseId());
-            if (courseToUpdate.hasErrors()) {
-                Map<String, String> map = courseToUpdate.errors();
-                JsonObject errors = new JsonObject();
-                map.forEach(errors::put);
-                return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
-                    ExecutionStatus.FAILED);
-            }
-        }
-        
-        return new ExecutionResult<>(MessageResponseFactory
-            .createNoContentResponse(EventBuilderFactory.getRemoveCollectionFromLessonEventBuilder(context.courseId(),
-                context.unitId(), context.lessonId(), context.collectionId())),
-            ExecutionStatus.SUCCESSFUL);
+
+        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory
+            .getRemoveCollectionFromLessonEventBuilder(context.courseId(), context.unitId(), context.lessonId(),
+                context.collectionId())), ExecutionStatus.SUCCESSFUL);
     }
 
     @Override
