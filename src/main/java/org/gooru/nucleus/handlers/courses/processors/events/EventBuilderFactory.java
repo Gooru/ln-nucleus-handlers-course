@@ -26,7 +26,8 @@ public class EventBuilderFactory {
     private static final String EVT_LESSON_MOVE = "event.lesson.move";
     private static final String EVT_LESSON_CONTENT_REORDER = "event.lesson.content.reorder";
     private static final String EVT_COLLECTION_MOVE = "event.collection.move";
-
+    private static final String EVT_COLLECTION_REMOVE = "event.collection.remove";
+    
     private static final String EVENT_NAME = "event.name";
     private static final String EVENT_BODY = "event.body";
     private static final String ID = "id";
@@ -36,6 +37,7 @@ public class EventBuilderFactory {
     private static final String COURSE_ID = "course_id";
     private static final String UNIT_ID = "unit_id";
     private static final String LESSON_ID = "lesson_id";
+    
 
     public static EventBuilder getCreateCourseEventBuilder(String courseId) {
         return () -> new JsonObject().put(EVENT_NAME, EVT_COURSE_CREATE).put(EVENT_BODY,
@@ -123,5 +125,11 @@ public class EventBuilderFactory {
     public static EventBuilder getUpdateUnitEventBuilder(String unitId) {
         return () -> new JsonObject().put(EVENT_NAME, EVT_UNIT_UPDATE).put(EVENT_BODY,
             new JsonObject().put(ID, unitId));
+    }
+
+    public static EventBuilder getRemoveCollectionFromLessonEventBuilder(String courseId, String unitId,
+        String lessonId, String collectionId) {
+        return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_REMOVE).put(EVENT_BODY, new JsonObject()
+            .put(ID, collectionId).put(COURSE_ID, courseId).put(UNIT_ID, unitId).put(LESSON_ID, lessonId));
     }
 }

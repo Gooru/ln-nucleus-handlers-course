@@ -15,4 +15,6 @@ public interface LessonRepo {
     MessageResponse reorderCollectionsAssessmentsInLesson();
 
     MessageResponse moveCollectionToLesson();
+
+    MessageResponse removeCollectionFromLesson();
 }

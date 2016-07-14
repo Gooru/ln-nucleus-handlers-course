@@ -41,6 +41,7 @@ public class MessageConstants {
     public static final String MSG_OP_LESSON_DELETE = "lesson.delete";
     public static final String MSG_OP_LESSON_CONTENT_REORDER = "lesson.content.reorder";
     public static final String MSG_OP_LESSON_MOVE_COLLECTION = "lesson.move.collection";
+    public static final String MSG_OP_LESSON_REMOVE_COLLECTION = "lesson.remove.collection";
 
     // Containers for different responses
     public static final String RESP_CONTAINER_MBUS = "mb.container";
@@ -49,6 +50,7 @@ public class MessageConstants {
     public static final String COURSE_ID = "courseId";
     public static final String UNIT_ID = "unitId";
     public static final String LESSON_ID = "lessonId";
+    public static final String COLLECTION_ID = "collectionId";
     public static final String RESP_JSON_KEY_RESOURCES = "resources";
 
 }

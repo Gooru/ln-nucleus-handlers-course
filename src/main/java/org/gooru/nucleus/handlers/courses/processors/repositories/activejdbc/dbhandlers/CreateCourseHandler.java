@@ -3,8 +3,8 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.LicenseUtil;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityMetadataReference;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -65,21 +65,13 @@ public class CreateCourseHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         course = new AJEntityCourse();
-        course.setAllFromJson(context.request());
         course.setOwnerId(context.userId());
         course.setCreatorId(context.userId());
         course.setModifierId(context.userId());
         course.setPublishStatus(AJEntityCourse.PUBLISH_STATUS_TYPE_UNPUBLISHED);
-
-        //TODO: cache id, value of licenses and avoid DB lookup every time.
-        AJEntityMetadataReference metadataReference = AJEntityMetadataReference
-            .findFirst(AJEntityMetadataReference.SELECT_LICENSE, AJEntityMetadataReference.DEFAULT_LICENSE_LABEL);
-        if (metadataReference != null) {
-            Integer license = metadataReference.getInteger(AJEntityMetadataReference.ID);
-            LOGGER.debug("metadata ref found for default license: {}", license);
-            course.setInteger(AJEntityCourse.LICENSE, license);
-        }
-
+        course.setInteger(AJEntityCourse.LICENSE, LicenseUtil.getDefaultLicenseCode());
+        course.setAllFromJson(context.request());
+        
         // Get max sequence id of course for subject bucket
         Object maxSequenceId;
         int sequenceId = 1;

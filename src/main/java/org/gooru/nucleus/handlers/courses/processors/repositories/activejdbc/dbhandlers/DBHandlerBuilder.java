@@ -89,4 +89,8 @@ public class DBHandlerBuilder {
         return new ReorderCourseHandler(context);
     }
 
+    public DBHandler buildRemoveCollectionFromLessonHandler(ProcessorContext context) {
+        return new RemoveCollectionFromLessonHandler(context);
+    }
+
 }
