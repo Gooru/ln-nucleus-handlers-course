@@ -1,16 +1,10 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.Timestamp;
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.*;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -56,16 +50,17 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                 ExecutionStatus.FAILED);
         }
 
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to move collection/assessment");
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
 
         if (context.request() == null || context.request().isEmpty()) {
             LOGGER.warn("invalid data provided to move collection/assessment");
-            return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(
-                "Invalid data provided to move collection/assessment"), ExecutionStatus.FAILED);
+            return new ExecutionResult<>(MessageResponseFactory
+                .createInvalidRequestResponse("Invalid data provided to move collection/assessment"),
+                ExecutionStatus.FAILED);
         }
 
         JsonObject mandatoryFieldErrors = validateMandatoryFields();
@@ -91,8 +86,9 @@ public class MoveCollectionToLessonHandler implements DBHandler {
         String collectionToMove = context.request().getString("collection_id");
         // String type = context.request().getString("type");
 
-        LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE,
-            targetCourseId, false, context.userId(), context.userId());
+        LazyList<AJEntityCourse> targetCourses = AJEntityCourse
+            .findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE, targetCourseId, false, context.userId(),
+                context.userId());
         if (targetCourses.isEmpty()) {
             LOGGER.warn("user is not owner or collaborator of target course to move collection. aborting");
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -108,8 +104,8 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                 ExecutionStatus.FAILED);
         }
 
-        LazyList<AJEntityLesson> targetLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE,
-            targetLessonId, targetUnitId, targetCourseId, false);
+        LazyList<AJEntityLesson> targetLessons = AJEntityLesson
+            .findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, targetLessonId, targetUnitId, targetCourseId, false);
         if (targetLessons.isEmpty()) {
             LOGGER.warn("target lesson is not found in database");
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target lesson is not found"),
@@ -162,8 +158,9 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                     ExecutionStatus.FAILED);
             }
 
-            LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE,
-                sourceCourseId, false, context.userId(), context.userId());
+            LazyList<AJEntityCourse> sourceCourses = AJEntityCourse
+                .findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE, sourceCourseId, false, context.userId(),
+                    context.userId());
             if (sourceCourses.isEmpty()) {
                 LOGGER.warn("user is not owner or collaborator of source course to move collection. aborting");
                 return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -177,8 +174,9 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                     ExecutionStatus.FAILED);
             }
 
-            LazyList<AJEntityLesson> sourceLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE,
-                sourceLessonId, sourceUnitId, sourceCourseId, false);
+            LazyList<AJEntityLesson> sourceLessons = AJEntityLesson
+                .findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, sourceLessonId, sourceUnitId, sourceCourseId,
+                    false);
             if (sourceLessons.isEmpty()) {
                 LOGGER.warn("source lesson is not found in database");
                 return new ExecutionResult<>(
@@ -205,6 +203,12 @@ public class MoveCollectionToLessonHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
+
+        ExecutionResult<MessageResponse> errors = DbHelperUtil.updateCourseTimestamp(context, LOGGER);
+        if (errors != null) {
+            return errors;
+        }
+
         collectionToUpdate.setCourseId(context.courseId());
         collectionToUpdate.setUnitId(context.unitId());
         collectionToUpdate.setLessonId(context.lessonId());
@@ -231,25 +235,9 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                 "collection_id = ?::uuid", context.courseId(), context.unitId(), context.lessonId(), context.userId(),
                 collectionToUpdate.getId());
 
-            AJEntityCourse courseToUpdate = new AJEntityCourse();
-            courseToUpdate.setCourseId(context.courseId());
-            courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
-            boolean result = courseToUpdate.save();
-            if (!result) {
-                LOGGER.error("Course with id '{}' failed to save modified time stamp", context.courseId());
-                if (courseToUpdate.hasErrors()) {
-                    Map<String, String> map = courseToUpdate.errors();
-                    JsonObject errors = new JsonObject();
-                    map.forEach(errors::put);
-                    return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
-                        ExecutionStatus.FAILED);
-                }
-            }
-
-            return new ExecutionResult<>(
-                MessageResponseFactory.createNoContentResponse(EventBuilderFactory.getMoveCollectionEventBuilder(
-                    context.courseId(), context.unitId(), context.lessonId(), collectionToUpdate.getId().toString(), context.request())),
-                ExecutionStatus.SUCCESSFUL);
+            return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory
+                .getMoveCollectionEventBuilder(context.courseId(), context.unitId(), context.lessonId(),
+                    collectionToUpdate.getId().toString(), context.request())), ExecutionStatus.SUCCESSFUL);
         } else {
             LOGGER.error("error while moving collection to lesson");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
@@ -265,9 +253,9 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     private JsonObject validateNullFields() {
         JsonObject input = context.request();
         JsonObject output = new JsonObject();
-        input.fieldNames().stream()
-            .filter(key -> AJEntityCollection.COLLECTION_MOVE_NOTNULL_FIELDS.contains(key)
-                && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+        input.fieldNames().stream().filter(
+            key -> AJEntityCollection.COLLECTION_MOVE_NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null
+                || input.getValue(key).toString().isEmpty()))
             .forEach(key -> output.put(key, "Field should not be empty or null"));
         return output.isEmpty() ? null : output;
     }
