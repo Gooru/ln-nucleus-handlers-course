@@ -1,16 +1,10 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import java.sql.Timestamp;
-import java.util.Map;
-
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.*;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -42,8 +36,8 @@ public class MoveUnitToCourseHandler implements DBHandler {
                 ExecutionStatus.FAILED);
         }
 
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to move unit");
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
@@ -91,16 +85,17 @@ public class MoveUnitToCourseHandler implements DBHandler {
 
         if (sourceCourseId == null || unitToMove == null || sourceCourseId.isEmpty() || unitToMove.isEmpty()) {
             LOGGER.warn("missing required fields");
-            return new ExecutionResult<>(
-                MessageResponseFactory
-                    .createValidationErrorResponse(new JsonObject().put("message", "missing required fields")),
+            return new ExecutionResult<>(MessageResponseFactory
+                .createValidationErrorResponse(new JsonObject().put("message", "missing required fields")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
-        LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE,
-            targetCourseId, false, context.userId(), context.userId());
-        LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE,
-            sourceCourseId, false, context.userId(), context.userId());
+        LazyList<AJEntityCourse> targetCourses = AJEntityCourse
+            .findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE, targetCourseId, false, context.userId(),
+                context.userId());
+        LazyList<AJEntityCourse> sourceCourses = AJEntityCourse
+            .findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE, sourceCourseId, false, context.userId(),
+                context.userId());
 
         if (targetCourses.isEmpty() || sourceCourses.isEmpty()) {
             LOGGER.warn("user is not owner or collaborator of source or target course to move unit. aborting");
@@ -125,6 +120,10 @@ public class MoveUnitToCourseHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
 
+        ExecutionResult<MessageResponse> errors = DbHelperUtil.updateCourseTimestamp(context, LOGGER);
+        if (errors != null) {
+            return errors;
+        }
         unitToUpdate.setCourseId(context.courseId());
         unitToUpdate.setModifierId(context.userId());
         unitToUpdate.setOwnerId(targetCourseOwner);
@@ -149,29 +148,17 @@ public class MoveUnitToCourseHandler implements DBHandler {
 
             AJEntityLesson.update("course_id = ?::uuid, owner_id = ?::uuid, modifier_id = ?::uuid", "unit_id = ?::uuid",
                 context.courseId(), targetCourseOwner, context.userId(), unitToUpdate.getId());
-            AJEntityCollection.update(
-                "course_id = ?::uuid, owner_id = ?::uuid, modifier_id = ?::uuid, collaborator = ?", "unit_id = ?::uuid",
-                context.courseId(), targetCourseOwner, context.userId(), null, unitToUpdate.getId());
-            AJEntityContent.update("course_id = ?::uuid, modifier_id = ?::uuid", "unit_id = ?::uuid",
-                context.courseId(), context.userId(), unitToUpdate.getId());
+            AJEntityCollection
+                .update("course_id = ?::uuid, owner_id = ?::uuid, modifier_id = ?::uuid, collaborator = ?",
+                    "unit_id = ?::uuid", context.courseId(), targetCourseOwner, context.userId(), null,
+                    unitToUpdate.getId());
+            AJEntityContent
+                .update("course_id = ?::uuid, modifier_id = ?::uuid", "unit_id = ?::uuid", context.courseId(),
+                    context.userId(), unitToUpdate.getId());
 
-            AJEntityCourse courseToUpdate = new AJEntityCourse();
-            courseToUpdate.setCourseId(context.courseId());
-            courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
-            boolean result = courseToUpdate.save();
-            if (!result) {
-                LOGGER.error("Course with id '{}' failed to save modified time stamp", context.courseId());
-                if (courseToUpdate.hasErrors()) {
-                    Map<String, String> map = courseToUpdate.errors();
-                    JsonObject errors = new JsonObject();
-                    map.forEach(errors::put);
-                    return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
-                        ExecutionStatus.FAILED);
-                }
-            }
-
-            return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
-                EventBuilderFactory.getMoveUnitEventBuilder(context.courseId(), unitToUpdate.getId().toString(), context.request())), ExecutionStatus.SUCCESSFUL);
+            return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory
+                .getMoveUnitEventBuilder(context.courseId(), unitToUpdate.getId().toString(), context.request())),
+                ExecutionStatus.SUCCESSFUL);
         } else {
             LOGGER.error("error while moving unit to course");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
@@ -195,9 +182,9 @@ public class MoveUnitToCourseHandler implements DBHandler {
     private JsonObject validateNullFields() {
         JsonObject input = context.request();
         JsonObject output = new JsonObject();
-        input.fieldNames().stream()
-            .filter(key -> AJEntityCourse.UNIT_MOVE_NOTNULL_FIELDS.contains(key)
-                && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+        input.fieldNames().stream().filter(
+            key -> AJEntityCourse.UNIT_MOVE_NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null || input
+                .getValue(key).toString().isEmpty()))
             .forEach(key -> output.put(key, "Field should not be empty or null"));
         return output.isEmpty() ? null : output;
     }

@@ -1,15 +1,14 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
 import java.sql.PreparedStatement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
@@ -53,17 +52,16 @@ public class ReorderUnitInCourseHandler implements DBHandler {
                 ExecutionStatus.FAILED);
         }
 
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to reorder units");
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
 
         if (!reorderPayloadValidator(context.request().getJsonArray(REORDER_PAYLOAD_KEY))) {
             LOGGER.warn("Request data validation failed");
-            return new ExecutionResult<>(
-                MessageResponseFactory.createValidationErrorResponse(
-                    new JsonObject().put("Reorder", "Data validation failed. Invalid data in request payload")),
+            return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(
+                new JsonObject().put("Reorder", "Data validation failed. Invalid data in request payload")),
                 ExecutionStatus.FAILED);
         }
 
@@ -74,8 +72,9 @@ public class ReorderUnitInCourseHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> validateRequest() {
 
-        LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE,
-            context.courseId(), false, context.userId(), context.userId());
+        LazyList<AJEntityCourse> ajEntityCourse = AJEntityCourse
+            .findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE, context.courseId(), false, context.userId(),
+                context.userId());
         if (ajEntityCourse.isEmpty()) {
             LOGGER.warn("user is not owner or collaborator of course to reorder units. aborting");
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -88,6 +87,11 @@ public class ReorderUnitInCourseHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         try {
+
+            ExecutionResult<MessageResponse> errors = DbHelperUtil.updateCourseTimestamp(context, LOGGER);
+            if (errors != null) {
+                return errors;
+            }
             List unitsOfCourse = Base.firstColumn(AJEntityUnit.SELECT_UNIT_OF_COURSE, context.courseId(), false);
             JsonArray input = this.context.request().getJsonArray(REORDER_PAYLOAD_KEY);
 
@@ -110,22 +114,6 @@ public class ReorderUnitInCourseHandler implements DBHandler {
             }
 
             Base.executeBatch(ps);
-
-            AJEntityCourse courseToUpdate = new AJEntityCourse();
-            courseToUpdate.setCourseId(context.courseId());
-            courseToUpdate.setTimestamp(AJEntityCourse.UPDATED_AT, new Timestamp(System.currentTimeMillis()));
-            boolean result = courseToUpdate.save();
-            if (!result) {
-                LOGGER.error("Course with id '{}' failed to save modified time stamp", context.courseId());
-                if (courseToUpdate.hasErrors()) {
-                    Map<String, String> map = courseToUpdate.errors();
-                    JsonObject errors = new JsonObject();
-                    map.forEach(errors::put);
-                    return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
-                        ExecutionStatus.FAILED);
-                }
-            }
-
         } catch (DBException | ClassCastException e) {
             LOGGER.error("incorrect payload data type", e);
             return new ExecutionResult<>(
@@ -133,8 +121,9 @@ public class ReorderUnitInCourseHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
         LOGGER.info("reordered units in course {}", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
-            EventBuilderFactory.getReorderUnitEventBuilder(context.courseId())), ExecutionStatus.SUCCESSFUL);
+        return new ExecutionResult<>(MessageResponseFactory
+            .createNoContentResponse(EventBuilderFactory.getReorderUnitEventBuilder(context.courseId())),
+            ExecutionStatus.SUCCESSFUL);
     }
 
     @Override
