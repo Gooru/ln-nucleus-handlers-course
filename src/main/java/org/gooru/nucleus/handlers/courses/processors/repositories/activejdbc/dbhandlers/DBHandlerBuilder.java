@@ -93,4 +93,8 @@ public class DBHandlerBuilder {
         return new RemoveCollectionFromLessonHandler(context);
     }
 
+	public DBHandler buildFetchResourcesForCourse(ProcessorContext context) {
+		return new FetchResourcesForCourseHandler(context);
+	}
+
 }

@@ -27,8 +27,11 @@ public class AJEntityContent extends Model {
             + " collection_id = ANY(?::uuid[]) AND course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid AND is_deleted = false GROUP BY"
             + " collection_id, content_format";
 
-    public static final List<String> RESOURCES_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, CONTENT_FORMAT,
-            CONTENT_SUBFORMAT);
     public static final String UPDATE_CONTENT_REMOVE_CULC = "course_id = null, unit_id = null, lesson_id = null";
     public static final String UPDATE_CONTENT_REMOVE_CULC_WHERE = "course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid AND collection_id = ?::uuid";
+    
+	public static final String SELECT_RESOURCES_BY_COURSE = "SELECT id, title, content_subformat FROM content WHERE course_id = ?::uuid AND"
+	    + " content_format = 'resource'::content_format_type AND is_deleted = false AND taxonomy ?? ?";
+
+	public static final List<String> RESOURCES_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, CONTENT_SUBFORMAT);
 }

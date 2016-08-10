@@ -18,4 +18,6 @@ public interface CourseRepo {
 
     MessageResponse reorderCourse();
     
+    MessageResponse fetchResourcesForCourse();
+    
 }

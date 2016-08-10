@@ -29,6 +29,7 @@ public class MessageConstants {
     public static final String MSG_OP_COURSE_CONTENT_REORDER = "course.content.reorder";
     public static final String MSG_OP_COURSE_MOVE_UNIT = "course.move.unit";
     public static final String MSG_OP_COURSE_REORDER = "course.reorder";
+    public static final String MSG_OP_COURSE_RESOURCES_GET = "course.resources.get";
     public static final String MSG_OP_UNIT_GET = "unit.get";
     public static final String MSG_OP_UNIT_CREATE = "unit.create";
     public static final String MSG_OP_UNIT_UPDATE = "unit.update";
@@ -51,6 +52,7 @@ public class MessageConstants {
     public static final String UNIT_ID = "unitId";
     public static final String LESSON_ID = "lessonId";
     public static final String COLLECTION_ID = "collectionId";
+    public static final String TAXONOMY = "taxonomy";
     public static final String RESP_JSON_KEY_RESOURCES = "resources";
 
 }
