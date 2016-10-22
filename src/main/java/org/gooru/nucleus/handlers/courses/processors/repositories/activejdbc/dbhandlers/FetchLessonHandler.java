@@ -115,8 +115,9 @@ public class FetchLessonHandler implements DBHandler {
                 collectionSummary.stream()
                     .forEach(collection -> collectionIds.add(collection.getString(AJEntityCollection.ID)));
 
+                String collectionArrayString = listToPostgresArrayString(collectionIds);
                 List<Map> collectionContentCount = Base.findAll(AJEntityContent.SELECT_CONTENT_COUNT_BY_COLLECTION,
-                    listToPostgresArrayString(collectionIds), context.courseId(), context.unitId(), context.lessonId());
+                    collectionArrayString, context.courseId(), context.unitId(), context.lessonId());
                 Map<String, Integer> resourceCountMap = new HashMap<>();
                 collectionContentCount.stream()
                     .filter(map -> map.get(AJEntityContent.CONTENT_FORMAT) != null
@@ -133,16 +134,25 @@ public class FetchLessonHandler implements DBHandler {
                     .forEach(map -> questionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
                         Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString())));
 
+                List<Map> oeQuestionCountFromDB = Base.findAll(AJEntityContent.SELECT_OE_QUESTION_COUNT,
+                    collectionArrayString, context.courseId(), context.unitId(), context.lessonId());
+                Map<String, Integer> oeQuestionCountMap = new HashMap<>();
+                oeQuestionCountFromDB
+                    .forEach(map -> oeQuestionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
+                        Integer.valueOf(map.get(AJEntityContent.OE_QUESTION_COUNT).toString())));
+
                 JsonArray collectionSummaryArray = new JsonArray();
                 collectionSummary.stream().forEach(collection -> {
                     String collectionId = collection.getString(AJEntityCollection.ID);
                     Integer resourceCount = resourceCountMap.get(collectionId);
                     Integer questionCount = questionCountMap.get(collectionId);
+                    Integer oeQuestionCount = oeQuestionCountMap.get(collectionId);
                     collectionSummaryArray.add(new JsonObject(new JsonFormatterBuilder()
                         .buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS)
                         .toJson(collection))
                             .put(AJEntityContent.RESOURCE_COUNT, resourceCount != null ? resourceCount : 0)
-                            .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0));
+                            .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0)
+                            .put(AJEntityContent.OE_QUESTION_COUNT, oeQuestionCount != null ? oeQuestionCount : 0));
                 });
 
                 resultBody.put(AJEntityCollection.COLLECTION_SUMMARY, collectionSummaryArray);
