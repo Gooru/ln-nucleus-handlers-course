@@ -24,7 +24,7 @@ public class CreateLessonHandler implements DBHandler {
 
     private final ProcessorContext context;
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateLessonHandler.class);
-    private AJEntityLesson newLesson;
+    private AJEntityLesson lesson;
     private String courseOwner;
 
     public CreateLessonHandler(ProcessorContext context) {
@@ -100,32 +100,21 @@ public class CreateLessonHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        newLesson = new AJEntityLesson();
-        newLesson.setAllFromJson(context.request());
-        newLesson.setCourseId(context.courseId());
-        newLesson.setUnitId(context.unitId());
-        newLesson.setOwnerId(courseOwner);
-        newLesson.setCreatorId(context.userId());
-        newLesson.setModifierId(context.userId());
-        newLesson.set(AJEntityLesson.IS_DELETED, false);
+        lesson = new AJEntityLesson();
+        lesson.setAllFromJson(context.request());
+        autoPopulateFields();
 
-        Object maxSequenceId =
-            Base.firstCell(AJEntityLesson.SELECT_LESSON_MAX_SEQUENCEID, context.courseId(), context.unitId());
-        int sequenceId = 1;
-        if (maxSequenceId != null) {
-            sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
-        }
-        newLesson.set(AJEntityLesson.SEQUENCE_ID, sequenceId);
+        lesson.set(AJEntityLesson.SEQUENCE_ID, getSequenceId());
 
-        if (newLesson.hasErrors()) {
+        if (lesson.hasErrors()) {
             LOGGER.warn("error in creating new lesson");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
                 ExecutionStatus.FAILED);
         }
 
-        if (newLesson.isValid()) {
-            if (newLesson.save()) {
-                LOGGER.info("lesson {} created successfully for unit {}", newLesson.getId().toString(),
+        if (lesson.isValid()) {
+            if (lesson.save()) {
+                LOGGER.info("lesson {} created successfully for unit {}", lesson.getId().toString(),
                     context.unitId());
 
                 AJEntityCourse courseToUpdate = new AJEntityCourse();
@@ -144,8 +133,8 @@ public class CreateLessonHandler implements DBHandler {
                 }
 
                 return new ExecutionResult<>(
-                    MessageResponseFactory.createPostResponse(newLesson.getId().toString(),
-                        EventBuilderFactory.getCreateLessonEventBuilder(newLesson.getId().toString())),
+                    MessageResponseFactory.createPostResponse(lesson.getId().toString(),
+                        EventBuilderFactory.getCreateLessonEventBuilder(lesson.getId().toString())),
                     ExecutionStatus.SUCCESSFUL);
             } else {
                 LOGGER.error("error while saving new lesson");
@@ -156,6 +145,30 @@ public class CreateLessonHandler implements DBHandler {
             LOGGER.warn("validation errors in creating new lesson");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
                 ExecutionStatus.FAILED);
+        }
+    }
+
+    private int getSequenceId() {
+        Object maxSequenceId =
+            Base.firstCell(AJEntityLesson.SELECT_LESSON_MAX_SEQUENCEID, context.courseId(), context.unitId());
+        int sequenceId = 1;
+        if (maxSequenceId != null) {
+            sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
+        }
+        return sequenceId;
+    }
+
+    private void autoPopulateFields() {
+        lesson.setCourseId(context.courseId());
+        lesson.setUnitId(context.unitId());
+        lesson.setOwnerId(courseOwner);
+        lesson.setCreatorId(context.userId());
+        lesson.setModifierId(context.userId());
+        lesson.set(AJEntityLesson.IS_DELETED, false);
+        lesson.setTenant(context.tenant());
+        String tenantRoot = context.tenantRoot();
+        if (tenantRoot != null && !tenantRoot.isEmpty()) {
+            lesson.setTenantRoot(tenantRoot);
         }
     }
 
@@ -184,7 +197,7 @@ public class CreateLessonHandler implements DBHandler {
 
     private JsonObject getModelErrors() {
         JsonObject errors = new JsonObject();
-        this.newLesson.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+        this.lesson.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
         return errors;
     }
 }

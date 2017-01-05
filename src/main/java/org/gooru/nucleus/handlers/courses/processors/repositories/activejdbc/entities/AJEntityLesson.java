@@ -35,6 +35,8 @@ public class AJEntityLesson extends Model {
     public static final String SEQUENCE_ID = "sequence_id";
     public static final String IS_DELETED = "is_deleted";
     public static final String CREATOR_SYSTEM = "creator_system";
+    public static final String TENANT = "tenant";
+    public static final String TENANT_ROOT = "tenant_root";
 
     public static final String LESSON_SUMMARY = "lesson_summary";
     public static final String LESSON_COUNT = "lesson_count";
@@ -95,6 +97,16 @@ public class AJEntityLesson extends Model {
 
     public void setLessonId(String lessonId) {
         setPGObject(LESSON_ID, UUID_TYPE, lessonId);
+    }
+
+    public void setTenant(String tenantId) {
+        setPGObject(TENANT, UUID_TYPE, tenantId);
+    }
+
+    public void setTenantRoot(String tenantRoot) {
+        if (tenantRoot != null && !tenantRoot.isEmpty()) {
+            setPGObject(TENANT_ROOT, UUID_TYPE, tenantRoot);
+        }
     }
 
     // NOTE:
