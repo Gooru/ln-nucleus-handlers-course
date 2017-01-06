@@ -41,6 +41,8 @@ public class AJEntityCourse extends Model {
     public static final String SUBJECT_BUCKET = "subject_bucket";
     public static final String LICENSE = "license";
     public static final String CREATOR_SYSTEM = "creator_system";
+    public static final String TENANT = "tenant";
+    public static final String TENANT_ROOT = "tenant_root";
 
     public static final String PUBLISH_STATUS_TYPE = "publish_status_type";
     public static final String PUBLISH_STATUS_TYPE_UNPUBLISHED = "unpublished";
@@ -111,6 +113,15 @@ public class AJEntityCourse extends Model {
         setPGObject(PUBLISH_STATUS, PUBLISH_STATUS_TYPE, status);
     }
 
+    public void setTenant(String tenantId) {
+        setPGObject(TENANT, UUID_TYPE, tenantId);
+    }
+
+    public void setTenantRoot(String tenantRoot) {
+        if (tenantRoot != null && !tenantRoot.isEmpty()) {
+            setPGObject(TENANT_ROOT, UUID_TYPE, tenantRoot);
+        }
+    }
     // NOTE:
     // We do not deal with nested objects, only first level ones
     // We do not check for forbidden fields, it should be done before this

@@ -65,28 +65,10 @@ public class CreateCourseHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         course = new AJEntityCourse();
-        course.setOwnerId(context.userId());
-        course.setCreatorId(context.userId());
-        course.setModifierId(context.userId());
-        course.setPublishStatus(AJEntityCourse.PUBLISH_STATUS_TYPE_UNPUBLISHED);
-        course.setInteger(AJEntityCourse.LICENSE, LicenseUtil.getDefaultLicenseCode());
+        autoPopulateFields();
         course.setAllFromJson(context.request());
-        
-        // Get max sequence id of course for subject bucket
-        Object maxSequenceId;
-        int sequenceId = 1;
-        String subjectBucket = course.getString(AJEntityCourse.SUBJECT_BUCKET);
-        if (subjectBucket != null && !subjectBucket.isEmpty()) {
-            maxSequenceId =
-                Base.firstCell(AJEntityCourse.SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET, context.userId(), subjectBucket);
-        } else {
-            maxSequenceId = Base.firstCell(AJEntityCourse.SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET, context.userId());
-        }
 
-        if (maxSequenceId != null) {
-            sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
-        }
-        course.setInteger(AJEntityCourse.SEQUENCE_ID, sequenceId);
+        course.setInteger(AJEntityCourse.SEQUENCE_ID, getSequenceId());
 
         if (course.hasErrors()) {
             LOGGER.warn("errors in course creation");
@@ -110,6 +92,37 @@ public class CreateCourseHandler implements DBHandler {
             LOGGER.warn("validation error while creating course");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
                 ExecutionStatus.FAILED);
+        }
+    }
+
+    private int getSequenceId() {
+        // Get max sequence id of course for subject bucket
+        Object maxSequenceId;
+        int sequenceId = 1;
+        String subjectBucket = course.getString(AJEntityCourse.SUBJECT_BUCKET);
+        if (subjectBucket != null && !subjectBucket.isEmpty()) {
+            maxSequenceId =
+                Base.firstCell(AJEntityCourse.SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET, context.userId(), subjectBucket);
+        } else {
+            maxSequenceId = Base.firstCell(AJEntityCourse.SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET, context.userId());
+        }
+
+        if (maxSequenceId != null) {
+            sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
+        }
+        return sequenceId;
+    }
+
+    private void autoPopulateFields() {
+        course.setOwnerId(context.userId());
+        course.setCreatorId(context.userId());
+        course.setModifierId(context.userId());
+        course.setPublishStatus(AJEntityCourse.PUBLISH_STATUS_TYPE_UNPUBLISHED);
+        course.setInteger(AJEntityCourse.LICENSE, LicenseUtil.getDefaultLicenseCode());
+        course.setTenant(context.tenant());
+        String tenantRoot = context.tenantRoot();
+        if (tenantRoot != null && !tenantRoot.isEmpty()) {
+            course.setTenantRoot(tenantRoot);
         }
     }
 
