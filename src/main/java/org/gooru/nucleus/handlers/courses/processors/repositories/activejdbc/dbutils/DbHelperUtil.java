@@ -1,6 +1,8 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils;
 
 import java.sql.Timestamp;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
@@ -37,6 +39,25 @@ public final class DbHelperUtil {
             }
         }
         return null;
+    }
+
+    public static String toPostgresArrayString(Collection<String> input) {
+        int approxSize = ((input.size() + 1) * 36); // Length of UUID is around 36 chars
+        Iterator<String> it = input.iterator();
+        if (!it.hasNext()) {
+            return "{}";
+        }
+
+        StringBuilder sb = new StringBuilder(approxSize);
+        sb.append('{');
+        for (; ; ) {
+            String s = it.next();
+            sb.append('"').append(s).append('"');
+            if (!it.hasNext()) {
+                return sb.append('}').toString();
+            }
+            sb.append(',');
+        }
     }
 
 }
