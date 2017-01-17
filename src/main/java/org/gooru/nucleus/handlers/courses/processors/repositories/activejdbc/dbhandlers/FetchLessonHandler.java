@@ -2,16 +2,13 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.*;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
@@ -69,9 +66,9 @@ public class FetchLessonHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> validateRequest() {
 
-        LazyList<AJEntityCourse> ajEntityCourse =
+        LazyList<AJEntityCourse> courses =
             AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
-        if (ajEntityCourse.isEmpty()) {
+        if (courses.isEmpty()) {
             LOGGER.warn("course {} not found to fetch lesson, aborting", context.courseId());
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
         }
@@ -83,62 +80,64 @@ public class FetchLessonHandler implements DBHandler {
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
         }
 
-        LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE,
-            context.lessonId(), context.unitId(), context.courseId(), false);
+        LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson
+            .findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, context.lessonId(), context.unitId(),
+                context.courseId(), false);
         if (ajEntityLesson.isEmpty()) {
             LOGGER.warn("Lesson {} not found, aborting", context.lessonId());
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
         }
 
         LOGGER.debug("validateRequest() OK");
-        return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
+        return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(courses.get(0));
     }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         JsonObject resultBody;
-        LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON,
-            context.lessonId(), context.unitId(), context.courseId(), false);
+        LazyList<AJEntityLesson> ajEntityLesson = AJEntityLesson
+            .findBySQL(AJEntityLesson.SELECT_LESSON, context.lessonId(), context.unitId(), context.courseId(), false);
         if (!ajEntityLesson.isEmpty()) {
             LOGGER.info("lesson {} found, packing into JSON", context.unitId());
-            resultBody = new JsonObject(new JsonFormatterBuilder()
-                .buildSimpleJsonFormatter(false, AJEntityLesson.ALL_FIELDS).toJson(ajEntityLesson.get(0)));
+            resultBody = new JsonObject(
+                new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.ALL_FIELDS)
+                    .toJson(ajEntityLesson.get(0)));
 
-            LazyList<AJEntityCollection> collectionSummary =
-                AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY, context.lessonId(),
-                    context.unitId(), context.courseId(), false);
+            LazyList<AJEntityCollection> collectionSummary = AJEntityCollection
+                .findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY, context.lessonId(), context.unitId(),
+                    context.courseId(), false);
 
-            LOGGER.debug("number of collections found for lesson {} : {}", context.lessonId(),
-                collectionSummary.size());
+            LOGGER
+                .debug("number of collections found for lesson {} : {}", context.lessonId(), collectionSummary.size());
             if (collectionSummary.size() > 0) {
                 List<String> collectionIds = new ArrayList<>();
                 collectionSummary.stream()
                     .forEach(collection -> collectionIds.add(collection.getString(AJEntityCollection.ID)));
 
-                String collectionArrayString = listToPostgresArrayString(collectionIds);
-                List<Map> collectionContentCount = Base.findAll(AJEntityContent.SELECT_CONTENT_COUNT_BY_COLLECTION,
-                    collectionArrayString, context.courseId(), context.unitId(), context.lessonId());
+                String collectionArrayString = DbHelperUtil.toPostgresArrayString(collectionIds);
+                List<Map> collectionContentCount =
+                    Base.findAll(AJEntityContent.SELECT_CONTENT_COUNT_BY_COLLECTION, collectionArrayString,
+                        context.courseId(), context.unitId(), context.lessonId());
                 Map<String, Integer> resourceCountMap = new HashMap<>();
-                collectionContentCount.stream()
-                    .filter(map -> map.get(AJEntityContent.CONTENT_FORMAT) != null
-                        && map.get(AJEntityContent.CONTENT_FORMAT).toString()
-                            .equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_RESOURCE))
-                    .forEach(map -> resourceCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
+                collectionContentCount.stream().filter(
+                    map -> map.get(AJEntityContent.CONTENT_FORMAT) != null && map.get(AJEntityContent.CONTENT_FORMAT)
+                        .toString().equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_RESOURCE)).forEach(
+                    map -> resourceCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
                         Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString())));
 
                 Map<String, Integer> questionCountMap = new HashMap<>();
-                collectionContentCount.stream()
-                    .filter(map -> map.get(AJEntityContent.CONTENT_FORMAT) != null
-                        && map.get(AJEntityContent.CONTENT_FORMAT).toString()
-                            .equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_QUESTION))
-                    .forEach(map -> questionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
+                collectionContentCount.stream().filter(
+                    map -> map.get(AJEntityContent.CONTENT_FORMAT) != null && map.get(AJEntityContent.CONTENT_FORMAT)
+                        .toString().equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_QUESTION)).forEach(
+                    map -> questionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
                         Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString())));
 
-                List<Map> oeQuestionCountFromDB = Base.findAll(AJEntityContent.SELECT_OE_QUESTION_COUNT,
-                    collectionArrayString, context.courseId(), context.unitId(), context.lessonId());
+                List<Map> oeQuestionCountFromDB =
+                    Base.findAll(AJEntityContent.SELECT_OE_QUESTION_COUNT, collectionArrayString, context.courseId(),
+                        context.unitId(), context.lessonId());
                 Map<String, Integer> oeQuestionCountMap = new HashMap<>();
-                oeQuestionCountFromDB
-                    .forEach(map -> oeQuestionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
+                oeQuestionCountFromDB.forEach(map -> oeQuestionCountMap
+                    .put(map.get(AJEntityContent.COLLECTION_ID).toString(),
                         Integer.valueOf(map.get(AJEntityContent.OE_QUESTION_COUNT).toString())));
 
                 JsonArray collectionSummaryArray = new JsonArray();
@@ -150,9 +149,9 @@ public class FetchLessonHandler implements DBHandler {
                     collectionSummaryArray.add(new JsonObject(new JsonFormatterBuilder()
                         .buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS)
                         .toJson(collection))
-                            .put(AJEntityContent.RESOURCE_COUNT, resourceCount != null ? resourceCount : 0)
-                            .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0)
-                            .put(AJEntityContent.OE_QUESTION_COUNT, oeQuestionCount != null ? oeQuestionCount : 0));
+                        .put(AJEntityContent.RESOURCE_COUNT, resourceCount != null ? resourceCount : 0)
+                        .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0)
+                        .put(AJEntityContent.OE_QUESTION_COUNT, oeQuestionCount != null ? oeQuestionCount : 0));
                 });
 
                 resultBody.put(AJEntityCollection.COLLECTION_SUMMARY, collectionSummaryArray);
@@ -169,27 +168,6 @@ public class FetchLessonHandler implements DBHandler {
     @Override
     public boolean handlerReadOnly() {
         return true;
-    }
-
-    private String listToPostgresArrayString(List<String> input) {
-        int approxSize = ((input.size() + 1) * 36); // Length of UUID is around
-                                                    // 36
-                                                    // chars
-        Iterator<String> it = input.iterator();
-        if (!it.hasNext()) {
-            return "{}";
-        }
-
-        StringBuilder sb = new StringBuilder(approxSize);
-        sb.append('{');
-        for (;;) {
-            String s = it.next();
-            sb.append('"').append(s).append('"');
-            if (!it.hasNext()) {
-                return sb.append('}').toString();
-            }
-            sb.append(',');
-        }
     }
 
 }

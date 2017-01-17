@@ -67,6 +67,9 @@ dependencies {
 
     // Test dependencies
     testCompile "junit:junit:${junitVersion}"
+
+    // Other projects
+    compile project(':nucleus-libs-tenant')
 }
 
 shadowJar {
