@@ -169,4 +169,8 @@ public class AJEntityCourse extends Model {
     public String getTenantRoot() {
         return this.getString(TENANT_ROOT);
     }
+
+    public String getOwnerId() {
+        return this.getString(OWNER_ID);
+    }
 }
