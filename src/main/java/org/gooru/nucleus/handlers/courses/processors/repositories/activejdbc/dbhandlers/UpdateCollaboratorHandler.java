@@ -74,7 +74,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
         LazyList<AJEntityCourse> courses =
             AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
 
-        if (courses.size() > 1) {
+        if (!courses.isEmpty()) {
             this.course = courses.get(0);
             // check whether user is owner of course
             if (!context.userId().equalsIgnoreCase(this.course.getOwnerId())) {
