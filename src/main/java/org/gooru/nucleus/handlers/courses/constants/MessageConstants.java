@@ -29,6 +29,7 @@ public class MessageConstants {
     public static final String MSG_OP_COURSE_MOVE_UNIT = "course.move.unit";
     public static final String MSG_OP_COURSE_REORDER = "course.reorder";
     public static final String MSG_OP_COURSE_RESOURCES_GET = "course.resources.get";
+    public static final String MSG_OP_COURSE_ASSESSMENTS_GET = "course.assessments.get";
     public static final String MSG_OP_UNIT_GET = "unit.get";
     public static final String MSG_OP_UNIT_CREATE = "unit.create";
     public static final String MSG_OP_UNIT_UPDATE = "unit.update";

@@ -80,6 +80,12 @@ public enum CommandProcessorBuilder {
             return new ResourcesByStandardProcessor(context);
         }
     },
+    COURSE_ASSESSMENTS_GET(MessageConstants.MSG_OP_COURSE_ASSESSMENTS_GET) {
+        @Override
+        public Processor build(ProcessorContext context) {
+            return new AssessmentsByCourseProcessor(context);
+        }
+    },
     UNIT_GET(MessageConstants.MSG_OP_UNIT_GET) {
         @Override
         public Processor build(ProcessorContext context) {

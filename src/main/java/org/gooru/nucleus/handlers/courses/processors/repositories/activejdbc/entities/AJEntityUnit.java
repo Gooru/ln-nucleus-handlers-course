@@ -39,8 +39,10 @@ public class AJEntityUnit extends Model {
     public static final String CREATOR_SYSTEM = "creator_system";
     public static final String TENANT = "tenant";
     public static final String TENANT_ROOT = "tenant_root";
+    public static final String ID = "id";
 
     public static final String UNIT_SUMMARY = "unit_summary";
+    public static final String UNITS = "units";
 
     public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
     public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);

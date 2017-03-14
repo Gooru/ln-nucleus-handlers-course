@@ -55,4 +55,9 @@ public class AJCourseRepo implements CourseRepo {
 		return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildFetchResourcesForCourse(context));
 	}
 
+    @Override
+    public MessageResponse fetchAssessmentsByCourse() {
+        return new TransactionExecutor().executeTransaction(new DBHandlerBuilder().buildFetchAssessmentsByCourse(context));
+    }
+
 }

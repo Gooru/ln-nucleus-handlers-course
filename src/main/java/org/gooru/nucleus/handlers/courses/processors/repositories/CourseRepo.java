@@ -20,4 +20,6 @@ public interface CourseRepo {
     
     MessageResponse fetchResourcesForCourse();
     
+    MessageResponse fetchAssessmentsByCourse();
+    
 }

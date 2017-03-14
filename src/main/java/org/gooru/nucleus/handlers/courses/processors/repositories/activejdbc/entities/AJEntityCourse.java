@@ -49,6 +49,7 @@ public class AJEntityCourse extends Model {
     public static final String PUBLISH_STATUS_TYPE_UNPUBLISHED = "unpublished";
     public static final String PUBLISH_STATUS_TYPE_REQUESTED = "requested";
     public static final String PUBLISH_STATUS_TYPE_PUBLISHED = "published";
+    public static final String COURSES = "courses";
 
     public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
     public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY, COLLABORATOR);
