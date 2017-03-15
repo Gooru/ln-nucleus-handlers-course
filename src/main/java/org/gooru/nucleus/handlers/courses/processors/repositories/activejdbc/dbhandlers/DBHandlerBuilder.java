@@ -101,4 +101,8 @@ public class DBHandlerBuilder {
         return new FetchAssessmentsByCourse(context);
     }
 
+    public DBHandler buildFetchCollectionsByCourse(ProcessorContext context) {
+        return new FetchCollectionsByCourse(context);
+    }
+
 }

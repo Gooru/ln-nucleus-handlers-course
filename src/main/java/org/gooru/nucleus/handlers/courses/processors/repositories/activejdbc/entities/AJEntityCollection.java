@@ -33,6 +33,7 @@ public class AJEntityCollection extends Model {
     public static final String COLLECTION_COUNT = "collection_count";
     public static final String ASSESSMENT_COUNT = "assessment_count";
     public static final String ASSESSMENTS = "assessments";
+    public static final String COLLECTIONS = "collections";
 
     public static final List<String> COLLECTION_SUMMARY_FIELDS =
         Arrays.asList(ID, TITLE, FORMAT, SEQUENCE_ID, THUMBNAIL, URL);
@@ -59,6 +60,9 @@ public class AJEntityCollection extends Model {
     public static final String SELECT_ASSESSMENTS_BY_COURSE =
         "SELECT id, unit_id, lesson_id, title, format FROM collection where format = 'assessment'::content_container_type AND course_id = ?::uuid AND is_deleted = false";
     
+    public static final String SELECT_COLLECTIONS_BY_COURSE =
+        "SELECT id, unit_id, lesson_id, title, format FROM collection where format = 'collection'::content_container_type AND course_id = ?::uuid AND is_deleted = false";
+    
     public static final String UPDATE_COLLECTION_REMOVE_CUL = "course_id = null, unit_id = null, lesson_id = null";
     public static final String UPDATE_COLLECTION_REMOVE_CUL_WHERE = "id = ?::uuid";
     
@@ -67,6 +71,7 @@ public class AJEntityCollection extends Model {
 
     public static final List<String> COLLECTION_MOVE_NOTNULL_FIELDS = Arrays.asList(COURSE_ID, UNIT_ID, LESSON_ID);
     public static final List<String> ASSESSMENT_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, FORMAT);
+    public static final List<String> COLLECTION_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, FORMAT);
 
     public static final String FORMAT_COLLECTION = "collection";
     public static final String FORMAT_ASSESSMENT = "assessment";
