@@ -126,6 +126,8 @@ public class DeleteLessonHandler implements DBHandler {
             AJEntityContent
                 .update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true, context.userId(),
                     context.lessonId());
+            AJEntityRubric.update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true,
+                context.userId(), context.lessonId());
 
             return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
                 EventBuilderFactory.getDeleteLessonEventBuilder(lessonToDelete.getId().toString())),

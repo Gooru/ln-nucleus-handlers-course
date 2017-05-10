@@ -110,6 +110,8 @@ public class DeleteUnitHandler implements DBHandler {
                     context.unitId());
             AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true, context.userId(),
                 context.unitId());
+            AJEntityRubric.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true,
+                context.userId(), context.unitId());
 
             return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
                 EventBuilderFactory.getDeleteUnitEventBuilder(unitToDelete.getId().toString())),
