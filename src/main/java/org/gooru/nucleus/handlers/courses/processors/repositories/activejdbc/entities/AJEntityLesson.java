@@ -69,7 +69,7 @@ public class AJEntityLesson extends Model {
         "SELECT count(lesson_id) as lesson_count, unit_id FROM lesson WHERE unit_id = ANY(?::uuid[]) AND course_id = ?::uuid AND is_deleted = false"
             + " GROUP BY unit_id";
     public static final String SELECT_LESSON_BY_COURSE =
-        "SELECT lesson_id, unit_id, title FROM lesson WHERE course_id = ?::uuid AND is_deleted = false";
+        "SELECT lesson_id, unit_id, title, sequence_id FROM lesson WHERE course_id = ?::uuid AND is_deleted = false";
 
     public static final List<String> INSERTABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY, CREATOR_SYSTEM);
     public static final List<String> UPDATABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);

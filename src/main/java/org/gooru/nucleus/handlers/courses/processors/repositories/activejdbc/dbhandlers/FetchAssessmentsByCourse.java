@@ -71,24 +71,24 @@ public class FetchAssessmentsByCourse implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         // Get all units of course
-        Map<String, String> unitsTitleMap = new HashMap<>();
+        Map<String, AJEntityUnit> unitsTitleMap = new HashMap<>();
         LazyList<AJEntityUnit> units =
             AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT_SUMMARY, context.courseId(), false);
         if (!units.isEmpty()) {
             units.forEach(unit -> {
-                unitsTitleMap.put(unit.getString(AJEntityUnit.UNIT_ID), unit.getString(AJEntityUnit.TITLE));
+                unitsTitleMap.put(unit.getString(AJEntityUnit.UNIT_ID), unit);
             });
         }
 
         // Get all lessons of course
         Map<String, Set<String>> lessonsByUnitMap = new HashMap<>();
-        Map<String, String> lessonsTitleMap = new HashMap<>();
+        Map<String, AJEntityLesson> lessonsTitleMap = new HashMap<>();
         LazyList<AJEntityLesson> lessons =
             AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_BY_COURSE, context.courseId());
         if (!lessons.isEmpty()) {
             lessons.forEach(lesson -> {
                 String lessonId = lesson.getString(AJEntityLesson.LESSON_ID);
-                lessonsTitleMap.put(lessonId, lesson.getString(AJEntityLesson.TITLE));
+                lessonsTitleMap.put(lessonId, lesson);
 
                 String unitId = lesson.getString(AJEntityLesson.UNIT_ID);
                 if (lessonsByUnitMap.containsKey(unitId)) {
@@ -128,16 +128,20 @@ public class FetchAssessmentsByCourse implements DBHandler {
         JsonArray unitArray = new JsonArray();
         Set<String> unitIds = lessonsByUnitMap.keySet();
         for (String unitId : unitIds) {
-            JsonObject unitArrElement =
-                new JsonObject().put(AJEntityUnit.ID, unitId).put(AJEntityUnit.TITLE, unitsTitleMap.get(unitId));
+            AJEntityUnit unitFromMap = unitsTitleMap.get(unitId);
+            JsonObject unitArrElement = new JsonObject().put(AJEntityUnit.ID, unitId)
+                .put(AJEntityUnit.TITLE, unitFromMap.getString(AJEntityUnit.TITLE))
+                .put(AJEntityUnit.SEQUENCE_ID, unitFromMap.getInteger(AJEntityUnit.SEQUENCE_ID));
 
             JsonArray lessonArray = new JsonArray();
             Set<String> lessonIds = lessonsByUnitMap.get(unitId);
             for (String lessonId : lessonIds) {
                 JsonArray assessmentArray = assessmentsByLessonMap.get(lessonId);
                 if (assessmentArray != null) {
+                    AJEntityLesson lessonFromMap = lessonsTitleMap.get(lessonId);
                     JsonObject lessonArrElement = new JsonObject().put(AJEntityLesson.ID, lessonId)
-                        .put(AJEntityLesson.TITLE, lessonsTitleMap.get(lessonId));
+                        .put(AJEntityLesson.TITLE, lessonFromMap.getString(AJEntityLesson.TITLE))
+                        .put(AJEntityLesson.SEQUENCE_ID, lessonFromMap.getInteger(AJEntityLesson.SEQUENCE_ID));
                     lessonArrElement.put(AJEntityCollection.ASSESSMENTS, (assessmentArray != null ? assessmentArray : new JsonArray()));
                     lessonArray.add(lessonArrElement);
                 }
