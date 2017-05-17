@@ -112,6 +112,13 @@ public class FetchUnitHandler implements DBHandler {
                         .equalsIgnoreCase(AJEntityCollection.FORMAT_ASSESSMENT)).forEach(map -> assessmentCountByLesson
                     .put(map.get(AJEntityCollection.LESSON_ID).toString(),
                         Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
+                
+                Map<String, Integer> extAssessmentCountByLesson = new HashMap<>();
+                collectionCount.stream().filter(
+                    map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT).toString()
+                        .equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_ASSESSMENT)).forEach(map -> extAssessmentCountByLesson
+                    .put(map.get(AJEntityCollection.LESSON_ID).toString(),
+                        Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
 
                 JsonArray lessonSummaryArray = new JsonArray();
                 lessons.stream().forEach(lesson -> {
@@ -121,8 +128,10 @@ public class FetchUnitHandler implements DBHandler {
                     String lessonId = lesson.get(AJEntityCollection.ID).toString();
                     Integer collectionCnt = collectionCountByLesson.get(lessonId);
                     Integer assessmentCnt = assessmentCountByLesson.get(lessonId);
+                    Integer extAssessmentCnt = extAssessmentCountByLesson.get(lessonId);
                     lessonSummary.put(AJEntityCollection.COLLECTION_COUNT, collectionCnt != null ? collectionCnt : 0);
                     lessonSummary.put(AJEntityCollection.ASSESSMENT_COUNT, assessmentCnt != null ? assessmentCnt : 0);
+                    lessonSummary.put(AJEntityCollection.EXT_ASSESSMENT_COUNT, extAssessmentCnt != null ? extAssessmentCnt : 0);
                     lessonSummaryArray.add(lessonSummary);
                 });
                 resultBody.put(AJEntityLesson.LESSON_SUMMARY, lessonSummaryArray);
