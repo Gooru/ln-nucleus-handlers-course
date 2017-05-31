@@ -33,6 +33,7 @@ public class AJEntityCollection extends Model {
     public static final String COLLECTION_SUMMARY = "collection_summary";
     public static final String COLLECTION_COUNT = "collection_count";
     public static final String ASSESSMENT_COUNT = "assessment_count";
+    public static final String EXT_ASSESSMENT_COUNT = "external_assessment_count";
     public static final String ASSESSMENTS = "assessments";
     public static final String COLLECTIONS = "collections";
 
@@ -78,6 +79,7 @@ public class AJEntityCollection extends Model {
 
     public static final String FORMAT_COLLECTION = "collection";
     public static final String FORMAT_ASSESSMENT = "assessment";
+    public static final String FORMAT_EXT_ASSESSMENT = "assessment-external";
 
     public void setCourseId(String courseId) {
         setPGObject(COURSE_ID, UUID_TYPE, courseId);
