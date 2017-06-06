@@ -138,14 +138,13 @@ public class FetchCollectionsByCourse implements DBHandler {
             Set<String> lessonIds = lessonsByUnitMap.get(unitId);
             for (String lessonId : lessonIds) {
                 JsonArray collectionArray = collectionsByLessonMap.get(lessonId);
-                if (collectionArray != null) {
-                    AJEntityLesson lessonFromMap = lessonsTitleMap.get(lessonId);
-                    JsonObject lessonArrElement = new JsonObject().put(AJEntityLesson.ID, lessonId)
-                        .put(AJEntityLesson.TITLE, lessonFromMap.getString(AJEntityLesson.TITLE))
-                        .put(AJEntityLesson.SEQUENCE_ID, lessonFromMap.getInteger(AJEntityLesson.SEQUENCE_ID));
-                    lessonArrElement.put(AJEntityCollection.COLLECTIONS, (collectionArray != null ? collectionArray : new JsonArray()));
-                    lessonArray.add(lessonArrElement);
-                }
+                AJEntityLesson lessonFromMap = lessonsTitleMap.get(lessonId);
+                JsonObject lessonArrElement = new JsonObject().put(AJEntityLesson.ID, lessonId)
+                    .put(AJEntityLesson.TITLE, lessonFromMap.getString(AJEntityLesson.TITLE))
+                    .put(AJEntityLesson.SEQUENCE_ID, lessonFromMap.getInteger(AJEntityLesson.SEQUENCE_ID));
+                lessonArrElement.put(AJEntityCollection.COLLECTIONS,
+                    (collectionArray != null ? collectionArray : new JsonArray()));
+                lessonArray.add(lessonArrElement);
             }
             unitArrElement.put(AJEntityLesson.LESSONS, lessonArray);
             unitArray.add(unitArrElement);

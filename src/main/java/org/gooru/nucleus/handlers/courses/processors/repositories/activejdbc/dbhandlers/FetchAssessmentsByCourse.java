@@ -137,14 +137,13 @@ public class FetchAssessmentsByCourse implements DBHandler {
             Set<String> lessonIds = lessonsByUnitMap.get(unitId);
             for (String lessonId : lessonIds) {
                 JsonArray assessmentArray = assessmentsByLessonMap.get(lessonId);
-                if (assessmentArray != null) {
-                    AJEntityLesson lessonFromMap = lessonsTitleMap.get(lessonId);
-                    JsonObject lessonArrElement = new JsonObject().put(AJEntityLesson.ID, lessonId)
-                        .put(AJEntityLesson.TITLE, lessonFromMap.getString(AJEntityLesson.TITLE))
-                        .put(AJEntityLesson.SEQUENCE_ID, lessonFromMap.getInteger(AJEntityLesson.SEQUENCE_ID));
-                    lessonArrElement.put(AJEntityCollection.ASSESSMENTS, (assessmentArray != null ? assessmentArray : new JsonArray()));
-                    lessonArray.add(lessonArrElement);
-                }
+                AJEntityLesson lessonFromMap = lessonsTitleMap.get(lessonId);
+                JsonObject lessonArrElement = new JsonObject().put(AJEntityLesson.ID, lessonId)
+                    .put(AJEntityLesson.TITLE, lessonFromMap.getString(AJEntityLesson.TITLE))
+                    .put(AJEntityLesson.SEQUENCE_ID, lessonFromMap.getInteger(AJEntityLesson.SEQUENCE_ID));
+                lessonArrElement.put(AJEntityCollection.ASSESSMENTS,
+                    (assessmentArray != null ? assessmentArray : new JsonArray()));
+                lessonArray.add(lessonArrElement);
             }
             unitArrElement.put(AJEntityLesson.LESSONS, lessonArray);
             unitArray.add(unitArrElement);
