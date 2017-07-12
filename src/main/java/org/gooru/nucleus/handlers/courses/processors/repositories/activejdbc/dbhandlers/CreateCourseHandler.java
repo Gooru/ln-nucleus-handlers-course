@@ -9,6 +9,7 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.libs.tenant.settings.TenantSettingsProviderBuilder;
 import org.javalite.activejdbc.Base;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,6 +124,10 @@ public class CreateCourseHandler implements DBHandler {
         String tenantRoot = context.tenantRoot();
         if (tenantRoot != null && !tenantRoot.isEmpty()) {
             course.setTenantRoot(tenantRoot);
+        }
+        String version = TenantSettingsProviderBuilder.buildTenantSettingsProvider(context.tenant()).getDefaultCourseVersion();
+        if (version != null) {
+            course.setVersion(version);
         }
     }
 
