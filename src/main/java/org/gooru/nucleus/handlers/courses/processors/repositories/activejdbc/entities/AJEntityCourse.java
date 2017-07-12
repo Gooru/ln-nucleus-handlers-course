@@ -44,6 +44,7 @@ public class AJEntityCourse extends Model {
     public static final String CREATOR_SYSTEM = "creator_system";
     public static final String TENANT = "tenant";
     public static final String TENANT_ROOT = "tenant_root";
+    public static final String VERSION = "version";
 
     public static final String PUBLISH_STATUS_TYPE = "publish_status_type";
     public static final String PUBLISH_STATUS_TYPE_UNPUBLISHED = "unpublished";
@@ -127,6 +128,10 @@ public class AJEntityCourse extends Model {
         if (tenantRoot != null && !tenantRoot.isEmpty()) {
             setPGObject(TENANT_ROOT, UUID_TYPE, tenantRoot);
         }
+    }
+    
+    public void setVersion(String version) {
+        this.setString(VERSION, version);
     }
 
     // NOTE:
