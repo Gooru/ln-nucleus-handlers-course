@@ -8,6 +8,7 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.ent
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityRubric;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
@@ -93,6 +94,8 @@ public class DeleteCourseHandler implements DBHandler {
             AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid", true,
                 context.userId(), context.courseId());
             AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid", true,
+                context.userId(), context.courseId());
+            AJEntityRubric.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid", true,
                 context.userId(), context.courseId());
 
             // Remove the association of this course from class

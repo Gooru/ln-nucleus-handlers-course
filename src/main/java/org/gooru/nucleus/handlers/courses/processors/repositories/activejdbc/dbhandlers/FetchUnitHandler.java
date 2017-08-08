@@ -1,13 +1,13 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
@@ -61,9 +61,9 @@ public class FetchUnitHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> validateRequest() {
-        LazyList<AJEntityCourse> ajEntityCourse =
+        LazyList<AJEntityCourse> courses =
             AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
-        if (ajEntityCourse.isEmpty()) {
+        if (courses.isEmpty()) {
             LOGGER.warn("course {} not found to fetch unit, aborting", context.courseId());
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
         }
@@ -75,7 +75,7 @@ public class FetchUnitHandler implements DBHandler {
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
         }
 
-        return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
+        return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(courses.get(0));
     }
 
     @Override
@@ -85,42 +85,53 @@ public class FetchUnitHandler implements DBHandler {
         JsonObject resultBody;
         if (!ajEntityUnits.isEmpty()) {
             LOGGER.info("unit {} found, packing into JSON", context.unitId());
-            resultBody = new JsonObject(new JsonFormatterBuilder()
-                .buildSimpleJsonFormatter(false, AJEntityUnit.ALL_FIELDS).toJson(ajEntityUnits.get(0)));
+            resultBody = new JsonObject(
+                new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityUnit.ALL_FIELDS)
+                    .toJson(ajEntityUnits.get(0)));
 
-            LazyList<AJEntityLesson> lessons =
-                AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), context.courseId(), false);
+            LazyList<AJEntityLesson> lessons = AJEntityLesson
+                .findBySQL(AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), context.courseId(), false);
             LOGGER.debug("number of lessons found for unit {} : {}", context.unitId(), lessons.size());
             if (lessons.size() > 0) {
                 List<String> lessonIds = new ArrayList<>();
                 lessons.stream().forEach(lesson -> lessonIds.add(lesson.getString(AJEntityLesson.LESSON_ID)));
 
                 List<Map> collectionCount = Base.findAll(AJEntityCollection.SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON,
-                    toPostgresArrayString(lessonIds), context.unitId(), context.courseId());
+                    DbHelperUtil.toPostgresArrayString(lessonIds), context.unitId(), context.courseId());
                 LOGGER.debug("collection count: {}", collectionCount.size());
                 Map<String, Integer> collectionCountByLesson = new HashMap<>();
-                collectionCount.stream()
-                    .filter(map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                        .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_COLLECTION))
-                    .forEach(map -> collectionCountByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(),
+                collectionCount.stream().filter(
+                    map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT).toString()
+                        .equalsIgnoreCase(AJEntityCollection.FORMAT_COLLECTION)).forEach(map -> collectionCountByLesson
+                    .put(map.get(AJEntityCollection.LESSON_ID).toString(),
                         Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
 
                 Map<String, Integer> assessmentCountByLesson = new HashMap<>();
-                collectionCount.stream()
-                    .filter(map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                        .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_ASSESSMENT))
-                    .forEach(map -> assessmentCountByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(),
+                collectionCount.stream().filter(
+                    map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT).toString()
+                        .equalsIgnoreCase(AJEntityCollection.FORMAT_ASSESSMENT)).forEach(map -> assessmentCountByLesson
+                    .put(map.get(AJEntityCollection.LESSON_ID).toString(),
+                        Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
+                
+                Map<String, Integer> extAssessmentCountByLesson = new HashMap<>();
+                collectionCount.stream().filter(
+                    map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT).toString()
+                        .equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_ASSESSMENT)).forEach(map -> extAssessmentCountByLesson
+                    .put(map.get(AJEntityCollection.LESSON_ID).toString(),
                         Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
 
                 JsonArray lessonSummaryArray = new JsonArray();
                 lessons.stream().forEach(lesson -> {
-                    JsonObject lessonSummary = new JsonObject(new JsonFormatterBuilder()
-                        .buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS).toJson(lesson));
+                    JsonObject lessonSummary = new JsonObject(
+                        new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS)
+                            .toJson(lesson));
                     String lessonId = lesson.get(AJEntityCollection.ID).toString();
                     Integer collectionCnt = collectionCountByLesson.get(lessonId);
                     Integer assessmentCnt = assessmentCountByLesson.get(lessonId);
+                    Integer extAssessmentCnt = extAssessmentCountByLesson.get(lessonId);
                     lessonSummary.put(AJEntityCollection.COLLECTION_COUNT, collectionCnt != null ? collectionCnt : 0);
                     lessonSummary.put(AJEntityCollection.ASSESSMENT_COUNT, assessmentCnt != null ? assessmentCnt : 0);
+                    lessonSummary.put(AJEntityCollection.EXT_ASSESSMENT_COUNT, extAssessmentCnt != null ? extAssessmentCnt : 0);
                     lessonSummaryArray.add(lessonSummary);
                 });
                 resultBody.put(AJEntityLesson.LESSON_SUMMARY, lessonSummaryArray);
@@ -136,27 +147,6 @@ public class FetchUnitHandler implements DBHandler {
     @Override
     public boolean handlerReadOnly() {
         return true;
-    }
-
-    private String toPostgresArrayString(Collection<String> input) {
-        int approxSize = ((input.size() + 1) * 36); // Length of UUID is around
-                                                    // 36
-                                                    // chars
-        Iterator<String> it = input.iterator();
-        if (!it.hasNext()) {
-            return "{}";
-        }
-
-        StringBuilder sb = new StringBuilder(approxSize);
-        sb.append('{');
-        for (;;) {
-            String s = it.next();
-            sb.append('"').append(s).append('"');
-            if (!it.hasNext()) {
-                return sb.append('}').toString();
-            }
-            sb.append(',');
-        }
     }
 
 }

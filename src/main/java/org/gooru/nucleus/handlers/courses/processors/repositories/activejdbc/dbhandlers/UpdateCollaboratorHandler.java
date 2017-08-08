@@ -3,6 +3,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
@@ -23,6 +24,7 @@ public class UpdateCollaboratorHandler implements DBHandler {
     private AJEntityCourse course;
     private static final String COLLABORATORS_REMOVED = "collaborators.removed";
     private static final String COLLABORATORS_ADDED = "collaborators.added";
+    private JsonObject diffCollaborators;
 
     public UpdateCollaboratorHandler(ProcessorContext context) {
         this.context = context;
@@ -33,8 +35,9 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
         if (context.courseId() == null || context.courseId().isEmpty()) {
             LOGGER.warn("invalid course id to update collaborator");
-            return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(
-                "Invalid course id provided to update collaborator"), ExecutionStatus.FAILED);
+            return new ExecutionResult<>(MessageResponseFactory
+                .createInvalidRequestResponse("Invalid course id provided to update collaborator"),
+                ExecutionStatus.FAILED);
         }
 
         if (context.request() == null || context.request().isEmpty()) {
@@ -44,8 +47,8 @@ public class UpdateCollaboratorHandler implements DBHandler {
                 ExecutionStatus.FAILED);
         }
 
-        if (context.userId() == null || context.userId().isEmpty()
-            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty() || context.userId()
+            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to update course collaborator");
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
@@ -68,12 +71,13 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> validateRequest() {
-        LazyList<AJEntityCourse> ajEntityCourse =
+        LazyList<AJEntityCourse> courses =
             AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
 
-        if (!ajEntityCourse.isEmpty()) {
+        if (!courses.isEmpty()) {
+            this.course = courses.get(0);
             // check whether user is owner of course
-            if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
+            if (!context.userId().equalsIgnoreCase(this.course.getOwnerId())) {
                 LOGGER.warn("user is not owner of course to update collaborator. aborting");
                 return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
             }
@@ -81,16 +85,15 @@ public class UpdateCollaboratorHandler implements DBHandler {
             LOGGER.warn("course {} not found to update collaborators, aborting", context.courseId());
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
         }
+        diffCollaborators = calculateDiffOfCollaborators();
 
-        course = ajEntityCourse.get(0);
-
-        LOGGER.debug("validateRequest() OK");
-        return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
+        return AuthorizerBuilder
+            .buildTenantCollaboratorAuthorizer(context, diffCollaborators.getJsonArray(COLLABORATORS_ADDED))
+            .authorize(course);
     }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        JsonObject diffCollaborators = calculateDiffOfCollaborators();
         courseUpdateCollab = new AJEntityCourse();
         courseUpdateCollab.setCourseId(context.courseId());
         courseUpdateCollab.setModifierId(context.userId());
@@ -104,9 +107,8 @@ public class UpdateCollaboratorHandler implements DBHandler {
 
         if (courseUpdateCollab.save()) {
             LOGGER.info("updated collaborators of course {} successfully", context.courseId());
-            return new ExecutionResult<>(
-                MessageResponseFactory.createNoContentResponse(
-                    EventBuilderFactory.getUpdateCourseCollaboratorEventBuilder(context.courseId(), diffCollaborators)),
+            return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
+                EventBuilderFactory.getUpdateCourseCollaboratorEventBuilder(context.courseId(), diffCollaborators)),
                 ExecutionStatus.SUCCESSFUL);
         } else {
             LOGGER.error("error while updating course collaborator");
@@ -131,9 +133,9 @@ public class UpdateCollaboratorHandler implements DBHandler {
     private JsonObject validateNullFields() {
         JsonObject input = context.request();
         JsonObject output = new JsonObject();
-        input.fieldNames().stream()
-            .filter(key -> AJEntityCourse.COLLABORATOR_FIELD.contains(key)
-                && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
+        input.fieldNames().stream().filter(
+            key -> AJEntityCourse.COLLABORATOR_FIELD.contains(key) && (input.getValue(key) == null || input
+                .getValue(key).toString().isEmpty()))
             .forEach(key -> output.put(key, "Field should not be empty or null"));
         return output.isEmpty() ? null : output;
     }
@@ -149,8 +151,8 @@ public class UpdateCollaboratorHandler implements DBHandler {
         // Find current collaborators
         String currentCollaboratorsAsString = this.course.getString(AJEntityCourse.COLLABORATOR);
         JsonArray currentCollaborators;
-        currentCollaborators = currentCollaboratorsAsString != null && !currentCollaboratorsAsString.isEmpty()
-            ? new JsonArray(currentCollaboratorsAsString) : new JsonArray();
+        currentCollaborators = currentCollaboratorsAsString != null && !currentCollaboratorsAsString.isEmpty() ?
+            new JsonArray(currentCollaboratorsAsString) : new JsonArray();
         JsonArray newCollaborators = this.context.request().getJsonArray(AJEntityCourse.COLLABORATOR);
         if (currentCollaborators.isEmpty() && !newCollaborators.isEmpty()) {
             // Adding all

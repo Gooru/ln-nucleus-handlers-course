@@ -234,6 +234,9 @@ public class MoveCollectionToLessonHandler implements DBHandler {
             AJEntityContent.update("course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, modifier_id = ?::uuid",
                 "collection_id = ?::uuid", context.courseId(), context.unitId(), context.lessonId(), context.userId(),
                 collectionToUpdate.getId());
+            AJEntityRubric.update("course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, modifier_id = ?::uuid",
+                "collection_id = ?::uuid", context.courseId(), context.unitId(), context.lessonId(), context.userId(),
+                collectionToUpdate.getId());
 
             return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory
                 .getMoveCollectionEventBuilder(context.courseId(), context.unitId(), context.lessonId(),
