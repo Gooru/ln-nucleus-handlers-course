@@ -4,9 +4,8 @@ public class MessageConstants {
 
     public static final String MSG_HEADER_OP = "mb.operation";
     public static final String MSG_HEADER_TOKEN = "session.token";
-    public static final String MSG_OP_AUTH_WITH_PREFS = "auth.with.prefs";
     public static final String MSG_OP_STATUS = "mb.operation.status";
-    public static final String MSG_KEY_PREFS = "prefs";
+    public static final String MSG_KEY_SESSION = "session";
     public static final String MSG_OP_STATUS_SUCCESS = "success";
     public static final String MSG_OP_STATUS_ERROR = "error";
     public static final String MSG_OP_STATUS_VALIDATION_ERROR = "error.validation";
@@ -30,6 +29,8 @@ public class MessageConstants {
     public static final String MSG_OP_COURSE_MOVE_UNIT = "course.move.unit";
     public static final String MSG_OP_COURSE_REORDER = "course.reorder";
     public static final String MSG_OP_COURSE_RESOURCES_GET = "course.resources.get";
+    public static final String MSG_OP_COURSE_ASSESSMENTS_GET = "course.assessments.get";
+    public static final String MSG_OP_COURSE_COLLECTIONS_GET = "course.collections.get";
     public static final String MSG_OP_UNIT_GET = "unit.get";
     public static final String MSG_OP_UNIT_CREATE = "unit.create";
     public static final String MSG_OP_UNIT_UPDATE = "unit.update";

@@ -1,16 +1,17 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
+
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 @Table("course")
 public class AJEntityCourse extends Model {
@@ -41,23 +42,28 @@ public class AJEntityCourse extends Model {
     public static final String SUBJECT_BUCKET = "subject_bucket";
     public static final String LICENSE = "license";
     public static final String CREATOR_SYSTEM = "creator_system";
+    public static final String TENANT = "tenant";
+    public static final String TENANT_ROOT = "tenant_root";
+    public static final String VERSION = "version";
 
     public static final String PUBLISH_STATUS_TYPE = "publish_status_type";
     public static final String PUBLISH_STATUS_TYPE_UNPUBLISHED = "unpublished";
     public static final String PUBLISH_STATUS_TYPE_REQUESTED = "requested";
     public static final String PUBLISH_STATUS_TYPE_PUBLISHED = "published";
+    public static final String COURSES = "courses";
 
     public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
     public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY, COLLABORATOR);
     public static final List<String> JSON_OBJECT_FIELDS = Arrays.asList(METADATA, TAXONOMY);
     public static final List<String> JSON_ARRAY_FIELDS = Arrays.asList(COLLABORATOR);
-    public static final List<String> ALL_FIELDS =
-        Arrays.asList(ID, TITLE, DESCRIPTION, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID,
-            ORIGINAL_COURSE_ID, PUBLISH_STATUS, PUBLISH_DATE, THUMBNAIL, METADATA, TAXONOMY, COLLABORATOR,
-            VISIBLE_ON_PROFILE, CREATED_AT, UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, LICENSE, CREATOR_SYSTEM, USE_CASE);
+    public static final List<String> ALL_FIELDS = Arrays
+        .asList(ID, TITLE, DESCRIPTION, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID, ORIGINAL_COURSE_ID,
+            PUBLISH_STATUS, PUBLISH_DATE, THUMBNAIL, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, CREATED_AT,
+            UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, LICENSE, CREATOR_SYSTEM, USE_CASE);
 
-    public static final List<String> INSERTABLE_FIELDS = Arrays.asList(TITLE, DESCRIPTION, THUMBNAIL,
-        METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET, CREATOR_SYSTEM, USE_CASE);
+    public static final List<String> INSERTABLE_FIELDS = Arrays
+        .asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET, CREATOR_SYSTEM,
+            USE_CASE);
     public static final List<String> UPDATABLE_FIELDS =
         Arrays.asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET, USE_CASE);
 
@@ -66,13 +72,16 @@ public class AJEntityCourse extends Model {
 
     public static final String SELECT_COLLABORATOR = "SELECT collaborator FROM course WHERE id = ?::uuid";
     public static final String SELECT_COURSE_TO_AUTHORIZE =
-        "SELECT id, owner_id, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ? AND (owner_id = ?::uuid OR collaborator ?? ?)";
+        "SELECT id, owner_id, collaborator, tenant, tenant_root FROM course WHERE id = ?::uuid AND is_deleted = ? AND"
+            + " (owner_id = ?::uuid OR collaborator ?? ?)";
     public static final String SELECT_COURSE_TO_VALIDATE =
-        "SELECT id, owner_id, publish_status, collaborator FROM course WHERE id = ?::uuid AND is_deleted = ?";
+        "SELECT id, owner_id, publish_status, collaborator, tenant, tenant_root FROM course WHERE id = ?::uuid AND "
+            + "is_deleted = ?";
     public static final String SELECT_COURSE =
-        "SELECT id, title, description, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_course_id, publish_status,"
-            + " publish_date, thumbnail, metadata, taxonomy, collaborator, visible_on_profile, sequence_id, subject_bucket,"
-            + " license, creator_system, use_case FROM course WHERE id = ?::uuid AND is_deleted = ?";
+        "SELECT id, title, description, created_at, updated_at, owner_id, creator_id, modifier_id, "
+            + "original_creator_id, original_course_id, publish_status, publish_date, thumbnail, metadata, taxonomy, "
+            + "collaborator, visible_on_profile, sequence_id, subject_bucket, license, creator_system, use_case, "
+            + "tenant, tenant_root FROM course WHERE id = ?::uuid AND is_deleted = ?";
     public static final String SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET =
         "SELECT MAX(sequence_id) FROM course WHERE owner_id = ?::uuid AND" + " subject_bucket = ?";
     public static final String SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET =
@@ -111,6 +120,20 @@ public class AJEntityCourse extends Model {
         setPGObject(PUBLISH_STATUS, PUBLISH_STATUS_TYPE, status);
     }
 
+    public void setTenant(String tenantId) {
+        setPGObject(TENANT, UUID_TYPE, tenantId);
+    }
+
+    public void setTenantRoot(String tenantRoot) {
+        if (tenantRoot != null && !tenantRoot.isEmpty()) {
+            setPGObject(TENANT_ROOT, UUID_TYPE, tenantRoot);
+        }
+    }
+    
+    public void setVersion(String version) {
+        this.setString(VERSION, version);
+    }
+
     // NOTE:
     // We do not deal with nested objects, only first level ones
     // We do not check for forbidden fields, it should be done before this
@@ -140,4 +163,20 @@ public class AJEntityCourse extends Model {
         }
     }
 
+    public boolean isCoursePublished() {
+        String publishStatus = this.getString(PUBLISH_STATUS);
+        return PUBLISH_STATUS_TYPE_PUBLISHED.equalsIgnoreCase(publishStatus);
+    }
+
+    public String getTenant() {
+        return this.getString(TENANT);
+    }
+
+    public String getTenantRoot() {
+        return this.getString(TENANT_ROOT);
+    }
+
+    public String getOwnerId() {
+        return this.getString(OWNER_ID);
+    }
 }

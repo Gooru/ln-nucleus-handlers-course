@@ -23,7 +23,7 @@ public class CreateUnitHandler implements DBHandler {
 
     private final ProcessorContext context;
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateUnitHandler.class);
-    private AJEntityUnit newUnit;
+    private AJEntityUnit unit;
     private String courseOwner;
 
     public CreateUnitHandler(ProcessorContext context) {
@@ -86,32 +86,21 @@ public class CreateUnitHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        newUnit = new AJEntityUnit();
-        newUnit.setAllFromJson(context.request());
-        newUnit.setCourseId(context.courseId());
-        newUnit.setOwnerId(courseOwner);
-        newUnit.setCreatorId(context.userId());
-        newUnit.setModifierId(context.userId());
-        newUnit.set(AJEntityUnit.IS_DELETED, false);
+        unit = new AJEntityUnit();
+        unit.setAllFromJson(context.request());
+        autoPopulateFields();
 
-        // Get max sequence id for course
-        Object maxSequenceId = Base.firstCell(AJEntityUnit.SELECT_UNIT_MAX_SEQUENCEID, context.courseId());
-        int sequenceId = 1;
-        if (maxSequenceId != null) {
-            sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
+        unit.set(AJEntityUnit.SEQUENCE_ID, getSequenceId());
 
-        }
-        newUnit.set(AJEntityUnit.SEQUENCE_ID, sequenceId);
-
-        if (newUnit.hasErrors()) {
+        if (unit.hasErrors()) {
             LOGGER.warn("error in creating new unit");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
                 ExecutionStatus.FAILED);
         }
 
-        if (newUnit.isValid()) {
-            if (newUnit.save()) {
-                LOGGER.info("unit {} created successfully for course {}", newUnit.getId().toString(),
+        if (unit.isValid()) {
+            if (unit.save()) {
+                LOGGER.info("unit {} created successfully for course {}", unit.getId().toString(),
                     context.courseId());
 
                 AJEntityCourse courseToUpdate = new AJEntityCourse();
@@ -130,8 +119,8 @@ public class CreateUnitHandler implements DBHandler {
                 }
 
                 return new ExecutionResult<>(
-                    MessageResponseFactory.createPostResponse(newUnit.getId().toString(),
-                        EventBuilderFactory.getCreateUnitEventBuilder(newUnit.getId().toString())),
+                    MessageResponseFactory.createPostResponse(unit.getId().toString(),
+                        EventBuilderFactory.getCreateUnitEventBuilder(unit.getId().toString())),
                     ExecutionStatus.SUCCESSFUL);
             } else {
                 LOGGER.error("error in saving unit");
@@ -142,6 +131,30 @@ public class CreateUnitHandler implements DBHandler {
             LOGGER.warn("validation error in saving unit");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
                 ExecutionStatus.FAILED);
+        }
+    }
+
+    private int getSequenceId() {
+        // Get max sequence id for course
+        Object maxSequenceId = Base.firstCell(AJEntityUnit.SELECT_UNIT_MAX_SEQUENCEID, context.courseId());
+        int sequenceId = 1;
+        if (maxSequenceId != null) {
+            sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
+
+        }
+        return sequenceId;
+    }
+
+    private void autoPopulateFields() {
+        unit.setCourseId(context.courseId());
+        unit.setOwnerId(courseOwner);
+        unit.setCreatorId(context.userId());
+        unit.setModifierId(context.userId());
+        unit.set(AJEntityUnit.IS_DELETED, false);
+        unit.setTenant(context.tenant());
+        String tenantRoot = context.tenantRoot();
+        if (tenantRoot != null && !tenantRoot.isEmpty()) {
+            unit.setTenantRoot(tenantRoot);
         }
     }
 
@@ -170,7 +183,7 @@ public class CreateUnitHandler implements DBHandler {
 
     private JsonObject getModelErrors() {
         JsonObject errors = new JsonObject();
-        this.newUnit.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
+        this.unit.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
         return errors;
     }
 

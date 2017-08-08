@@ -35,9 +35,13 @@ public class AJEntityLesson extends Model {
     public static final String SEQUENCE_ID = "sequence_id";
     public static final String IS_DELETED = "is_deleted";
     public static final String CREATOR_SYSTEM = "creator_system";
+    public static final String TENANT = "tenant";
+    public static final String TENANT_ROOT = "tenant_root";
+    public static final String ID = "id";
 
     public static final String LESSON_SUMMARY = "lesson_summary";
     public static final String LESSON_COUNT = "lesson_count";
+    public static final String LESSONS = "lessons";
 
     public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
     public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
@@ -64,6 +68,8 @@ public class AJEntityLesson extends Model {
     public static final String SELECT_LESSON_COUNT_MULTIPLE =
         "SELECT count(lesson_id) as lesson_count, unit_id FROM lesson WHERE unit_id = ANY(?::uuid[]) AND course_id = ?::uuid AND is_deleted = false"
             + " GROUP BY unit_id";
+    public static final String SELECT_LESSON_BY_COURSE =
+        "SELECT lesson_id, unit_id, title, sequence_id FROM lesson WHERE course_id = ?::uuid AND is_deleted = false";
 
     public static final List<String> INSERTABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY, CREATOR_SYSTEM);
     public static final List<String> UPDATABLE_FIELDS = Arrays.asList(TITLE, METADATA, TAXONOMY);
@@ -95,6 +101,16 @@ public class AJEntityLesson extends Model {
 
     public void setLessonId(String lessonId) {
         setPGObject(LESSON_ID, UUID_TYPE, lessonId);
+    }
+
+    public void setTenant(String tenantId) {
+        setPGObject(TENANT, UUID_TYPE, tenantId);
+    }
+
+    public void setTenantRoot(String tenantRoot) {
+        if (tenantRoot != null && !tenantRoot.isEmpty()) {
+            setPGObject(TENANT_ROOT, UUID_TYPE, tenantRoot);
+        }
     }
 
     // NOTE:

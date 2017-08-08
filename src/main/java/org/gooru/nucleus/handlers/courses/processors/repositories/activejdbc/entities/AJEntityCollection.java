@@ -22,6 +22,7 @@ public class AJEntityCollection extends Model {
     public static final String TITLE = "title";
     public static final String URL = "url";
     public static final String FORMAT = "format";
+    public static final String SUBFORMAT = "subformat";
     public static final String MODIFIER_ID = "modifier_id";
     public static final String OWNER_ID = "owner_id";
     public static final String COLLABORATOR = "collaborator";
@@ -32,12 +33,15 @@ public class AJEntityCollection extends Model {
     public static final String COLLECTION_SUMMARY = "collection_summary";
     public static final String COLLECTION_COUNT = "collection_count";
     public static final String ASSESSMENT_COUNT = "assessment_count";
+    public static final String EXT_ASSESSMENT_COUNT = "external_assessment_count";
+    public static final String ASSESSMENTS = "assessments";
+    public static final String COLLECTIONS = "collections";
 
     public static final List<String> COLLECTION_SUMMARY_FIELDS =
-        Arrays.asList(ID, TITLE, FORMAT, SEQUENCE_ID, THUMBNAIL, URL);
+        Arrays.asList(ID, TITLE, FORMAT, SEQUENCE_ID, THUMBNAIL, URL, SUBFORMAT);
 
     public static final String SELECT_COLLECTION_SUMMARY =
-        "SELECT id, title, format, sequence_id, thumbnail, url FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND "
+        "SELECT id, title, format, sequence_id, thumbnail, url, subformat FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND "
             + "is_deleted = ? order by sequence_id asc";
     public static final String SELECT_COLLECTION_TO_MOVE =
         "SELECT id, course_id, unit_id, lesson_id, owner_id, collaborator FROM collection WHERE id = ?::uuid AND is_deleted = ?";
@@ -52,9 +56,17 @@ public class AJEntityCollection extends Model {
         "SELECT id FROM collection where id = ?::uuid AND is_deleted = false AND course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid";
 
     public static final String SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON =
-        "SELECT count(id) as collection_count, format, lesson_id FROM collection WHERE lesson_id = ANY(?::uuid[]) AND unit_id = ?::uuid AND course_id = ?::uuid"
-            + " AND is_deleted = false GROUP BY lesson_id, format";
-    
+        "SELECT count(id) as collection_count, format, lesson_id FROM collection WHERE lesson_id = ANY(?::uuid[]) AND unit_id = ?::uuid AND"
+        + " course_id = ?::uuid AND is_deleted = false GROUP BY lesson_id, format";
+
+    public static final String SELECT_ASSESSMENTS_BY_COURSE =
+        "SELECT id, unit_id, lesson_id, title, format, subformat, sequence_id FROM collection where format = 'assessment'::content_container_type AND"
+        + " course_id = ?::uuid AND is_deleted = false";
+
+    public static final String SELECT_COLLECTIONS_BY_COURSE =
+        "SELECT id, unit_id, lesson_id, title, format, subformat, sequence_id FROM collection where format = 'collection'::content_container_type AND"
+        + " course_id = ?::uuid AND is_deleted = false";
+
     public static final String UPDATE_COLLECTION_REMOVE_CUL = "course_id = null, unit_id = null, lesson_id = null";
     public static final String UPDATE_COLLECTION_REMOVE_CUL_WHERE = "id = ?::uuid";
     
@@ -62,9 +74,12 @@ public class AJEntityCollection extends Model {
     public static final String JSONB_TYPE = "jsonb";
 
     public static final List<String> COLLECTION_MOVE_NOTNULL_FIELDS = Arrays.asList(COURSE_ID, UNIT_ID, LESSON_ID);
+    public static final List<String> ASSESSMENT_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, FORMAT, SUBFORMAT, SEQUENCE_ID);
+    public static final List<String> COLLECTION_BY_COURSE_FIELDS = Arrays.asList(ID, TITLE, FORMAT, SUBFORMAT, SEQUENCE_ID);
 
     public static final String FORMAT_COLLECTION = "collection";
     public static final String FORMAT_ASSESSMENT = "assessment";
+    public static final String FORMAT_EXT_ASSESSMENT = "assessment-external";
 
     public void setCourseId(String courseId) {
         setPGObject(COURSE_ID, UUID_TYPE, courseId);
