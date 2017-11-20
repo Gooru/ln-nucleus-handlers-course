@@ -36,7 +36,6 @@ public class CourseVerticle extends AbstractVerticle {
                     LOGGER.debug("Received message: " + message.body());
                     vertx.executeBlocking(future -> {
                         MessageResponse result = new ProcessorBuilder(message).build().process();
-                        LOGGER.info("got response :" + result.reply());
                         future.complete(result);
                     }, res -> {
                         MessageResponse result = (MessageResponse) res.result();
