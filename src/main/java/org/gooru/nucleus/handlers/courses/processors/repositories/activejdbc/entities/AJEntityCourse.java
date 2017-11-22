@@ -59,7 +59,7 @@ public class AJEntityCourse extends Model {
     public static final List<String> ALL_FIELDS = Arrays
         .asList(ID, TITLE, DESCRIPTION, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID, ORIGINAL_COURSE_ID,
             PUBLISH_STATUS, PUBLISH_DATE, THUMBNAIL, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, CREATED_AT,
-            UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, LICENSE, CREATOR_SYSTEM, USE_CASE);
+            UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, LICENSE, CREATOR_SYSTEM, USE_CASE, VERSION);
 
     public static final List<String> INSERTABLE_FIELDS = Arrays
         .asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET, CREATOR_SYSTEM,
@@ -81,7 +81,7 @@ public class AJEntityCourse extends Model {
         "SELECT id, title, description, created_at, updated_at, owner_id, creator_id, modifier_id, "
             + "original_creator_id, original_course_id, publish_status, publish_date, thumbnail, metadata, taxonomy, "
             + "collaborator, visible_on_profile, sequence_id, subject_bucket, license, creator_system, use_case, "
-            + "tenant, tenant_root FROM course WHERE id = ?::uuid AND is_deleted = ?";
+            + "version, tenant, tenant_root FROM course WHERE id = ?::uuid AND is_deleted = ?";
     public static final String SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET =
         "SELECT MAX(sequence_id) FROM course WHERE owner_id = ?::uuid AND" + " subject_bucket = ?";
     public static final String SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET =
@@ -129,7 +129,7 @@ public class AJEntityCourse extends Model {
             setPGObject(TENANT_ROOT, UUID_TYPE, tenantRoot);
         }
     }
-    
+
     public void setVersion(String version) {
         this.setString(VERSION, version);
     }
