@@ -120,14 +120,15 @@ public class DeleteLessonHandler implements DBHandler {
         if (lessonToDelete.save()) {
             LOGGER.info("lesson {} marked as deleted successfully", context.lessonId());
 
-            AJEntityCollection
-                .update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true, context.userId(),
-                    context.lessonId());
-            AJEntityContent
-                .update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true, context.userId(),
-                    context.lessonId());
-            AJEntityRubric.update("is_deleted = ?, modifier_id = ?::uuid", "lesson_id = ?::uuid", true,
-                context.userId(), context.lessonId());
+            AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid",
+                "course_id = ?::uuid and unit_id = ?::uuid and lesson_id = ?::uuid", true, context.userId(),
+                context.courseId(), context.unitId(), context.lessonId());
+            AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid",
+                "course_id = ?::uuid and unit_id = ?::uuid and lesson_id = ?::uuid", true, context.userId(),
+                context.courseId(), context.unitId(), context.lessonId());
+            AJEntityRubric.update("is_deleted = ?, modifier_id = ?::uuid",
+                "course_id = ?::uuid and unit_id = ?::uuid and lesson_id = ?::uuid", true, context.userId(),
+                context.courseId(), context.unitId(), context.lessonId());
 
             return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
                 EventBuilderFactory.getDeleteLessonEventBuilder(lessonToDelete.getId().toString())),
