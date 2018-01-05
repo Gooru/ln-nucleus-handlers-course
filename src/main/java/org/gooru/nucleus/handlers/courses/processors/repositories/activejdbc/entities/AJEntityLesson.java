@@ -38,6 +38,8 @@ public class AJEntityLesson extends Model {
     public static final String TENANT = "tenant";
     public static final String TENANT_ROOT = "tenant_root";
     public static final String ID = "id";
+    public static final String AGGREGATED_TAXONOMY = "aggregated_taxonomy";
+    public static final String AGGREGATED_GUT_CODES = "aggregated_gut_codes";
 
     public static final String LESSON_SUMMARY = "lesson_summary";
     public static final String LESSON_COUNT = "lesson_count";
@@ -47,15 +49,15 @@ public class AJEntityLesson extends Model {
     public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
     public static final List<String> ALL_FIELDS =
         Arrays.asList(LESSON_ID, UNIT_ID, COURSE_ID, TITLE, CREATED_AT, UPDATED_AT, CREATOR_ID, MODIFIER_ID, OWNER_ID,
-            ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, METADATA, TAXONOMY, SEQUENCE_ID, CREATOR_SYSTEM);
+            ORIGINAL_CREATOR_ID, ORIGINAL_LESSON_ID, METADATA, TAXONOMY, SEQUENCE_ID, CREATOR_SYSTEM, AGGREGATED_TAXONOMY);
     public static final List<String> LESSON_SUMMARY_FIELDS = Arrays.asList(LESSON_ID, TITLE, SEQUENCE_ID);
 
     public static final String SELECT_LESSON_TO_VALIDATE =
         "SELECT lesson_id, unit_id, course_id FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
     public static final String SELECT_LESSON =
         "SELECT lesson_id, unit_id, course_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, "
-            + "original_lesson_id, metadata, taxonomy, sequence_id, creator_system FROM lesson WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND "
-            + "course_id = ?::uuid and is_deleted = ?";
+            + "original_lesson_id, metadata, taxonomy, sequence_id, creator_system, aggregated_taxonomy FROM lesson WHERE lesson_id = ?::uuid"
+            + " AND unit_id = ?::uuid AND course_id = ?::uuid and is_deleted = ?";
     public static final String SELECT_LESSON_SUMMARY =
         "SELECT lesson_id, title, sequence_id FROM lesson WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
     public static final String SELECT_LESSON_MAX_SEQUENCEID =

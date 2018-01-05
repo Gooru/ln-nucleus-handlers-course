@@ -40,6 +40,8 @@ public class AJEntityUnit extends Model {
     public static final String TENANT = "tenant";
     public static final String TENANT_ROOT = "tenant_root";
     public static final String ID = "id";
+    public static final String AGGREGATED_TAXONOMY = "aggregated_taxonomy";
+    public static final String AGGREGATED_GUT_CODES = "aggregated_gut_codes";
 
     public static final String UNIT_SUMMARY = "unit_summary";
     public static final String UNITS = "units";
@@ -49,7 +51,7 @@ public class AJEntityUnit extends Model {
     public static final List<String> JSON_OBJECT_FIELDS = Arrays.asList(METADATA, TAXONOMY);
     public static final List<String> ALL_FIELDS = Arrays.asList(UNIT_ID, COURSE_ID, TITLE, CREATED_AT, UPDATED_AT,
         OWNER_ID, CREATOR_ID, MODIFIER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_UNIT_ID, BIG_IDEAS, ESSENTIAL_QUESTIONS,
-        METADATA, TAXONOMY, SEQUENCE_ID, CREATOR_SYSTEM);
+        METADATA, TAXONOMY, SEQUENCE_ID, CREATOR_SYSTEM, AGGREGATED_TAXONOMY);
 
     public static final List<String> INSERTABLE_FIELDS =
         Arrays.asList(TITLE, BIG_IDEAS, ESSENTIAL_QUESTIONS, METADATA, TAXONOMY, CREATOR_SYSTEM);
@@ -62,8 +64,8 @@ public class AJEntityUnit extends Model {
 
     public static final String SELECT_UNIT =
         "SELECT course_id, unit_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_unit_id,"
-            + " big_ideas, essential_questions, metadata, taxonomy, sequence_id, creator_system FROM unit WHERE course_id = ?::uuid AND"
-            + " unit_id = ?::uuid AND is_deleted = ?";
+            + " big_ideas, essential_questions, metadata, taxonomy, sequence_id, creator_system, aggregated_taxonomy FROM unit WHERE"
+            + " course_id = ?::uuid AND unit_id = ?::uuid AND is_deleted = ?";
 
     public static final String SELECT_UNIT_TO_VALIDATE =
         "SELECT unit_id, course_id FROM unit WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
