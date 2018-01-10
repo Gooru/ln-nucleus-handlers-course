@@ -7,5 +7,6 @@ public class MessagebusEndpoints {
      */
     public static final String MBEP_COURSE = "org.gooru.nucleus.message.bus.course";
     public static final String MBEP_EVENT = "org.gooru.nucleus.message.bus.publisher.event";
+    public static final String MBEP_TAG_AGGREGATOR = "org.gooru.nucleus.message.bus.tag.aggregator";
 
 }

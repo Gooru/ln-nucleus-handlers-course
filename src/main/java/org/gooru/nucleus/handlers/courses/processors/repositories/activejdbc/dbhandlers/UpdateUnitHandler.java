@@ -1,18 +1,23 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import org.gooru.nucleus.handlers.courses.constants.CommonConstants;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.handlers.courses.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class UpdateUnitHandler implements DBHandler {
@@ -20,6 +25,7 @@ public class UpdateUnitHandler implements DBHandler {
     private final ProcessorContext context;
     private static final Logger LOGGER = LoggerFactory.getLogger(UpdateUnitHandler.class);
     private AJEntityUnit unitToUpdate;
+    private AJEntityUnit existingUnit;
 
     public UpdateUnitHandler(ProcessorContext context) {
         this.context = context;
@@ -86,6 +92,8 @@ public class UpdateUnitHandler implements DBHandler {
             LOGGER.warn("Unit {} not found, aborting", context.unitId());
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
         }
+        
+        this.existingUnit = ajEntityUnit.get(0);
 
         return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
     }
@@ -105,6 +113,16 @@ public class UpdateUnitHandler implements DBHandler {
 
         if (unitToUpdate.isValid()) {
             if (unitToUpdate.save()) {
+                JsonObject tagDiff = DbHelperUtil.calculateTagDifference(this.context, this.existingUnit);
+                if (tagDiff != null && !tagDiff.isEmpty()) {
+                    JsonArray tagsToAggregate = new JsonArray();
+                    tagsToAggregate.add(TagAggregatorRequestBuilderFactory
+                        .getUnitTagAggregatorRequestBuilder(this.context.unitId(), tagDiff).build());
+                    return new ExecutionResult<>(
+                        MessageResponseFactory.createNoContentResponse(
+                            EventBuilderFactory.getUpdateUnitEventBuilder(context.unitId()), tagsToAggregate),
+                        ExecutionStatus.SUCCESSFUL);
+                }
                 LOGGER.info("unit {} updated successfully", context.unitId());
                 return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
                     EventBuilderFactory.getUpdateUnitEventBuilder(context.unitId())), ExecutionStatus.SUCCESSFUL);

@@ -4,11 +4,17 @@ import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.*;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityRubric;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.handlers.courses.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +27,7 @@ public class DeleteLessonHandler implements DBHandler {
     private final ProcessorContext context;
     private static final Logger LOGGER = LoggerFactory.getLogger(DeleteLessonHandler.class);
     private AJEntityLesson lessonToDelete;
+    private AJEntityLesson existingLesson;
 
     public DeleteLessonHandler(ProcessorContext context) {
         this.context = context;
@@ -93,6 +100,8 @@ public class DeleteLessonHandler implements DBHandler {
             LOGGER.warn("Lesson {} not found, aborting", context.lessonId());
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(), ExecutionStatus.FAILED);
         }
+        
+        this.existingLesson = ajEntityLesson.get(0);
 
         LOGGER.debug("validateRequest() OK");
         return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
@@ -130,8 +139,21 @@ public class DeleteLessonHandler implements DBHandler {
                 "course_id = ?::uuid and unit_id = ?::uuid and lesson_id = ?::uuid", true, context.userId(),
                 context.courseId(), context.unitId(), context.lessonId());
 
-            return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
-                EventBuilderFactory.getDeleteLessonEventBuilder(lessonToDelete.getId().toString())),
+            // Calculate tag difference. If tags are present for the entity then
+            // send the request for aggregation otherwise skip
+            JsonObject tagDiff = DbHelperUtil.generateTagsToDelete(this.existingLesson);
+            if (tagDiff != null && !tagDiff.isEmpty()) {
+                JsonArray tagsToAggregate = new JsonArray();
+                tagsToAggregate.add(TagAggregatorRequestBuilderFactory
+                    .getUnitTagAggregatorRequestBuilder(this.context.unitId(), tagDiff).build());
+                return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
+                    EventBuilderFactory.getDeleteLessonEventBuilder(lessonToDelete.getId().toString()),
+                    tagsToAggregate), ExecutionStatus.SUCCESSFUL);
+            }
+
+            return new ExecutionResult<>(
+                MessageResponseFactory.createNoContentResponse(
+                    EventBuilderFactory.getDeleteLessonEventBuilder(lessonToDelete.getId().toString())),
                 ExecutionStatus.SUCCESSFUL);
         } else {
             LOGGER.error("error while deleting lesson");

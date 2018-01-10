@@ -5,11 +5,13 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.gooru.nucleus.handlers.courses.constants.CommonConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.javalite.activejdbc.Model;
 import org.slf4j.Logger;
 
 import io.vertx.core.json.JsonObject;
@@ -18,7 +20,7 @@ import io.vertx.core.json.JsonObject;
  * @author ashish on 14/7/16.
  */
 public final class DbHelperUtil {
-
+    
     private DbHelperUtil() {
         throw new AssertionError();
     }
@@ -39,6 +41,61 @@ public final class DbHelperUtil {
             }
         }
         return null;
+    }
+    
+    public static JsonObject calculateTagDifference(ProcessorContext context, Model entity) {
+        JsonObject result = new JsonObject();
+        String existingTagsAsString = entity.getString(CommonConstants.TAXONOMY);
+        JsonObject existingTags = existingTagsAsString != null && !existingTagsAsString.isEmpty()
+            ? new JsonObject(existingTagsAsString) : new JsonObject();
+        JsonObject newTags = context.request().getJsonObject(CommonConstants.TAXONOMY);
+
+        if (existingTags.isEmpty() && newTags != null && !newTags.isEmpty()) {
+            result.put(CommonConstants.TAGS_ADDED, newTags.copy());
+            result.put(CommonConstants.TAGS_REMOVED, new JsonObject());
+        } else if (!existingTags.isEmpty() && (newTags == null || newTags.isEmpty())) {
+            result.put(CommonConstants.TAGS_ADDED, new JsonObject());
+            result.put(CommonConstants.TAGS_REMOVED, existingTags.copy());
+        } else if (!existingTags.isEmpty() && newTags != null && !newTags.isEmpty()) {
+            JsonObject toBeAdded = new JsonObject();
+            JsonObject toBeRemoved = existingTags.copy();
+            newTags.forEach(entry -> {
+                String key = entry.getKey();
+                if (toBeRemoved.containsKey(key)) {
+                    toBeRemoved.remove(key);
+                } else {
+                    toBeAdded.put(key, entry.getValue());
+                }
+            });
+
+            if (toBeAdded.isEmpty() && toBeRemoved.isEmpty()) {
+                return null;
+            }
+
+            result.put(CommonConstants.TAGS_ADDED, toBeAdded);
+            result.put(CommonConstants.TAGS_REMOVED, toBeRemoved);
+        }
+
+        return result;
+    }
+    
+    public static JsonObject generateTagsToDelete(Model entity) {
+        JsonObject result = new JsonObject();
+        String existingTagsAsString = entity.getString(CommonConstants.TAXONOMY);
+        JsonObject existingTags = (existingTagsAsString != null && !existingTagsAsString.isEmpty())
+            ? new JsonObject(existingTagsAsString) : null;
+
+        return existingTags != null ? result.put(CommonConstants.TAGS_REMOVED, existingTags) : null;
+    }
+    
+    public static JsonObject generateTagsToAdd(Model entity) {
+        JsonObject result = new JsonObject();
+        String existingTagsAsString = entity.getString(CommonConstants.TAXONOMY);
+        JsonObject existingTags = (existingTagsAsString != null && !existingTagsAsString.isEmpty())
+            ? new JsonObject(existingTagsAsString) : null;
+
+        return existingTags != null ? result.put(CommonConstants.TAGS_ADDED, existingTags) : null;
+        
     }
 
     public static String toPostgresArrayString(Collection<String> input) {
