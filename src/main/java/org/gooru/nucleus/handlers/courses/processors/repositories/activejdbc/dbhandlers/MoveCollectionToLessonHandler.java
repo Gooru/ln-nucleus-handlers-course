@@ -216,8 +216,8 @@ public class MoveCollectionToLessonHandler implements DBHandler {
         collectionToUpdate.setOwnerId(targetCourseOwner);
         collectionToUpdate.set(AJEntityCollection.COLLABORATOR, null);
 
-        Object maxSequenceId = Base.firstCell(AJEntityCollection.SELECT_COLLECTION_MAX_SEQUENCEID, context.lessonId(),
-            context.unitId(), context.courseId());
+        Object maxSequenceId = Base.firstCell(AJEntityCollection.SELECT_COLLECTION_MAX_SEQUENCEID, context.courseId(),
+            context.unitId(), context.lessonId());
         int sequenceId = 1;
         if (maxSequenceId != null) {
             sequenceId = Integer.valueOf(maxSequenceId.toString()) + 1;
