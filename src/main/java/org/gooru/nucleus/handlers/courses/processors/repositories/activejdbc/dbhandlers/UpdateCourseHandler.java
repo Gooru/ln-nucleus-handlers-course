@@ -1,18 +1,24 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
+import org.gooru.nucleus.handlers.courses.constants.CommonConstants;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.handlers.courses.processors.tagaggregator.TagAggregatorRequestBuilder;
+import org.gooru.nucleus.handlers.courses.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class UpdateCourseHandler implements DBHandler {
@@ -20,6 +26,7 @@ public class UpdateCourseHandler implements DBHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(UpdateCourseHandler.class);
     private final ProcessorContext context;
     private AJEntityCourse courseToUpdate;
+    private AJEntityCourse existingCourse;
 
     public UpdateCourseHandler(ProcessorContext context) {
         this.context = context;
@@ -72,6 +79,8 @@ public class UpdateCourseHandler implements DBHandler {
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
 
+        this.existingCourse = ajEntityCourse.get(0);
+        
         LOGGER.debug("validateRequest() OK");
         return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
     }
@@ -121,6 +130,16 @@ public class UpdateCourseHandler implements DBHandler {
         if (courseToUpdate.isValid()) {
             if (courseToUpdate.save()) {
                 LOGGER.info("course {} updated successfully", context.courseId());
+                JsonObject tagDiff = DbHelperUtil.calculateTagDifference(this.context, this.existingCourse);
+                if (tagDiff != null && !tagDiff.isEmpty()) {
+                    JsonArray tagsToAggregate = new JsonArray();
+                    tagsToAggregate.add(TagAggregatorRequestBuilderFactory
+                        .getCourseTagAggregatorRequestBuilder(context.courseId(), tagDiff).build());
+                    return new ExecutionResult<>(
+                        MessageResponseFactory.createNoContentResponse(
+                            EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId()), tagsToAggregate),
+                        ExecutionStatus.SUCCESSFUL);
+                }
                 return new ExecutionResult<>(
                     MessageResponseFactory
                         .createNoContentResponse(EventBuilderFactory.getUpdateCourseEventBuilder(context.courseId())),
@@ -165,5 +184,4 @@ public class UpdateCourseHandler implements DBHandler {
         this.courseToUpdate.errors().entrySet().forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
         return errors;
     }
-
 }

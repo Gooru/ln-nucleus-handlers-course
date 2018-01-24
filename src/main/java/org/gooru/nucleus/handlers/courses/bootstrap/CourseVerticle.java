@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -50,6 +51,24 @@ public class CourseVerticle extends AbstractVerticle {
                                 LOGGER.warn("Invalid session token received");
                             }
                             eb.send(MessagebusEndpoints.MBEP_EVENT, eventData);
+                        }
+                        
+                        JsonArray tagsToAggregate = result.tagsToAggregate();
+                        if (tagsToAggregate != null && !tagsToAggregate.isEmpty()) {
+                            JsonObject session =
+                                ((JsonObject) message.body()).getJsonObject(MessageConstants.MSG_KEY_SESSION);
+                            String sessionToken =
+                                ((JsonObject) message.body()).getString(MessageConstants.MSG_HEADER_TOKEN);
+                            
+                            tagsToAggregate.forEach(data -> {
+                                JsonObject request = (JsonObject) data;
+                                request.put(MessageConstants.MSG_HEADER_TOKEN, sessionToken);
+                                request.put(MessageConstants.MSG_KEY_SESSION, session);
+                                LOGGER.debug("sending request for tag aggregation: {}", request);
+                                eb.send(MessagebusEndpoints.MBEP_TAG_AGGREGATOR, request);
+                            });
+                        } else {
+                            LOGGER.debug("no data for tag aggregation");
                         }
                     });
                 }).completionHandler(result -> {

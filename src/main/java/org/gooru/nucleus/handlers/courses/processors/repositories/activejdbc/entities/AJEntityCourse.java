@@ -45,6 +45,8 @@ public class AJEntityCourse extends Model {
     public static final String TENANT = "tenant";
     public static final String TENANT_ROOT = "tenant_root";
     public static final String VERSION = "version";
+    public static final String AGGREGATED_TAXONOMY = "aggregated_taxonomy";
+    public static final String AGGREGATED_GUT_CODES = "aggregated_gut_codes";
 
     public static final String PUBLISH_STATUS_TYPE = "publish_status_type";
     public static final String PUBLISH_STATUS_TYPE_UNPUBLISHED = "unpublished";
@@ -59,7 +61,7 @@ public class AJEntityCourse extends Model {
     public static final List<String> ALL_FIELDS = Arrays
         .asList(ID, TITLE, DESCRIPTION, OWNER_ID, CREATOR_ID, ORIGINAL_CREATOR_ID, MODIFIER_ID, ORIGINAL_COURSE_ID,
             PUBLISH_STATUS, PUBLISH_DATE, THUMBNAIL, METADATA, TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, CREATED_AT,
-            UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, LICENSE, CREATOR_SYSTEM, USE_CASE, VERSION);
+            UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, LICENSE, CREATOR_SYSTEM, USE_CASE, VERSION, AGGREGATED_TAXONOMY);
 
     public static final List<String> INSERTABLE_FIELDS = Arrays
         .asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET, CREATOR_SYSTEM,
@@ -72,7 +74,7 @@ public class AJEntityCourse extends Model {
 
     public static final String SELECT_COLLABORATOR = "SELECT collaborator FROM course WHERE id = ?::uuid";
     public static final String SELECT_COURSE_TO_AUTHORIZE =
-        "SELECT id, owner_id, collaborator, tenant, tenant_root FROM course WHERE id = ?::uuid AND is_deleted = ? AND"
+        "SELECT id, owner_id, collaborator, tenant, tenant_root, taxonomy FROM course WHERE id = ?::uuid AND is_deleted = ? AND"
             + " (owner_id = ?::uuid OR collaborator ?? ?)";
     public static final String SELECT_COURSE_TO_VALIDATE =
         "SELECT id, owner_id, publish_status, collaborator, tenant, tenant_root FROM course WHERE id = ?::uuid AND "
@@ -81,7 +83,7 @@ public class AJEntityCourse extends Model {
         "SELECT id, title, description, created_at, updated_at, owner_id, creator_id, modifier_id, "
             + "original_creator_id, original_course_id, publish_status, publish_date, thumbnail, metadata, taxonomy, "
             + "collaborator, visible_on_profile, sequence_id, subject_bucket, license, creator_system, use_case, "
-            + "version, tenant, tenant_root FROM course WHERE id = ?::uuid AND is_deleted = ?";
+            + "version, tenant, tenant_root, aggregated_taxonomy FROM course WHERE id = ?::uuid AND is_deleted = ?";
     public static final String SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET =
         "SELECT MAX(sequence_id) FROM course WHERE owner_id = ?::uuid AND" + " subject_bucket = ?";
     public static final String SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET =

@@ -9,19 +9,25 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.handlers.courses.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class MoveCollectionToLessonHandler implements DBHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateCourseHandler.class);
+    private static final JsonObject tagsToAdd = null;
     private final ProcessorContext context;
     private AJEntityCollection collectionToUpdate;
     private String targetCourseOwner;
+    
+    private AJEntityLesson sourceLesson;
+    private AJEntityLesson targetLesson;
 
     public MoveCollectionToLessonHandler(ProcessorContext context) {
         this.context = context;
@@ -111,6 +117,8 @@ public class MoveCollectionToLessonHandler implements DBHandler {
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target lesson is not found"),
                 ExecutionStatus.FAILED);
         }
+        
+        this.targetLesson = targetLessons.get(0);
 
         LazyList<AJEntityCollection> collections =
             AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_TO_MOVE, collectionToMove, false);
@@ -183,6 +191,8 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                     MessageResponseFactory.createNotFoundResponse("source lesson is not found"),
                     ExecutionStatus.FAILED);
             }
+            this.sourceLesson = sourceLessons.get(0);
+            
         } else {
             // if the course_id is null in request, then its not associated with
             // CUL
@@ -238,6 +248,18 @@ public class MoveCollectionToLessonHandler implements DBHandler {
             AJEntityRubric.update("course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, modifier_id = ?::uuid",
                 "collection_id = ?::uuid", context.courseId(), context.unitId(), context.lessonId(), context.userId(),
                 collectionToUpdate.getId());
+            
+            JsonArray tagsToAggregate = new JsonArray();
+            JsonObject tagsToAdd = DbHelperUtil.generateTagsToAdd(this.targetLesson);
+            tagsToAggregate.add(TagAggregatorRequestBuilderFactory
+                .getLessonTagAggregatorRequestBuilder(context.lessonId(), tagsToAdd).build());
+            
+            String sourceLessonId = context.request().getString("lesson_id");
+            if (sourceLessonId != null) {
+                JsonObject tagsToRemove = DbHelperUtil.generateTagsToDelete(this.sourceLesson);
+                tagsToAggregate.add(TagAggregatorRequestBuilderFactory
+                .getLessonTagAggregatorRequestBuilder(sourceLessonId, tagsToRemove).build());
+            }
 
             return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory
                 .getMoveCollectionEventBuilder(context.courseId(), context.unitId(), context.lessonId(),

@@ -3,7 +3,9 @@ package org.gooru.nucleus.handlers.courses.processors.responses;
 import org.gooru.nucleus.handlers.courses.constants.HttpConstants;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilder;
+import org.gooru.nucleus.handlers.courses.processors.tagaggregator.TagAggregatorRequestBuilder;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -71,6 +73,12 @@ public class MessageResponseFactory {
     public static MessageResponse createNoContentResponse(EventBuilder eventBuilder) {
         return new MessageResponse.Builder().successful().setStatusNoOutput().setEventData(eventBuilder.build())
             .build();
+    }
+    
+    public static MessageResponse createNoContentResponse(EventBuilder eventBuilder,
+        JsonArray tagsToAggregate) {
+        return new MessageResponse.Builder().successful().setStatusNoOutput().setEventData(eventBuilder.build())
+            .setTagsToAggregate(tagsToAggregate).build();
     }
 
     public static MessageResponse createValidationErrorResponse(JsonObject errors) {
