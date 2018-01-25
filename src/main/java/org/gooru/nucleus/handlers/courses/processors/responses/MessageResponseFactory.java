@@ -3,7 +3,6 @@ package org.gooru.nucleus.handlers.courses.processors.responses;
 import org.gooru.nucleus.handlers.courses.constants.HttpConstants;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilder;
-import org.gooru.nucleus.handlers.courses.processors.tagaggregator.TagAggregatorRequestBuilder;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
