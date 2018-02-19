@@ -103,15 +103,15 @@ public class DeleteUnitHandler implements DBHandler {
         if (unitToDelete.save()) {
             LOGGER.info("unit {} marked as deleted successfully", context.unitId());
 
-            AJEntityLesson.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true, context.userId(),
+            AJEntityLesson.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid and unit_id = ?::uuid",
+                true, context.userId(), context.courseId(), context.unitId());
+            AJEntityCollection.update("is_deleted = ?, modifier_id = ?::uuid",
+                "course_id = ?::uuid and unit_id = ?::uuid", true, context.userId(), context.courseId(),
                 context.unitId());
-            AJEntityCollection
-                .update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true, context.userId(),
-                    context.unitId());
-            AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true, context.userId(),
-                context.unitId());
-            AJEntityRubric.update("is_deleted = ?, modifier_id = ?::uuid", "unit_id = ?::uuid", true,
-                context.userId(), context.unitId());
+            AJEntityContent.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid and unit_id = ?::uuid",
+                true, context.userId(), context.courseId(), context.unitId());
+            AJEntityRubric.update("is_deleted = ?, modifier_id = ?::uuid", "course_id = ?::uuid and unit_id = ?::uuid",
+                true, context.userId(), context.courseId(), context.unitId());
 
             return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(
                 EventBuilderFactory.getDeleteUnitEventBuilder(unitToDelete.getId().toString())),
