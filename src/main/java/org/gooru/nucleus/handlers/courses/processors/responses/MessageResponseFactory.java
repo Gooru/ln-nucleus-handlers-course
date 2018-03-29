@@ -13,7 +13,6 @@ import io.vertx.core.json.JsonObject;
 public class MessageResponseFactory {
 
     private static final String API_VERSION_DEPRECATED = "API version is deprecated";
-    private static final String API_VERSION_NOT_SUPPORTED = "API version is not supported";
 
     public static MessageResponse createInvalidRequestResponse() {
         return new MessageResponse.Builder().failed().setStatusBadRequest().build();
