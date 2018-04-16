@@ -9,16 +9,18 @@ import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.handlers.courses.processors.tagaggregator.TagAggregatorRequestBuilderFactory;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class MoveCollectionToLessonHandler implements DBHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CreateCourseHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MoveCollectionToLessonHandler.class);
     private final ProcessorContext context;
     private AJEntityCollection collectionToUpdate;
     private String targetCourseOwner;
@@ -50,17 +52,16 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                 ExecutionStatus.FAILED);
         }
 
-        if (context.userId() == null || context.userId().isEmpty() || context.userId()
-            .equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+        if (context.userId() == null || context.userId().isEmpty()
+            || context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
             LOGGER.warn("Anonymous user attempting to move collection/assessment");
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
         }
 
         if (context.request() == null || context.request().isEmpty()) {
             LOGGER.warn("invalid data provided to move collection/assessment");
-            return new ExecutionResult<>(MessageResponseFactory
-                .createInvalidRequestResponse("Invalid data provided to move collection/assessment"),
-                ExecutionStatus.FAILED);
+            return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(
+                "Invalid data provided to move collection/assessment"), ExecutionStatus.FAILED);
         }
 
         JsonObject mandatoryFieldErrors = validateMandatoryFields();
@@ -86,9 +87,8 @@ public class MoveCollectionToLessonHandler implements DBHandler {
         String collectionToMove = context.request().getString("collection_id");
         // String type = context.request().getString("type");
 
-        LazyList<AJEntityCourse> targetCourses = AJEntityCourse
-            .findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE, targetCourseId, false, context.userId(),
-                context.userId());
+        LazyList<AJEntityCourse> targetCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE,
+            targetCourseId, false, context.userId(), context.userId());
         if (targetCourses.isEmpty()) {
             LOGGER.warn("user is not owner or collaborator of target course to move collection. aborting");
             return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -104,8 +104,8 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                 ExecutionStatus.FAILED);
         }
 
-        LazyList<AJEntityLesson> targetLessons = AJEntityLesson
-            .findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, targetLessonId, targetUnitId, targetCourseId, false);
+        LazyList<AJEntityLesson> targetLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE,
+            targetLessonId, targetUnitId, targetCourseId, false);
         if (targetLessons.isEmpty()) {
             LOGGER.warn("target lesson is not found in database");
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse("target lesson is not found"),
@@ -158,9 +158,8 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                     ExecutionStatus.FAILED);
             }
 
-            LazyList<AJEntityCourse> sourceCourses = AJEntityCourse
-                .findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE, sourceCourseId, false, context.userId(),
-                    context.userId());
+            LazyList<AJEntityCourse> sourceCourses = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_TO_AUTHORIZE,
+                sourceCourseId, false, context.userId(), context.userId());
             if (sourceCourses.isEmpty()) {
                 LOGGER.warn("user is not owner or collaborator of source course to move collection. aborting");
                 return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(), ExecutionStatus.FAILED);
@@ -174,15 +173,15 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                     ExecutionStatus.FAILED);
             }
 
-            LazyList<AJEntityLesson> sourceLessons = AJEntityLesson
-                .findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE, sourceLessonId, sourceUnitId, sourceCourseId,
-                    false);
+            LazyList<AJEntityLesson> sourceLessons = AJEntityLesson.findBySQL(AJEntityLesson.SELECT_LESSON_TO_VALIDATE,
+                sourceLessonId, sourceUnitId, sourceCourseId, false);
             if (sourceLessons.isEmpty()) {
                 LOGGER.warn("source lesson is not found in database");
                 return new ExecutionResult<>(
                     MessageResponseFactory.createNotFoundResponse("source lesson is not found"),
                     ExecutionStatus.FAILED);
             }
+
         } else {
             // if the course_id is null in request, then its not associated with
             // CUL
@@ -239,9 +238,38 @@ public class MoveCollectionToLessonHandler implements DBHandler {
                 "collection_id = ?::uuid", context.courseId(), context.unitId(), context.lessonId(), context.userId(),
                 collectionToUpdate.getId());
 
-            return new ExecutionResult<>(MessageResponseFactory.createNoContentResponse(EventBuilderFactory
-                .getMoveCollectionEventBuilder(context.courseId(), context.unitId(), context.lessonId(),
-                    collectionToUpdate.getId().toString(), context.request())), ExecutionStatus.SUCCESSFUL);
+            JsonArray tagsToAggregate = new JsonArray();
+            JsonObject tagsToAdd = DbHelperUtil.generateTagsToAdd(this.collectionToUpdate);
+            if (tagsToAdd != null && !tagsToAdd.isEmpty()) {
+                tagsToAggregate.add(TagAggregatorRequestBuilderFactory
+                    .getLessonTagAggregatorRequestBuilder(context.lessonId(), tagsToAdd).build());
+            }
+
+            String sourceLessonId = context.request().getString("lesson_id");
+            if (sourceLessonId != null) {
+                JsonObject tagsToRemove = DbHelperUtil.generateTagsToDelete(this.collectionToUpdate);
+                if (tagsToRemove != null && !tagsToRemove.isEmpty()) {
+                    tagsToAggregate.add(TagAggregatorRequestBuilderFactory
+                        .getLessonTagAggregatorRequestBuilder(sourceLessonId, tagsToRemove).build());
+                }
+            }
+
+            if (tagsToAggregate.isEmpty()) {
+                return new ExecutionResult<>(
+                    MessageResponseFactory.createNoContentResponse(
+                        EventBuilderFactory.getMoveCollectionEventBuilder(context.courseId(), context.unitId(),
+                            context.lessonId(), collectionToUpdate.getId().toString(), context.request())),
+                    ExecutionStatus.SUCCESSFUL);
+            }
+
+            return new ExecutionResult<>(
+                MessageResponseFactory
+                    .createNoContentResponse(
+                        EventBuilderFactory.getMoveCollectionEventBuilder(context.courseId(), context.unitId(),
+                            context.lessonId(), collectionToUpdate.getId().toString(), context.request()),
+                        tagsToAggregate),
+                ExecutionStatus.SUCCESSFUL);
+
         } else {
             LOGGER.error("error while moving collection to lesson");
             return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(getModelErrors()),
@@ -257,9 +285,9 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     private JsonObject validateNullFields() {
         JsonObject input = context.request();
         JsonObject output = new JsonObject();
-        input.fieldNames().stream().filter(
-            key -> AJEntityCollection.COLLECTION_MOVE_NOTNULL_FIELDS.contains(key) && (input.getValue(key) == null
-                || input.getValue(key).toString().isEmpty()))
+        input.fieldNames().stream()
+            .filter(key -> AJEntityCollection.COLLECTION_MOVE_NOTNULL_FIELDS.contains(key)
+                && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
             .forEach(key -> output.put(key, "Field should not be empty or null"));
         return output.isEmpty() ? null : output;
     }

@@ -29,6 +29,7 @@ public class AJEntityCollection extends Model {
     public static final String SEQUENCE_ID = "sequence_id";
     public static final String IS_DELETED = "is_deleted";
     public static final String THUMBNAIL = "thumbnail";
+    public static final String TAXONOMY = "taxonomy";
 
     public static final String COLLECTION_SUMMARY = "collection_summary";
     public static final String COLLECTION_COUNT = "collection_count";
@@ -41,10 +42,10 @@ public class AJEntityCollection extends Model {
         Arrays.asList(ID, TITLE, FORMAT, SEQUENCE_ID, THUMBNAIL, URL, SUBFORMAT);
 
     public static final String SELECT_COLLECTION_SUMMARY =
-        "SELECT id, title, format, sequence_id, thumbnail, url, subformat FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND "
-            + "is_deleted = ? order by sequence_id asc";
+        "SELECT id, title, format, sequence_id, thumbnail, url, subformat FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid"
+        + " AND course_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
     public static final String SELECT_COLLECTION_TO_MOVE =
-        "SELECT id, course_id, unit_id, lesson_id, owner_id, collaborator FROM collection WHERE id = ?::uuid AND is_deleted = ?";
+        "SELECT id, course_id, unit_id, lesson_id, owner_id, collaborator, taxonomy FROM collection WHERE id = ?::uuid AND is_deleted = ?";
     public static final String SELECT_COLLECTION_OF_COURSE =
         "SELECT id FROM collection WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
     public static final String REORDER_QUERY =
@@ -53,7 +54,8 @@ public class AJEntityCollection extends Model {
     public static final String SELECT_COLLECTION_MAX_SEQUENCEID =
         "SELECT max(sequence_id) FROM collection WHERE course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid";
     public static final String SELECT_COLLECTION_TO_VALIDATE =
-        "SELECT id FROM collection where id = ?::uuid AND is_deleted = false AND course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid";
+        "SELECT id, taxonomy FROM collection where id = ?::uuid AND is_deleted = false AND course_id = ?::uuid AND unit_id = ?::uuid AND"
+        + " lesson_id = ?::uuid";
 
     public static final String SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON =
         "SELECT count(id) as collection_count, format, lesson_id FROM collection WHERE lesson_id = ANY(?::uuid[]) AND unit_id = ?::uuid AND"

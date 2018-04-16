@@ -1,11 +1,13 @@
 package org.gooru.nucleus.handlers.courses.processors.responses;
 
-import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.HttpConstants;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Created by ashish on 6/1/16.
@@ -16,6 +18,7 @@ public class MessageResponse {
     private final DeliveryOptions deliveryOptions;
     private final JsonObject reply;
     private final JsonObject event;
+    private final JsonArray tagsToAggregate;
 
     // Private constructor
     private MessageResponse(JsonObject response) {
@@ -23,6 +26,7 @@ public class MessageResponse {
             response.getString(MessageConstants.MSG_OP_STATUS));
         this.reply = response.getJsonObject(MessageConstants.RESP_CONTAINER_MBUS);
         this.event = response.getJsonObject(MessageConstants.RESP_CONTAINER_EVENT);
+        this.tagsToAggregate = response.getJsonArray(MessageConstants.RESP_CONTAINER_TAGS_TO_AGGREGATE);
     }
 
     public DeliveryOptions deliveryOptions() {
@@ -36,6 +40,10 @@ public class MessageResponse {
     public JsonObject event() {
         return this.event;
     }
+    
+    public JsonArray tagsToAggregate() {
+        return this.tagsToAggregate;
+    }
 
     // Public builder with validations
     public static class Builder {
@@ -44,6 +52,7 @@ public class MessageResponse {
         private JsonObject responseBody = null;
         private JsonObject headers = null;
         private JsonObject eventData = null;
+        private JsonArray tagsToAggregate = null;
 
         public Builder() {
             this.headers = new JsonObject();
@@ -135,6 +144,11 @@ public class MessageResponse {
             this.eventData = eventData;
             return this;
         }
+        
+        public Builder setTagsToAggregate(JsonArray tagsToAggregate) {
+            this.tagsToAggregate = tagsToAggregate;
+            return this;
+        }
 
         public MessageResponse build() {
             JsonObject result;
@@ -148,6 +162,10 @@ public class MessageResponse {
 
                 if (this.eventData != null && !this.eventData.isEmpty()) {
                     result.put(MessageConstants.RESP_CONTAINER_EVENT, this.eventData);
+                }
+                
+                if (this.tagsToAggregate != null && !this.tagsToAggregate.isEmpty()) {
+                    result.put(MessageConstants.RESP_CONTAINER_TAGS_TO_AGGREGATE, this.tagsToAggregate);
                 }
             }
             return new MessageResponse(result);

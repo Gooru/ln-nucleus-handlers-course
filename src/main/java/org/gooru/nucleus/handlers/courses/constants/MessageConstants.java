@@ -48,6 +48,7 @@ public class MessageConstants {
     // Containers for different responses
     public static final String RESP_CONTAINER_MBUS = "mb.container";
     public static final String RESP_CONTAINER_EVENT = "mb.event";
+    public static final String RESP_CONTAINER_TAGS_TO_AGGREGATE = "mb.tags.to.aggregate";
 
     public static final String COURSE_ID = "courseId";
     public static final String UNIT_ID = "unitId";

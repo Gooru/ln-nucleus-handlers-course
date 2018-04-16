@@ -4,6 +4,7 @@ import org.gooru.nucleus.handlers.courses.constants.HttpConstants;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilder;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -12,7 +13,6 @@ import io.vertx.core.json.JsonObject;
 public class MessageResponseFactory {
 
     private static final String API_VERSION_DEPRECATED = "API version is deprecated";
-    private static final String API_VERSION_NOT_SUPPORTED = "API version is not supported";
 
     public static MessageResponse createInvalidRequestResponse() {
         return new MessageResponse.Builder().failed().setStatusBadRequest().build();
@@ -71,6 +71,12 @@ public class MessageResponseFactory {
     public static MessageResponse createNoContentResponse(EventBuilder eventBuilder) {
         return new MessageResponse.Builder().successful().setStatusNoOutput().setEventData(eventBuilder.build())
             .build();
+    }
+    
+    public static MessageResponse createNoContentResponse(EventBuilder eventBuilder,
+        JsonArray tagsToAggregate) {
+        return new MessageResponse.Builder().successful().setStatusNoOutput().setEventData(eventBuilder.build())
+            .setTagsToAggregate(tagsToAggregate).build();
     }
 
     public static MessageResponse createValidationErrorResponse(JsonObject errors) {
