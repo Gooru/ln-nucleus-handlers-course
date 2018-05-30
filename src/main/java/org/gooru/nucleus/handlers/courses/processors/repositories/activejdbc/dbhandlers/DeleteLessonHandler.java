@@ -74,8 +74,8 @@ public class DeleteLessonHandler implements DBHandler {
         if (!ajEntityCourse.isEmpty()) {
             // check whether user is either owner or collaborator
             if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID).equalsIgnoreCase(context.userId())) {
-                if (!new JsonArray(ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR))
-                    .contains(context.userId())) {
+				String collaborators = ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR);
+				if (collaborators == null || !new JsonArray(collaborators).contains(context.userId())) {
                     LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
                     return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(),
                         ExecutionStatus.FAILED);
