@@ -101,7 +101,10 @@ public class DeleteCourseHandler implements DBHandler {
             // Remove the association of this course from class
             // class is not archived and not delete and version is current
             // version
-            AJEntityClass.update("course_id = null",
+			// Update- 17/Jul/2018 - NILE-2835: Make the setting as null while removing the
+			// class course association. For now we are making it null, however we should
+			// remove the key from Jsonb instead of to make it null.
+            AJEntityClass.update("course_id = null, setting = null",
                 "course_id = ?::uuid AND is_deleted = ? AND is_archived = ? AND gooru_version = ?", context.courseId(),
                 false, false, AJEntityClass.CURRENT_VERSION);
 
