@@ -90,20 +90,20 @@ public class FetchCourseHandler implements DBHandler {
         List<String> unitIds = new ArrayList<>();
         units.forEach(unit -> unitIds.add(unit.getString(AJEntityUnit.UNIT_ID)));
 
-        List<Map> lessonCounts =
+        /*List<Map> lessonCounts =
             Base.findAll(AJEntityLesson.SELECT_LESSON_COUNT_MULTIPLE, DbHelperUtil.toPostgresArrayString(unitIds),
                 context.courseId());
         Map<String, Integer> lessonCountByUnit = new HashMap<>();
         lessonCounts.forEach(map -> lessonCountByUnit.put(map.get(AJEntityLesson.UNIT_ID).toString(),
             Integer.valueOf(map.get(AJEntityLesson.LESSON_COUNT).toString())));
-        LOGGER.debug("lesson counts: {}", lessonCountByUnit.size());
+        LOGGER.debug("lesson counts: {}", lessonCountByUnit.size());*/
         JsonArray unitSummaryArray = new JsonArray();
         units.forEach(unit -> {
             JsonObject unitSummary = new JsonObject(
                 new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityUnit.UNIT_SUMMARY_FIELDS)
                     .toJson(unit));
-            Integer lessonCount = lessonCountByUnit.get(unit.get(AJEntityLesson.UNIT_ID).toString());
-            unitSummary.put(AJEntityLesson.LESSON_COUNT, lessonCount != null ? lessonCount : 0);
+            //Integer lessonCount = lessonCountByUnit.get(unit.get(AJEntityLesson.UNIT_ID).toString());
+            //unitSummary.put(AJEntityLesson.LESSON_COUNT, lessonCount != null ? lessonCount : 0);
             unitSummaryArray.add(unitSummary);
         });
         return unitSummaryArray;
