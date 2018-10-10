@@ -70,7 +70,7 @@ public class AJEntityUnit extends Model {
     public static final String SELECT_UNIT_TO_VALIDATE =
         "SELECT unit_id, course_id, taxonomy FROM unit WHERE unit_id = ?::uuid AND course_id = ?::uuid AND is_deleted = ?";
     public static final String SELECT_UNIT_SUMMARY =
-        "SELECT unit_id, title, sequence_id FROM unit WHERE course_id = ?::uuid AND is_deleted = ? ";
+        "SELECT unit_id, title, sequence_id FROM unit WHERE course_id = ?::uuid AND is_deleted = ? order by sequence_id asc";
     public static final String SELECT_UNIT_MAX_SEQUENCEID =
         "SELECT max(sequence_id) FROM unit WHERE course_id = ?::uuid";
     public static final String SELECT_UNIT_OF_COURSE =
