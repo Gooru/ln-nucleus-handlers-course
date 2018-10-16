@@ -30,8 +30,13 @@ public class FetchCourseCardsHandler implements DBHandler {
     private final ProcessorContext context;
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchCourseCardsHandler.class);
 
+    private enum ResponseType {
+        CARD, SUMMARY, DETAIL;
+    }
+
     private List<String> courseIds;
     private String searchValue;
+    private ResponseType responseType = ResponseType.CARD;
 
     public FetchCourseCardsHandler(ProcessorContext context) {
         this.context = context;
@@ -70,6 +75,8 @@ public class FetchCourseCardsHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
+
+        // if responseType == ResponseType.CARD  <<TBD: need to code for other response types
         LazyList<AJEntityCourse> courses =
             AJEntityCourse.findBySQL(AJEntityCourse.SELECT_FOR_CARD, DbHelperUtil.toPostgresArrayString(courseIds));
         if (courses.isEmpty()) {
@@ -84,7 +91,7 @@ public class FetchCourseCardsHandler implements DBHandler {
         JsonObject result = new JsonObject();
         result.put(MessageConstants.RESP_JSON_KEY_COURSES, resultArray);
 
-        return new ExecutionResult<MessageResponse>(MessageResponseFactory.createGetResponse(result),
+        return new ExecutionResult<>(MessageResponseFactory.createGetResponse(result),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
 
