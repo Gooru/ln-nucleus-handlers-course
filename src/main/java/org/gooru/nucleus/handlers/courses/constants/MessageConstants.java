@@ -20,6 +20,7 @@ public class MessageConstants {
     public static final String MSG_MESSAGE = "message";
 
     // Operation names: Also need to be updated in corresponding handlers
+    public static final String MSG_OP_COURSE_CARDS_GET = "course.cards.get";
     public static final String MSG_OP_COURSE_GET = "course.get";
     public static final String MSG_OP_COURSE_CREATE = "course.create";
     public static final String MSG_OP_COURSE_UPDATE = "course.update";
@@ -56,5 +57,6 @@ public class MessageConstants {
     public static final String COLLECTION_ID = "collectionId";
     public static final String TAXONOMY = "taxonomy";
     public static final String RESP_JSON_KEY_RESOURCES = "resources";
+    public static final String RESP_JSON_KEY_COURSES = "courses";
 
 }

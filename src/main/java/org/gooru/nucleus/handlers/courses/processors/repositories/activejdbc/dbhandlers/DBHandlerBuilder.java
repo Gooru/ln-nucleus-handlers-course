@@ -7,6 +7,10 @@ import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
  */
 public class DBHandlerBuilder {
 
+    public DBHandler buildFetchCourseCardsHandler(ProcessorContext context) {
+        return new FetchCourseCardsHandler(context);
+    }
+
     public DBHandler buildFetchCourseHandler(ProcessorContext context) {
         return new FetchCourseHandler(context);
     }

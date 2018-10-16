@@ -4,6 +4,8 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 
 public interface CourseRepo {
 
+    MessageResponse fetchCourseCards();
+
     MessageResponse fetchCourse();
 
     MessageResponse createCourse();
