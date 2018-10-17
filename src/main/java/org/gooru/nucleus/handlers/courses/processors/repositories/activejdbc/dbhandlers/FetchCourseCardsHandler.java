@@ -44,7 +44,7 @@ public class FetchCourseCardsHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> checkSanity() {
-        JsonArray inputArray = context.request().getJsonArray("courseids");
+        JsonArray inputArray = context.request().getJsonArray("ids");
         searchValue = inputArray != null ? inputArray.getString(0) : null;
 
         if (searchValue == null || searchValue.isEmpty()) {
@@ -67,7 +67,7 @@ public class FetchCourseCardsHandler implements DBHandler {
             try {
                 UUID.fromString(courseId);
             } catch (IllegalArgumentException e) {
-                LOGGER.debug("validateRequest: Invalid course id: " + courseId);
+                LOGGER.error("validateRequest: Invalid course id: " + courseId, e);
                 return new ExecutionResult<>(
                     MessageResponseFactory.createInvalidRequestResponse("Invalid course id passed in the request"),
                     ExecutionResult.ExecutionStatus.FAILED);
@@ -79,8 +79,6 @@ public class FetchCourseCardsHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        LOGGER.debug("executeRequest: ....begin");
-
         // if responseType == ResponseType.CARD  <<TBD: need to code for other response types
         LazyList<AJEntityCourse> courses =
             AJEntityCourse.findBySQL(AJEntityCourse.SELECT_FOR_CARD, DbHelperUtil.toPostgresArrayString(courseIds));
@@ -89,7 +87,6 @@ public class FetchCourseCardsHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
-
         JsonArray resultArray = new JsonArray( new JsonFormatterBuilder()
                                 .buildSimpleJsonFormatter(false, AJEntityCourse.CARD_FIELDS) 
                                 .toJson(courses) );
@@ -97,8 +94,6 @@ public class FetchCourseCardsHandler implements DBHandler {
         JsonObject result = new JsonObject();
         result.put(MessageConstants.RESP_JSON_KEY_COURSES, resultArray);
 
-        LOGGER.debug("executeRequest: result: ", result);
-        LOGGER.debug("executeRequest: OK");
         return new ExecutionResult<>(MessageResponseFactory.createGetResponse(result),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
