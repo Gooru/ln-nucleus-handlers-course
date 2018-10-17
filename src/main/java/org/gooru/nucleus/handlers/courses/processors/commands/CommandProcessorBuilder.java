@@ -26,7 +26,7 @@ public enum CommandProcessorBuilder {
             };
         }
     },
-    COURSE_CARDS_GET(MessageConstants.MSG_OP_COURSE_CARDS_GET) {
+    COURSE_LIST_GET(MessageConstants.MSG_OP_COURSE_LIST_GET) {
         @Override
         public Processor build(ProcessorContext context) {
             return new CourseCardsGetProcessor(context);

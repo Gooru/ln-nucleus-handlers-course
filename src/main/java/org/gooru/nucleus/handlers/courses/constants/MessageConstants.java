@@ -20,7 +20,7 @@ public class MessageConstants {
     public static final String MSG_MESSAGE = "message";
 
     // Operation names: Also need to be updated in corresponding handlers
-    public static final String MSG_OP_COURSE_CARDS_GET = "course.cards.get";
+    public static final String MSG_OP_COURSE_LIST_GET = "course.list.get";
     public static final String MSG_OP_COURSE_GET = "course.get";
     public static final String MSG_OP_COURSE_CREATE = "course.create";
     public static final String MSG_OP_COURSE_UPDATE = "course.update";
