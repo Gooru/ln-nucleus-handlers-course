@@ -98,6 +98,14 @@ public class AJEntityCourse extends Model {
     public static final String UUID_TYPE = "uuid";
     public static final String JSONB_TYPE = "jsonb";
 
+    /**
+     * To support card level data projection across multiple courses
+     */
+    public static final List<String> CARD_FIELDS = Arrays
+        .asList(ID, TITLE, OWNER_ID, THUMBNAIL, VERSION);
+    public static final String SELECT_FOR_CARD = "SELECT id, title, owner_id, thumbnail, version "
+        + " FROM course WHERE id = ANY (?::uuid[]) AND is_deleted = false";
+
     public void setModifierId(String modifierId) {
         setPGObject(MODIFIER_ID, UUID_TYPE, modifierId);
     }
