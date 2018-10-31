@@ -11,13 +11,13 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
- * @author ashish on 29/12/16.
+ * @author subbu on 16 Oct 2018.
  */
-class CourseGetProcessor extends AbstractCommandProcessor {
+class CourseCardsGetProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CourseCardsGetProcessor.class);
 
-    public CourseGetProcessor(ProcessorContext context) {
+    public CourseCardsGetProcessor(ProcessorContext context) {
         super(context);
     }
 
@@ -28,13 +28,7 @@ class CourseGetProcessor extends AbstractCommandProcessor {
 
     @Override
     protected MessageResponse processCommand() {
-        if (!ValidationUtils.validateId(context.courseId())) {
-            LOGGER.error("Invalid request, course id not available. Aborting");
-            return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-        }
-
-        LOGGER.info("getting course {}", context.courseId());
-        return new RepoBuilder().buildCourseRepo(context).fetchCourse();
+        return new RepoBuilder().buildCourseRepo(context).fetchCourseCards();
 
     }
 }

@@ -68,7 +68,7 @@ public class AJEntityLesson extends Model {
         "UPDATE lesson SET sequence_id = ?, modifier_id = ?::uuid, updated_at = now() WHERE lesson_id = ?::uuid AND unit_id = ?::uuid AND course_id"
             + " = ?::uuid AND is_deleted = ?";
     public static final String SELECT_LESSON_COUNT_MULTIPLE =
-        "SELECT count(lesson_id) as lesson_count, unit_id FROM lesson WHERE unit_id = ANY(?::uuid[]) AND course_id = ?::uuid AND is_deleted = false"
+        "SELECT count(lesson_id) as lesson_count, unit_id FROM lesson WHERE course_id = ?::uuid AND is_deleted = false"
             + " GROUP BY unit_id";
     public static final String SELECT_LESSON_BY_COURSE =
         "SELECT lesson_id, unit_id, title, sequence_id FROM lesson WHERE course_id = ?::uuid AND is_deleted = false";

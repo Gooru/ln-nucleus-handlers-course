@@ -95,8 +95,16 @@ public class AJEntityCourse extends Model {
             + " = ? AND owner_id = ?::uuid";
     public static final String SELECT_SUBJECT_BUCKET = "SELECT subject_bucket FROM course WHERE id = ?::uuid";
 
-    public static final String UUID_TYPE = "uuid";
-    public static final String JSONB_TYPE = "jsonb";
+    private static final String UUID_TYPE = "uuid";
+    private static final String JSONB_TYPE = "jsonb";
+
+    /**
+     * To support card level data projection across multiple courses
+     */
+    public static final List<String> CARD_FIELDS = Arrays
+        .asList(ID, TITLE, OWNER_ID, THUMBNAIL, VERSION, SUBJECT_BUCKET);
+    public static final String SELECT_FOR_CARD = "SELECT id, title, owner_id, thumbnail, version, subject_bucket "
+        + " FROM course WHERE id = ANY (?::uuid[]) AND is_deleted = false";
 
     public void setModifierId(String modifierId) {
         setPGObject(MODIFIER_ID, UUID_TYPE, modifierId);

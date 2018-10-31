@@ -58,7 +58,7 @@ public class FetchCourseHandler implements DBHandler {
         LazyList<AJEntityCourse> ajEntityCourse =
             AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE, context.courseId(), false);
         if (!ajEntityCourse.isEmpty()) {
-            LOGGER.info("found course for id {} : " + context.courseId());
+            LOGGER.debug("found course for id {} : " + context.courseId());
             course = ajEntityCourse.get(0);
             return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(course);
         } else {
@@ -87,12 +87,15 @@ public class FetchCourseHandler implements DBHandler {
     }
 
     private JsonArray getLessonCountsForUnitsInCourse(LazyList<AJEntityUnit> units) {
+        /* 
         List<String> unitIds = new ArrayList<>();
         units.forEach(unit -> unitIds.add(unit.getString(AJEntityUnit.UNIT_ID)));
 
         List<Map> lessonCounts =
             Base.findAll(AJEntityLesson.SELECT_LESSON_COUNT_MULTIPLE, DbHelperUtil.toPostgresArrayString(unitIds),
-                context.courseId());
+                context.courseId()); */
+
+        List<Map> lessonCounts = Base.findAll(AJEntityLesson.SELECT_LESSON_COUNT_MULTIPLE, context.courseId());
         Map<String, Integer> lessonCountByUnit = new HashMap<>();
         lessonCounts.forEach(map -> lessonCountByUnit.put(map.get(AJEntityLesson.UNIT_ID).toString(),
             Integer.valueOf(map.get(AJEntityLesson.LESSON_COUNT).toString())));
