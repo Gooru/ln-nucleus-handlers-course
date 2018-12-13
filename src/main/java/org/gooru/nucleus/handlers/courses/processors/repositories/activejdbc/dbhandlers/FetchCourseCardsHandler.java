@@ -27,7 +27,7 @@ public class FetchCourseCardsHandler implements DBHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchCourseCardsHandler.class);
 
   private enum ResponseType {
-    CARD, SUMMARY, DETAIL;
+    CARD, SUMMARY, DETAIL
   }
 
   private List<String> courseIds;

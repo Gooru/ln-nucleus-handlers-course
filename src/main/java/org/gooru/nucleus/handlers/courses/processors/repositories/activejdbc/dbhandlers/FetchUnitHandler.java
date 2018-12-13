@@ -102,7 +102,7 @@ public class FetchUnitHandler implements DBHandler {
       LOGGER.debug("number of lessons found for unit {} : {}", context.unitId(), lessons.size());
       if (lessons.size() > 0) {
         List<String> lessonIds = new ArrayList<>();
-        lessons.stream()
+        lessons
             .forEach(lesson -> lessonIds.add(lesson.getString(AJEntityLesson.LESSON_ID)));
 
         List<Map> collectionCount = Base
@@ -138,7 +138,7 @@ public class FetchUnitHandler implements DBHandler {
                     Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
 
         JsonArray lessonSummaryArray = new JsonArray();
-        lessons.stream().forEach(lesson -> {
+        lessons.forEach(lesson -> {
           JsonObject lessonSummary = new JsonObject(
               new JsonFormatterBuilder()
                   .buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS)

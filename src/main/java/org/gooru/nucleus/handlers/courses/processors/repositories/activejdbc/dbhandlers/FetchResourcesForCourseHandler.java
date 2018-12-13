@@ -68,7 +68,7 @@ public class FetchResourcesForCourseHandler implements DBHandler {
         AJEntityContent
             .findBySQL(AJEntityContent.SELECT_RESOURCES_BY_COURSE, context.courseId(), taxonomy);
     JsonArray resourceArray = new JsonArray();
-    resourceList.stream()
+    resourceList
         .forEach(resource -> resourceArray.add(new JsonObject(new JsonFormatterBuilder()
             .buildSimpleJsonFormatter(false, AJEntityContent.RESOURCES_BY_COURSE_FIELDS)
             .toJson(resource))));

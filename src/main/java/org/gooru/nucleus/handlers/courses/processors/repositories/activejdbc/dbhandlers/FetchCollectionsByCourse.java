@@ -28,7 +28,7 @@ public class FetchCollectionsByCourse implements DBHandler {
 
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchCollectionsByCourse.class);
-  AJEntityCourse course;
+  private AJEntityCourse course;
 
   public FetchCollectionsByCourse(ProcessorContext context) {
     this.context = context;
@@ -104,7 +104,6 @@ public class FetchCollectionsByCourse implements DBHandler {
 
     // Get all collections of course
     Map<String, JsonArray> collectionsByLessonMap = new HashMap<>();
-    ;
     LazyList<AJEntityCollection> collections =
         AJEntityCollection
             .findBySQL(AJEntityCollection.SELECT_COLLECTIONS_BY_COURSE, context.courseId());

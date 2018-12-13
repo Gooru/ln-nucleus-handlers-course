@@ -126,7 +126,7 @@ public class FetchLessonHandler implements DBHandler {
               collectionSummary.size());
       if (collectionSummary.size() > 0) {
         List<String> collectionIds = new ArrayList<>();
-        collectionSummary.stream()
+        collectionSummary
             .forEach(collection -> collectionIds.add(collection.getString(AJEntityCollection.ID)));
 
         String collectionArrayString = DbHelperUtil.toPostgresArrayString(collectionIds);
@@ -159,7 +159,7 @@ public class FetchLessonHandler implements DBHandler {
                 Integer.valueOf(map.get(AJEntityContent.OE_QUESTION_COUNT).toString())));
 
         JsonArray collectionSummaryArray = new JsonArray();
-        collectionSummary.stream().forEach(collection -> {
+        collectionSummary.forEach(collection -> {
           String collectionId = collection.getString(AJEntityCollection.ID);
           Integer resourceCount = resourceCountMap.get(collectionId);
           Integer questionCount = questionCountMap.get(collectionId);

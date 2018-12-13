@@ -24,7 +24,7 @@ public class FetchCourseHandler implements DBHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchCourseHandler.class);
   private final ProcessorContext context;
-  AJEntityCourse course;
+  private AJEntityCourse course;
 
   public FetchCourseHandler(ProcessorContext context) {
     this.context = context;
