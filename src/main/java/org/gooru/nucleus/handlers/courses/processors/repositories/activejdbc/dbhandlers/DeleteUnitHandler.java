@@ -71,7 +71,7 @@ public class DeleteUnitHandler implements DBHandler {
       if (!ajEntityCourse.get(0).getString(AJEntityCourse.OWNER_ID)
           .equalsIgnoreCase(context.userId())) {
         String collaborators = ajEntityCourse.get(0).getString(AJEntityCourse.COLLABORATOR);
-        if (collaborators == null || !new JsonArray().contains(context.userId())) {
+        if (collaborators == null || !new JsonArray(collaborators).contains(context.userId())) {
           LOGGER.warn("user is not owner or collaborator of course to create unit. aborting");
           return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(),
               ExecutionStatus.FAILED);
