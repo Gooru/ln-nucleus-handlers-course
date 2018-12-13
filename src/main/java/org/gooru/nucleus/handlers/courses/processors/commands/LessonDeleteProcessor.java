@@ -13,41 +13,41 @@ import org.slf4j.LoggerFactory;
  */
 class LessonDeleteProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
 
-    public LessonDeleteProcessor(ProcessorContext context) {
-        super(context);
+  public LessonDeleteProcessor(ProcessorContext context) {
+    super(context);
+  }
+
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
+
+  @Override
+  protected MessageResponse processCommand() {
+    try {
+      if (!ValidationUtils.validateId(context.courseId())) {
+        LOGGER.error("Course id not available to delete lesson. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+
+      if (!ValidationUtils.validateId(context.unitId())) {
+        LOGGER.error("Unit id not available to delete lesson. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+
+      if (!ValidationUtils.validateId(context.lessonId())) {
+        LOGGER.error("Lesson id not available to delete lesson. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
+      }
+
+      LOGGER.info("deleting lesson {} of unit {}", context.lessonId(), context.unitId());
+      return new RepoBuilder().buildLessonRepo(context).deleteLesson();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while deleting lesson", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
-    }
-
-    @Override
-    protected MessageResponse processCommand() {
-        try {
-            if (!ValidationUtils.validateId(context.courseId())) {
-                LOGGER.error("Course id not available to delete lesson. Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-            }
-
-            if (!ValidationUtils.validateId(context.unitId())) {
-                LOGGER.error("Unit id not available to delete lesson. Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
-            }
-
-            if (!ValidationUtils.validateId(context.lessonId())) {
-                LOGGER.error("Lesson id not available to delete lesson. Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid lesson id");
-            }
-
-            LOGGER.info("deleting lesson {} of unit {}", context.lessonId(), context.unitId());
-            return new RepoBuilder().buildLessonRepo(context).deleteLesson();
-        } catch (Throwable t) {
-            LOGGER.error("Exception while deleting lesson", t);
-            return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-        }
-
-    }
+  }
 }

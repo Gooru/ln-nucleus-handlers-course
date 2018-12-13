@@ -8,5 +8,5 @@ import org.javalite.activejdbc.annotations.Table;
 @IdName("id")
 public class AJEntityClass extends Model {
 
-    public static final int CURRENT_VERSION = 3;
+  public static final int CURRENT_VERSION = 3;
 }

@@ -13,31 +13,31 @@ import org.slf4j.LoggerFactory;
  */
 class UnitCreateProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
 
-    public UnitCreateProcessor(ProcessorContext context) {
-        super(context);
+  public UnitCreateProcessor(ProcessorContext context) {
+    super(context);
+  }
+
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
+
+  @Override
+  protected MessageResponse processCommand() {
+    try {
+      if (!ValidationUtils.validateId(context.courseId())) {
+        LOGGER.error("Course id not available to create unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+
+      LOGGER.info("creating new unit for course {}", context.courseId());
+      return new RepoBuilder().buildUnitRepo(context).createUnit();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while creating unit", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
-    }
-
-    @Override
-    protected MessageResponse processCommand() {
-        try {
-            if (!ValidationUtils.validateId(context.courseId())) {
-                LOGGER.error("Course id not available to create unit. Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-            }
-
-            LOGGER.info("creating new unit for course {}", context.courseId());
-            return new RepoBuilder().buildUnitRepo(context).createUnit();
-        } catch (Throwable t) {
-            LOGGER.error("Exception while creating unit", t);
-            return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-        }
-
-    }
+  }
 }

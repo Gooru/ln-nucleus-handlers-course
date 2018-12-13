@@ -4,17 +4,17 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 
 public interface LessonRepo {
 
-    MessageResponse createLesson();
+  MessageResponse createLesson();
 
-    MessageResponse updateLesson();
+  MessageResponse updateLesson();
 
-    MessageResponse fetchLesson();
+  MessageResponse fetchLesson();
 
-    MessageResponse deleteLesson();
+  MessageResponse deleteLesson();
 
-    MessageResponse reorderCollectionsAssessmentsInLesson();
+  MessageResponse reorderCollectionsAssessmentsInLesson();
 
-    MessageResponse moveCollectionToLesson();
+  MessageResponse moveCollectionToLesson();
 
-    MessageResponse removeCollectionFromLesson();
+  MessageResponse removeCollectionFromLesson();
 }

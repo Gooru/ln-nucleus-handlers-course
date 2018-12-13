@@ -12,26 +12,26 @@ import org.slf4j.LoggerFactory;
  */
 class CourseCreateProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
 
-    public CourseCreateProcessor(ProcessorContext context) {
-        super(context);
+  public CourseCreateProcessor(ProcessorContext context) {
+    super(context);
+  }
+
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
+
+  @Override
+  protected MessageResponse processCommand() {
+    try {
+      LOGGER.info("Creating new course");
+      return new RepoBuilder().buildCourseRepo(context).createCourse();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while creating course", t.getMessage());
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
-    }
-
-    @Override
-    protected MessageResponse processCommand() {
-        try {
-            LOGGER.info("Creating new course");
-            return new RepoBuilder().buildCourseRepo(context).createCourse();
-        } catch (Throwable t) {
-            LOGGER.error("Exception while creating course", t.getMessage());
-            return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-        }
-
-    }
+  }
 }

@@ -4,5 +4,5 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 
 public interface CourseCollaboratorRepo {
 
-    MessageResponse updateCollaborator();
+  MessageResponse updateCollaborator();
 }

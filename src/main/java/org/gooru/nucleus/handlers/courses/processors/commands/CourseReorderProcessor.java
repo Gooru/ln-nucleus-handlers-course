@@ -11,20 +11,20 @@ import org.slf4j.LoggerFactory;
  */
 class CourseReorderProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
 
-    public CourseReorderProcessor(ProcessorContext context) {
-        super(context);
-    }
+  public CourseReorderProcessor(ProcessorContext context) {
+    super(context);
+  }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
-    }
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
 
-    @Override
-    protected MessageResponse processCommand() {
-        return new RepoBuilder().buildCourseRepo(context).reorderCourse();
+  @Override
+  protected MessageResponse processCommand() {
+    return new RepoBuilder().buildCourseRepo(context).reorderCourse();
 
-    }
+  }
 }

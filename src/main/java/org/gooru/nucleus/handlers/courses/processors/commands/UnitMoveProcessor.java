@@ -13,25 +13,25 @@ import org.slf4j.LoggerFactory;
  */
 class UnitMoveProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
 
-    public UnitMoveProcessor(ProcessorContext context) {
-        super(context);
+  public UnitMoveProcessor(ProcessorContext context) {
+    super(context);
+  }
+
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
+
+  @Override
+  protected MessageResponse processCommand() {
+    if (!ValidationUtils.validateId(context.courseId())) {
+      LOGGER.error("Course id not available to move unit. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
     }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
-    }
+    return new RepoBuilder().buildCourseRepo(context).moveUnitToCourse();
 
-    @Override
-    protected MessageResponse processCommand() {
-        if (!ValidationUtils.validateId(context.courseId())) {
-            LOGGER.error("Course id not available to move unit. Aborting");
-            return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-        }
-
-        return new RepoBuilder().buildCourseRepo(context).moveUnitToCourse();
-
-    }
+  }
 }
