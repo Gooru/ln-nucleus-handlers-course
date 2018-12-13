@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CourseCollaboratorUpdateProcessor extends AbstractCommandProcessor {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CourseCollaboratorUpdateProcessor.class);
 
   public CourseCollaboratorUpdateProcessor(ProcessorContext context) {
     super(context);

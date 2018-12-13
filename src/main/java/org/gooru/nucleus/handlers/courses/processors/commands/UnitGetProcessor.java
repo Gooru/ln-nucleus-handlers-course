@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  */
 class UnitGetProcessor extends AbstractCommandProcessor {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(UnitGetProcessor.class);
 
   public UnitGetProcessor(ProcessorContext context) {
     super(context);

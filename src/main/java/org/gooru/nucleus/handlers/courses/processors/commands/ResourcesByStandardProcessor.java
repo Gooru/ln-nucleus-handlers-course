@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
  */
 class ResourcesByStandardProcessor extends AbstractCommandProcessor {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ResourcesByStandardProcessor.class);
 
   public ResourcesByStandardProcessor(ProcessorContext context) {
     super(context);

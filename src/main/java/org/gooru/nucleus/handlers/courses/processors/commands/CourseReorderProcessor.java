@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
  */
 class CourseReorderProcessor extends AbstractCommandProcessor {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CourseReorderProcessor.class);
 
   public CourseReorderProcessor(ProcessorContext context) {
     super(context);
