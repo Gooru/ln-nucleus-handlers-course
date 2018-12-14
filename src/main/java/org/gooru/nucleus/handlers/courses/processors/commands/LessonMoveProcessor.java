@@ -13,31 +13,31 @@ import org.slf4j.LoggerFactory;
  */
 class LessonMoveProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LessonMoveProcessor.class);
 
-    public LessonMoveProcessor(ProcessorContext context) {
-        super(context);
+  public LessonMoveProcessor(ProcessorContext context) {
+    super(context);
 
+  }
+
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
+
+  @Override
+  protected MessageResponse processCommand() {
+    if (!ValidationUtils.validateId(context.courseId())) {
+      LOGGER.error("Course id not available to move lesson. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
     }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
+    if (!ValidationUtils.validateId(context.unitId())) {
+      LOGGER.error("Unit id not available to move lesson. Aborting");
+      return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
     }
 
-    @Override
-    protected MessageResponse processCommand() {
-        if (!ValidationUtils.validateId(context.courseId())) {
-            LOGGER.error("Course id not available to move lesson. Aborting");
-            return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-        }
+    return new RepoBuilder().buildUnitRepo(context).moveLessonToUnit();
 
-        if (!ValidationUtils.validateId(context.unitId())) {
-            LOGGER.error("Unit id not available to move lesson. Aborting");
-            return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
-        }
-
-        return new RepoBuilder().buildUnitRepo(context).moveLessonToUnit();
-
-    }
+  }
 }

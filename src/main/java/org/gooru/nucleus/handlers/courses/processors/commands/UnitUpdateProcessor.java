@@ -13,36 +13,36 @@ import org.slf4j.LoggerFactory;
  */
 class UnitUpdateProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(UnitUpdateProcessor.class);
 
-    public UnitUpdateProcessor(ProcessorContext context) {
-        super(context);
+  public UnitUpdateProcessor(ProcessorContext context) {
+    super(context);
+  }
+
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
+
+  @Override
+  protected MessageResponse processCommand() {
+    try {
+      if (!ValidationUtils.validateId(context.courseId())) {
+        LOGGER.error("Course id not available to update unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+
+      if (!ValidationUtils.validateId(context.unitId())) {
+        LOGGER.error("Unit id not available to update unit. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+
+      LOGGER.info("updating unit {} of course {}", context.unitId(), context.courseId());
+      return new RepoBuilder().buildUnitRepo(context).updateUnit();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while updating unit", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
-    }
-
-    @Override
-    protected MessageResponse processCommand() {
-        try {
-            if (!ValidationUtils.validateId(context.courseId())) {
-                LOGGER.error("Course id not available to update unit. Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-            }
-
-            if (!ValidationUtils.validateId(context.unitId())) {
-                LOGGER.error("Unit id not available to update unit. Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
-            }
-
-            LOGGER.info("updating unit {} of course {}", context.unitId(), context.courseId());
-            return new RepoBuilder().buildUnitRepo(context).updateUnit();
-        } catch (Throwable t) {
-            LOGGER.error("Exception while updating unit", t);
-            return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-        }
-
-    }
+  }
 }

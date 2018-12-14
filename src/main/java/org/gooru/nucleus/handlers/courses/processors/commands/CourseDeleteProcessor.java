@@ -13,30 +13,30 @@ import org.slf4j.LoggerFactory;
  */
 class CourseDeleteProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CourseDeleteProcessor.class);
 
-    public CourseDeleteProcessor(ProcessorContext context) {
-        super(context);
+  public CourseDeleteProcessor(ProcessorContext context) {
+    super(context);
+  }
+
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
+
+  @Override
+  protected MessageResponse processCommand() {
+    try {
+      if (!ValidationUtils.validateId(context.courseId())) {
+        LOGGER.error("Invalid request, course id not available. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+
+      LOGGER.info("deleting course {}", context.courseId());
+      return new RepoBuilder().buildCourseRepo(context).deleteCourse();
+    } catch (Throwable t) {
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
-    }
-
-    @Override
-    protected MessageResponse processCommand() {
-        try {
-            if (!ValidationUtils.validateId(context.courseId())) {
-                LOGGER.error("Invalid request, course id not available. Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-            }
-
-            LOGGER.info("deleting course {}", context.courseId());
-            return new RepoBuilder().buildCourseRepo(context).deleteCourse();
-        } catch (Throwable t) {
-            return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-        }
-
-    }
+  }
 }
