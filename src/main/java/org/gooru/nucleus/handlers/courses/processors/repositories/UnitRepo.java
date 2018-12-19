@@ -4,15 +4,15 @@ import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 
 public interface UnitRepo {
 
-    MessageResponse createUnit();
+  MessageResponse createUnit();
 
-    MessageResponse updateUnit();
+  MessageResponse updateUnit();
 
-    MessageResponse fetchUnit();
+  MessageResponse fetchUnit();
 
-    MessageResponse deleteUnit();
+  MessageResponse deleteUnit();
 
-    MessageResponse reorderLessonInUnit();
+  MessageResponse reorderLessonInUnit();
 
-    MessageResponse moveLessonToUnit();
+  MessageResponse moveLessonToUnit();
 }

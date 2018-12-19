@@ -13,36 +13,36 @@ import org.slf4j.LoggerFactory;
  */
 class LessonCreateProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LessonCreateProcessor.class);
 
-    public LessonCreateProcessor(ProcessorContext context) {
-        super(context);
+  public LessonCreateProcessor(ProcessorContext context) {
+    super(context);
+  }
+
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
+
+  @Override
+  protected MessageResponse processCommand() {
+    try {
+      if (!ValidationUtils.validateId(context.courseId())) {
+        LOGGER.error("Course id not available to create lesson. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
+      }
+
+      if (!ValidationUtils.validateId(context.unitId())) {
+        LOGGER.error("Unit id not available to create lesson. Aborting");
+        return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
+      }
+
+      LOGGER.info("creating lesson for unit {} of course {}", context.unitId(), context.courseId());
+      return new RepoBuilder().buildLessonRepo(context).createLesson();
+    } catch (Throwable t) {
+      LOGGER.error("Exception while creating lesson", t);
+      return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
     }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
-    }
-
-    @Override
-    protected MessageResponse processCommand() {
-        try {
-            if (!ValidationUtils.validateId(context.courseId())) {
-                LOGGER.error("Course id not available to create lesson. Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid course id");
-            }
-
-            if (!ValidationUtils.validateId(context.unitId())) {
-                LOGGER.error("Unit id not available to create lesson. Aborting");
-                return MessageResponseFactory.createInvalidRequestResponse("Invalid unit id");
-            }
-
-            LOGGER.info("creating lesson for unit {} of course {}", context.unitId(), context.courseId());
-            return new RepoBuilder().buildLessonRepo(context).createLesson();
-        } catch (Throwable t) {
-            LOGGER.error("Exception while creating lesson", t);
-            return MessageResponseFactory.createInternalErrorResponse(t.getMessage());
-        }
-
-    }
+  }
 }

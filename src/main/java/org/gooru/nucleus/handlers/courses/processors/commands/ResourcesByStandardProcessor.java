@@ -11,20 +11,20 @@ import org.slf4j.LoggerFactory;
  */
 class ResourcesByStandardProcessor extends AbstractCommandProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionRemoveProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ResourcesByStandardProcessor.class);
 
-    public ResourcesByStandardProcessor(ProcessorContext context) {
-        super(context);
-    }
+  public ResourcesByStandardProcessor(ProcessorContext context) {
+    super(context);
+  }
 
-    @Override
-    protected void setDeprecatedVersions() {
-        // no op
-    }
+  @Override
+  protected void setDeprecatedVersions() {
+    // no op
+  }
 
-    @Override
-    protected MessageResponse processCommand() {
-        return new RepoBuilder().buildCourseRepo(context).fetchResourcesForCourse();
+  @Override
+  protected MessageResponse processCommand() {
+    return new RepoBuilder().buildCourseRepo(context).fetchResourcesForCourse();
 
-    }
+  }
 }

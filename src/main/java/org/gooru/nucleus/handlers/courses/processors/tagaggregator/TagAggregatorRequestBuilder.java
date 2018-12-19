@@ -7,5 +7,5 @@ import io.vertx.core.json.JsonObject;
  */
 public interface TagAggregatorRequestBuilder {
 
-    JsonObject build();
+  JsonObject build();
 }
