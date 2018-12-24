@@ -1,16 +1,28 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.converters.ConverterRegistry;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.converters.FieldConverter;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.FieldSelector;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.FieldValidator;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.ValidatorRegistry;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.IdName;
 import org.javalite.activejdbc.annotations.Table;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 @Table("unit")
 @IdName("unit_id")
@@ -44,6 +56,7 @@ public class AJEntityUnit extends Model {
 
   public static final String UNIT_SUMMARY = "unit_summary";
   public static final String UNITS = "units";
+  public static final String PRIMARY_LANGUAGE = "primary_language";
 
   public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY);
@@ -52,12 +65,13 @@ public class AJEntityUnit extends Model {
       .asList(UNIT_ID, COURSE_ID, TITLE, CREATED_AT, UPDATED_AT,
           OWNER_ID, CREATOR_ID, MODIFIER_ID, ORIGINAL_CREATOR_ID, ORIGINAL_UNIT_ID, BIG_IDEAS,
           ESSENTIAL_QUESTIONS,
-          METADATA, TAXONOMY, SEQUENCE_ID, CREATOR_SYSTEM, AGGREGATED_TAXONOMY);
+          METADATA, TAXONOMY, SEQUENCE_ID, CREATOR_SYSTEM, AGGREGATED_TAXONOMY, PRIMARY_LANGUAGE);
 
-  public static final List<String> INSERTABLE_FIELDS =
-      Arrays.asList(TITLE, BIG_IDEAS, ESSENTIAL_QUESTIONS, METADATA, TAXONOMY, CREATOR_SYSTEM);
-  public static final List<String> UPDATABLE_FIELDS =
-      Arrays.asList(TITLE, BIG_IDEAS, ESSENTIAL_QUESTIONS, METADATA, TAXONOMY);
+  public static final Set<String> INSERTABLE_FIELDS = new HashSet<>
+      (Arrays.asList(TITLE, BIG_IDEAS, ESSENTIAL_QUESTIONS, METADATA, TAXONOMY, CREATOR_SYSTEM, PRIMARY_LANGUAGE));
+  public static final Set<String> UPDATABLE_FIELDS = new HashSet<>
+      (Arrays.asList(TITLE, BIG_IDEAS, ESSENTIAL_QUESTIONS, METADATA, TAXONOMY, PRIMARY_LANGUAGE));
+  public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE));
 
   public static final List<String> UNIT_SUMMARY_FIELDS = Arrays.asList(UNIT_ID, TITLE, SEQUENCE_ID);
 
@@ -66,7 +80,7 @@ public class AJEntityUnit extends Model {
 
   public static final String SELECT_UNIT =
       "SELECT course_id, unit_id, title, created_at, updated_at, owner_id, creator_id, modifier_id, original_creator_id, original_unit_id,"
-          + " big_ideas, essential_questions, metadata, taxonomy, sequence_id, creator_system, aggregated_taxonomy FROM unit WHERE"
+          + " big_ideas, essential_questions, metadata, taxonomy, sequence_id, creator_system, aggregated_taxonomy, primary_language FROM unit WHERE"
           + " course_id = ?::uuid AND unit_id = ?::uuid AND is_deleted = ?";
 
   public static final String SELECT_UNIT_TO_VALIDATE =
@@ -83,6 +97,39 @@ public class AJEntityUnit extends Model {
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 
+  private static final Map<String, FieldValidator> validatorRegistry;
+  private static final Map<String, FieldConverter> converterRegistry;
+
+  static {
+      validatorRegistry = initializeValidators();
+      converterRegistry = initializeConverters();
+  }
+
+  private static Map<String, FieldConverter> initializeConverters() {
+      Map<String, FieldConverter> converterMap = new HashMap<>();
+      converterMap.put(ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(METADATA, (FieldConverter::convertFieldToJson));
+      converterMap.put(TAXONOMY, (FieldConverter::convertFieldToJson));
+      converterMap.put(CREATOR_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(MODIFIER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(OWNER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(TENANT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(TENANT_ROOT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      return Collections.unmodifiableMap(converterMap);
+  }
+
+  private static Map<String, FieldValidator> initializeValidators() {
+      Map<String, FieldValidator> validatorMap = new HashMap<>();
+      validatorMap.put(ID, (FieldValidator::validateUuid));
+      validatorMap.put(TITLE, (value) -> FieldValidator.validateString(value, 1000));
+      validatorMap.put(METADATA, FieldValidator::validateJsonIfPresent);
+      validatorMap.put(TAXONOMY, FieldValidator::validateJsonIfPresent);
+      validatorMap.put(TENANT, (FieldValidator::validateUuid));
+      validatorMap.put(TENANT_ROOT, (FieldValidator::validateUuid));
+      validatorMap.put(PRIMARY_LANGUAGE, FieldValidator::validateLanguageIfPresent);
+      return Collections.unmodifiableMap(validatorMap);
+  }
+  
   public void setModifierId(String modifierId) {
     setPGObject(MODIFIER_ID, UUID_TYPE, modifierId);
   }
@@ -142,4 +189,50 @@ public class AJEntityUnit extends Model {
       this.errors().put(field, value);
     }
   }
+  
+  public static FieldSelector createFieldSelector() {
+      return new FieldSelector() {
+          @Override
+          public Set<String> allowedFields() {
+              return Collections.unmodifiableSet(INSERTABLE_FIELDS);
+          }
+
+          @Override
+          public Set<String> mandatoryFields() {
+              return Collections.unmodifiableSet(MANDATORY_FIELDS);
+          }
+      };
+  }
+  
+  public static FieldSelector editFieldSelector() {
+      return new FieldSelector() {
+          @Override
+          public Set<String> allowedFields() {
+              return Collections.unmodifiableSet(UPDATABLE_FIELDS);
+          }
+      };
+  }
+  
+  public static ValidatorRegistry getValidatorRegistry() {
+      return new UnitValidatorRegistry();
+  }
+
+  public static ConverterRegistry getConverterRegistry() {
+      return new UnitConvertorRegistry();
+  }
+
+  private static class UnitValidatorRegistry implements ValidatorRegistry {
+      @Override
+      public FieldValidator lookupValidator(String fieldName) {
+          return validatorRegistry.get(fieldName);
+      }
+  }
+
+  private static class UnitConvertorRegistry implements ConverterRegistry {
+      @Override
+      public FieldConverter lookupConverter(String fieldName) {
+          return converterRegistry.get(fieldName);
+      }
+  }
+
 }

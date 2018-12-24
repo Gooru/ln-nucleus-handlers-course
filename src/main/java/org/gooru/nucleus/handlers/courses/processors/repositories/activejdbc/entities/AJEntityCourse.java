@@ -1,15 +1,27 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.converters.ConverterRegistry;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.converters.FieldConverter;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.FieldSelector;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.FieldValidator;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.ValidatorRegistry;
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 @Table("course")
 public class AJEntityCourse extends Model {
@@ -51,6 +63,7 @@ public class AJEntityCourse extends Model {
   public static final String PUBLISH_STATUS_TYPE_REQUESTED = "requested";
   public static final String PUBLISH_STATUS_TYPE_PUBLISHED = "published";
   public static final String COURSES = "courses";
+  public static final String PRIMARY_LANGUAGE = "primary_language";
 
   public static final List<String> NOTNULL_FIELDS = Arrays.asList(TITLE);
   public static final List<String> JSON_FIELDS = Arrays.asList(METADATA, TAXONOMY, COLLABORATOR);
@@ -62,15 +75,15 @@ public class AJEntityCourse extends Model {
           PUBLISH_STATUS, PUBLISH_DATE, THUMBNAIL, METADATA, TAXONOMY, COLLABORATOR,
           VISIBLE_ON_PROFILE, CREATED_AT,
           UPDATED_AT, SEQUENCE_ID, SUBJECT_BUCKET, LICENSE, CREATOR_SYSTEM, USE_CASE, VERSION,
-          AGGREGATED_TAXONOMY);
+          AGGREGATED_TAXONOMY, PRIMARY_LANGUAGE);
 
-  public static final List<String> INSERTABLE_FIELDS = Arrays
+  public static final Set<String> INSERTABLE_FIELDS = new HashSet<>(Arrays
       .asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE, SUBJECT_BUCKET,
-          CREATOR_SYSTEM,
-          USE_CASE);
-  public static final List<String> UPDATABLE_FIELDS =
-      Arrays.asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE,
-          SUBJECT_BUCKET, USE_CASE);
+          CREATOR_SYSTEM, USE_CASE, PRIMARY_LANGUAGE));
+  public static final Set<String> UPDATABLE_FIELDS = new
+      HashSet<>(Arrays.asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE,
+          SUBJECT_BUCKET, USE_CASE, PRIMARY_LANGUAGE));
+  public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE));
 
   public static final List<String> COLLABORATOR_FIELD = Arrays.asList(COLLABORATOR);
   public static final List<String> UNIT_MOVE_NOTNULL_FIELDS = Arrays.asList("course_id", "unit_id");
@@ -86,7 +99,7 @@ public class AJEntityCourse extends Model {
       "SELECT id, title, description, created_at, updated_at, owner_id, creator_id, modifier_id, "
           + "original_creator_id, original_course_id, publish_status, publish_date, thumbnail, metadata, taxonomy, "
           + "collaborator, visible_on_profile, sequence_id, subject_bucket, license, creator_system, use_case, "
-          + "version, tenant, tenant_root, aggregated_taxonomy FROM course WHERE id = ?::uuid AND is_deleted = ?";
+          + "version, tenant, tenant_root, aggregated_taxonomy, primary_language FROM course WHERE id = ?::uuid AND is_deleted = ?";
   public static final String SELECT_MAX_SEQUENCE_FOR_SUBJECT_BUCKET =
       "SELECT MAX(sequence_id) FROM course WHERE owner_id = ?::uuid AND" + " subject_bucket = ?";
   public static final String SELECT_MAX_SEQUENCE_FOR_NON_SUBJECT_BUCKET =
@@ -112,6 +125,88 @@ public class AJEntityCourse extends Model {
       "SELECT id, title, owner_id, thumbnail, version, subject_bucket "
           + " FROM course WHERE id = ANY (?::uuid[]) AND is_deleted = false";
 
+  private static final Map<String, FieldValidator> validatorRegistry;
+  private static final Map<String, FieldConverter> converterRegistry;
+
+  static {
+      validatorRegistry = initializeValidators();
+      converterRegistry = initializeConverters();
+  }
+
+  private static Map<String, FieldConverter> initializeConverters() {
+      Map<String, FieldConverter> converterMap = new HashMap<>();
+      converterMap.put(ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(METADATA, (FieldConverter::convertFieldToJson));
+      converterMap.put(TAXONOMY, (FieldConverter::convertFieldToJson));
+      converterMap.put(CREATOR_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(MODIFIER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(OWNER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(TENANT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+      converterMap.put(TENANT_ROOT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+
+      return Collections.unmodifiableMap(converterMap);
+  }
+
+  private static Map<String, FieldValidator> initializeValidators() {
+      Map<String, FieldValidator> validatorMap = new HashMap<>();
+      validatorMap.put(ID, (FieldValidator::validateUuid));
+      validatorMap.put(TITLE, (value) -> FieldValidator.validateString(value, 1000));
+      validatorMap.put(DESCRIPTION, (value) -> FieldValidator.validateStringIfPresent(value, 20000));
+      validatorMap.put(THUMBNAIL, (value) -> FieldValidator.validateStringIfPresent(value, 2000));
+      validatorMap.put(METADATA, FieldValidator::validateJsonIfPresent);
+      validatorMap.put(TAXONOMY, FieldValidator::validateJsonIfPresent);
+      validatorMap.put(VISIBLE_ON_PROFILE, FieldValidator::validateBooleanIfPresent);
+      validatorMap.put(TENANT, (FieldValidator::validateUuid));
+      validatorMap.put(TENANT_ROOT, (FieldValidator::validateUuid));
+      validatorMap.put(PRIMARY_LANGUAGE, FieldValidator::validateLanguageIfPresent);
+      return Collections.unmodifiableMap(validatorMap);
+  }
+
+  public static FieldSelector createFieldSelector() {
+      return new FieldSelector() {
+          @Override
+          public Set<String> allowedFields() {
+              return Collections.unmodifiableSet(INSERTABLE_FIELDS);
+          }
+
+          @Override
+          public Set<String> mandatoryFields() {
+              return Collections.unmodifiableSet(MANDATORY_FIELDS);
+          }
+      };
+  }
+  
+  public static FieldSelector editFieldSelector() {
+      return new FieldSelector() {
+          @Override
+          public Set<String> allowedFields() {
+              return Collections.unmodifiableSet(UPDATABLE_FIELDS);
+          }
+      };
+  }
+  
+  public static ValidatorRegistry getValidatorRegistry() {
+      return new CourseValidatorRegistry();
+  }
+
+  public static ConverterRegistry getConverterRegistry() {
+      return new CourseConverterRegistry();
+  }
+
+  private static class CourseValidatorRegistry implements ValidatorRegistry {
+      @Override
+      public FieldValidator lookupValidator(String fieldName) {
+          return validatorRegistry.get(fieldName);
+      }
+  }
+
+  private static class CourseConverterRegistry implements ConverterRegistry {
+      @Override
+      public FieldConverter lookupConverter(String fieldName) {
+          return converterRegistry.get(fieldName);
+      }
+  }
+  
   public void setModifierId(String modifierId) {
     setPGObject(MODIFIER_ID, UUID_TYPE, modifierId);
   }
