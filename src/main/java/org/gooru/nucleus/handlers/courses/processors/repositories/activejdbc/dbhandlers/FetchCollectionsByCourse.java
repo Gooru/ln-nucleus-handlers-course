@@ -125,6 +125,30 @@ public class FetchCollectionsByCourse implements DBHandler {
         }
       });
     }
+    
+    // Get all external collections of course
+    Map<String, JsonArray> extCollectionsByLessonMap = new HashMap<>();
+    LazyList<AJEntityCollection> extCollections =
+        AJEntityCollection
+            .findBySQL(AJEntityCollection.SELECT_EXT_COLLECTIONS_BY_COURSE, context.courseId());
+    if (!extCollections.isEmpty()) {
+      extCollections.forEach(collection -> {
+        String lessonId = collection.getString(AJEntityCollection.LESSON_ID);
+
+        if (extCollectionsByLessonMap.containsKey(lessonId)) {
+          JsonObject collectionJson = new JsonObject(new JsonFormatterBuilder()
+              .buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_BY_COURSE_FIELDS)
+              .toJson(collection));
+          extCollectionsByLessonMap.get(lessonId).add(collectionJson);
+        } else {
+          JsonArray collectionArray = new JsonArray();
+          collectionArray.add(new JsonObject(new JsonFormatterBuilder()
+              .buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_BY_COURSE_FIELDS)
+              .toJson(collection)));
+          extCollectionsByLessonMap.put(lessonId, collectionArray);
+        }
+      });
+    }
 
     JsonArray unitArray = new JsonArray();
     Set<String> unitIds = lessonsByUnitMap.keySet();
@@ -138,12 +162,15 @@ public class FetchCollectionsByCourse implements DBHandler {
       Set<String> lessonIds = lessonsByUnitMap.get(unitId);
       for (String lessonId : lessonIds) {
         JsonArray collectionArray = collectionsByLessonMap.get(lessonId);
+        JsonArray extCollectionArray = extCollectionsByLessonMap.get(lessonId);
         AJEntityLesson lessonFromMap = lessonsTitleMap.get(lessonId);
         JsonObject lessonArrElement = new JsonObject().put(AJEntityLesson.ID, lessonId)
             .put(AJEntityLesson.TITLE, lessonFromMap.getString(AJEntityLesson.TITLE))
             .put(AJEntityLesson.SEQUENCE_ID, lessonFromMap.getInteger(AJEntityLesson.SEQUENCE_ID));
         lessonArrElement.put(AJEntityCollection.COLLECTIONS,
             (collectionArray != null ? collectionArray : new JsonArray()));
+        lessonArrElement.put(AJEntityCollection.COLLECTIONS_EXTERNAL,
+            (extCollectionArray != null ? extCollectionArray : new JsonArray()));
         lessonArray.add(lessonArrElement);
       }
       unitArrElement.put(AJEntityLesson.LESSONS, lessonArray);

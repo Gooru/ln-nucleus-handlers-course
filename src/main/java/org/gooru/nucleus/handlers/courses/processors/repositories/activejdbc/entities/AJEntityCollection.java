@@ -34,8 +34,11 @@ public class AJEntityCollection extends Model {
   public static final String COLLECTION_COUNT = "collection_count";
   public static final String ASSESSMENT_COUNT = "assessment_count";
   public static final String EXT_ASSESSMENT_COUNT = "external_assessment_count";
+  public static final String EXT_COLLECTION_COUNT = "external_collection_count";
   public static final String ASSESSMENTS = "assessments";
+  public static final String ASSESSMENTS_EXTERNAL = "assessments-external";
   public static final String COLLECTIONS = "collections";
+  public static final String COLLECTIONS_EXTERNAL = "collections-external";
 
   public static final List<String> COLLECTION_SUMMARY_FIELDS =
       Arrays.asList(ID, TITLE, FORMAT, SEQUENCE_ID, THUMBNAIL, URL, SUBFORMAT);
@@ -67,6 +70,14 @@ public class AJEntityCollection extends Model {
   public static final String SELECT_COLLECTIONS_BY_COURSE =
       "SELECT id, unit_id, lesson_id, title, format, subformat, sequence_id FROM collection where format = 'collection'::content_container_type AND"
           + " course_id = ?::uuid AND is_deleted = false";
+  
+  public static final String SELECT_EXT_ASSESSMENTS_BY_COURSE =
+      "SELECT id, unit_id, lesson_id, title, format, subformat, sequence_id FROM collection where format = 'assessment-external'::content_container_type AND"
+          + " course_id = ?::uuid AND is_deleted = false";
+  
+  public static final String SELECT_EXT_COLLECTIONS_BY_COURSE =
+      "SELECT id, unit_id, lesson_id, title, format, subformat, sequence_id FROM collection where format = 'collection-external'::content_container_type AND"
+          + " course_id = ?::uuid AND is_deleted = false";
 
   public static final String UPDATE_COLLECTION_REMOVE_CUL = "course_id = null, unit_id = null, lesson_id = null";
   public static final String UPDATE_COLLECTION_REMOVE_CUL_WHERE = "id = ?::uuid";
@@ -84,6 +95,7 @@ public class AJEntityCollection extends Model {
   public static final String FORMAT_COLLECTION = "collection";
   public static final String FORMAT_ASSESSMENT = "assessment";
   public static final String FORMAT_EXT_ASSESSMENT = "assessment-external";
+  public static final String FORMAT_EXT_COLLECTION = "collection-external";
 
   public void setCourseId(String courseId) {
     setPGObject(COURSE_ID, UUID_TYPE, courseId);

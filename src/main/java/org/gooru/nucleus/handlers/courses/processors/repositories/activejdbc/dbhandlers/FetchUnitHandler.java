@@ -84,6 +84,7 @@ public class FetchUnitHandler implements DBHandler {
     return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(courses.get(0));
   }
 
+  @SuppressWarnings("rawtypes")
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     LazyList<AJEntityUnit> ajEntityUnits =
@@ -118,6 +119,15 @@ public class FetchUnitHandler implements DBHandler {
             .forEach(map -> collectionCountByLesson
                 .put(map.get(AJEntityCollection.LESSON_ID).toString(),
                     Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
+        
+        Map<String, Integer> extCollectionCountByLesson = new HashMap<>();
+        collectionCount.stream().filter(
+            map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
+                .toString()
+                .equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_COLLECTION))
+            .forEach(map -> extCollectionCountByLesson
+                .put(map.get(AJEntityCollection.LESSON_ID).toString(),
+                    Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
 
         Map<String, Integer> assessmentCountByLesson = new HashMap<>();
         collectionCount.stream().filter(
@@ -145,10 +155,13 @@ public class FetchUnitHandler implements DBHandler {
                   .toJson(lesson));
           String lessonId = lesson.get(AJEntityCollection.ID).toString();
           Integer collectionCnt = collectionCountByLesson.get(lessonId);
+          Integer extCollectionCnt = extCollectionCountByLesson.get(lessonId);
           Integer assessmentCnt = assessmentCountByLesson.get(lessonId);
           Integer extAssessmentCnt = extAssessmentCountByLesson.get(lessonId);
           lessonSummary
               .put(AJEntityCollection.COLLECTION_COUNT, collectionCnt != null ? collectionCnt : 0);
+          lessonSummary
+              .put(AJEntityCollection.EXT_COLLECTION_COUNT, extCollectionCnt != null ? extCollectionCnt : 0);
           lessonSummary
               .put(AJEntityCollection.ASSESSMENT_COUNT, assessmentCnt != null ? assessmentCnt : 0);
           lessonSummary.put(AJEntityCollection.EXT_ASSESSMENT_COUNT,
