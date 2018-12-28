@@ -125,6 +125,31 @@ public class FetchAssessmentsByCourse implements DBHandler {
         }
       });
     }
+    
+    // Get all external assessments of course
+    Map<String, JsonArray> extAssessmentsByLessonMap = new HashMap<>();
+    LazyList<AJEntityCollection> extAssessments =
+        AJEntityCollection
+            .findBySQL(AJEntityCollection.SELECT_EXT_ASSESSMENTS_BY_COURSE, context.courseId());
+    if (!extAssessments.isEmpty()) {
+      extAssessments.forEach(extAssessment -> {
+        String lessonId = extAssessment.getString(AJEntityCollection.LESSON_ID);
+
+        if (extAssessmentsByLessonMap.containsKey(lessonId)) {
+          JsonObject assessmentJson = new JsonObject(new JsonFormatterBuilder()
+              .buildSimpleJsonFormatter(false, AJEntityCollection.ASSESSMENT_BY_COURSE_FIELDS)
+              .toJson(extAssessment));
+          extAssessmentsByLessonMap.get(lessonId).add(assessmentJson);
+        } else {
+          JsonArray extAssessmentArray = new JsonArray();
+          extAssessmentArray.add(new JsonObject(new JsonFormatterBuilder()
+              .buildSimpleJsonFormatter(false, AJEntityCollection.ASSESSMENT_BY_COURSE_FIELDS)
+              .toJson(extAssessment)));
+          extAssessmentsByLessonMap.put(lessonId, extAssessmentArray);
+        }
+      });
+    }
+
 
     JsonArray unitArray = new JsonArray();
     Set<String> unitIds = lessonsByUnitMap.keySet();
@@ -138,12 +163,15 @@ public class FetchAssessmentsByCourse implements DBHandler {
       Set<String> lessonIds = lessonsByUnitMap.get(unitId);
       for (String lessonId : lessonIds) {
         JsonArray assessmentArray = assessmentsByLessonMap.get(lessonId);
+        JsonArray extAssessmentArray = extAssessmentsByLessonMap.get(lessonId);
         AJEntityLesson lessonFromMap = lessonsTitleMap.get(lessonId);
         JsonObject lessonArrElement = new JsonObject().put(AJEntityLesson.ID, lessonId)
             .put(AJEntityLesson.TITLE, lessonFromMap.getString(AJEntityLesson.TITLE))
             .put(AJEntityLesson.SEQUENCE_ID, lessonFromMap.getInteger(AJEntityLesson.SEQUENCE_ID));
         lessonArrElement.put(AJEntityCollection.ASSESSMENTS,
             (assessmentArray != null ? assessmentArray : new JsonArray()));
+        lessonArrElement.put(AJEntityCollection.ASSESSMENTS_EXTERNAL,
+            (extAssessmentArray != null ? extAssessmentArray : new JsonArray()));
         lessonArray.add(lessonArrElement);
       }
       unitArrElement.put(AJEntityLesson.LESSONS, lessonArray);
