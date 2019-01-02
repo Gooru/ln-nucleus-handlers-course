@@ -152,7 +152,7 @@ public class AJEntityCourse extends Model {
       validatorMap.put(ID, (FieldValidator::validateUuid));
       validatorMap.put(TITLE, (value) -> FieldValidator.validateString(value, 1000));
       validatorMap.put(DESCRIPTION, (value) -> FieldValidator.validateStringIfPresent(value, 20000));
-      validatorMap.put(THUMBNAIL, (value) -> FieldValidator.validateStringIfPresent(value, 2000));
+      validatorMap.put(THUMBNAIL, (value) -> FieldValidator.validateStringIfPresentAllowEmpty(value, 2000));
       validatorMap.put(METADATA, FieldValidator::validateJsonIfPresent);
       validatorMap.put(TAXONOMY, FieldValidator::validateJsonIfPresent);
       validatorMap.put(VISIBLE_ON_PROFILE, FieldValidator::validateBooleanIfPresent);
