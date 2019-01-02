@@ -20,6 +20,10 @@ public interface FieldValidator {
         return o == null || o instanceof String && !((String) o).isEmpty() && ((String) o).length() < len;
     }
 
+    static boolean validateStringIfPresentAllowEmpty(Object o, int len) {
+        return o == null || o instanceof String && ((String) o).length() < len;
+    }
+
     static boolean validateString(Object o, int len) {
         return !(o == null || !(o instanceof String) || ((String) o).isEmpty() || (((String) o).length() > len));
     }
