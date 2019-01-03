@@ -1,10 +1,10 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonObject;
 import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.events.EventBuilderFactory;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.PayloadValidator;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -13,6 +13,8 @@ import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class UpdateCourseHandler implements DBHandler {
 
@@ -47,19 +49,14 @@ public class UpdateCourseHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createForbiddenResponse(),
           ExecutionStatus.FAILED);
     }
-
-    JsonObject validateErrors = validateFields();
-    if (validateErrors != null && !validateErrors.isEmpty()) {
-      return new ExecutionResult<>(
-          MessageResponseFactory.createValidationErrorResponse(validateErrors),
-          ExecutionResult.ExecutionStatus.FAILED);
-    }
-
-    JsonObject notNullErrors = validateNullFields();
-    if (notNullErrors != null && !notNullErrors.isEmpty()) {
-      return new ExecutionResult<>(
-          MessageResponseFactory.createValidationErrorResponse(notNullErrors),
-          ExecutionResult.ExecutionStatus.FAILED);
+    
+    JsonObject errors = new DefaultPayloadValidator()
+        .validatePayload(context.request(), AJEntityCourse.editFieldSelector(),
+            AJEntityCourse.getValidatorRegistry());
+    if (errors != null && !errors.isEmpty()) {
+        LOGGER.warn("Validation errors for request");
+        return new ExecutionResult<>(MessageResponseFactory.createValidationErrorResponse(errors),
+            ExecutionResult.ExecutionStatus.FAILED);
     }
 
     LOGGER.debug("checkSanity() OK");
@@ -152,28 +149,14 @@ public class UpdateCourseHandler implements DBHandler {
     return false;
   }
 
-  private JsonObject validateFields() {
-    JsonObject input = context.request();
-    JsonObject output = new JsonObject();
-    input.fieldNames().stream().filter(key -> !AJEntityCourse.UPDATABLE_FIELDS.contains(key))
-        .forEach(key -> output.put(key, "Field not allowed"));
-    return output.isEmpty() ? null : output;
-  }
-
-  private JsonObject validateNullFields() {
-    JsonObject input = context.request();
-    JsonObject output = new JsonObject();
-    input.fieldNames().stream()
-        .filter(key -> AJEntityCourse.NOTNULL_FIELDS.contains(key)
-            && (input.getValue(key) == null || input.getValue(key).toString().isEmpty()))
-        .forEach(key -> output.put(key, "Field should not be empty or null"));
-    return output.isEmpty() ? null : output;
-  }
-
   private JsonObject getModelErrors() {
     JsonObject errors = new JsonObject();
     this.courseToUpdate.errors().entrySet()
         .forEach(entry -> errors.put(entry.getKey(), entry.getValue()));
     return errors;
   }
+  
+  private static class DefaultPayloadValidator implements PayloadValidator {
+  }
+
 }
