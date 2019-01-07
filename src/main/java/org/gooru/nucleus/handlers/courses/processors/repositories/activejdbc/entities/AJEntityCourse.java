@@ -1,5 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.converters.ConverterRegistry;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.converters.FieldConverter;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.FieldSelector;
@@ -19,9 +20,6 @@ import org.javalite.activejdbc.annotations.Table;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 @Table("course")
 public class AJEntityCourse extends Model {
@@ -82,7 +80,7 @@ public class AJEntityCourse extends Model {
           CREATOR_SYSTEM, USE_CASE, PRIMARY_LANGUAGE));
   public static final Set<String> UPDATABLE_FIELDS = new
       HashSet<>(Arrays.asList(TITLE, DESCRIPTION, THUMBNAIL, METADATA, TAXONOMY, VISIBLE_ON_PROFILE,
-          SUBJECT_BUCKET, USE_CASE, PRIMARY_LANGUAGE));
+      SUBJECT_BUCKET, USE_CASE, PRIMARY_LANGUAGE));
   public static final Set<String> MANDATORY_FIELDS = new HashSet<>(Arrays.asList(TITLE));
 
   public static final List<String> COLLABORATOR_FIELD = Arrays.asList(COLLABORATOR);
@@ -129,84 +127,93 @@ public class AJEntityCourse extends Model {
   private static final Map<String, FieldConverter> converterRegistry;
 
   static {
-      validatorRegistry = initializeValidators();
-      converterRegistry = initializeConverters();
+    validatorRegistry = initializeValidators();
+    converterRegistry = initializeConverters();
   }
 
   private static Map<String, FieldConverter> initializeConverters() {
-      Map<String, FieldConverter> converterMap = new HashMap<>();
-      converterMap.put(ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-      converterMap.put(METADATA, (FieldConverter::convertFieldToJson));
-      converterMap.put(TAXONOMY, (FieldConverter::convertFieldToJson));
-      converterMap.put(CREATOR_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-      converterMap.put(MODIFIER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-      converterMap.put(OWNER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-      converterMap.put(TENANT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
-      converterMap.put(TENANT_ROOT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+    Map<String, FieldConverter> converterMap = new HashMap<>();
+    converterMap.put(ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+    converterMap.put(METADATA, (FieldConverter::convertFieldToJson));
+    converterMap.put(TAXONOMY, (FieldConverter::convertFieldToJson));
+    converterMap
+        .put(CREATOR_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+    converterMap
+        .put(MODIFIER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+    converterMap
+        .put(OWNER_ID, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+    converterMap
+        .put(TENANT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+    converterMap
+        .put(TENANT_ROOT, (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
 
-      return Collections.unmodifiableMap(converterMap);
+    return Collections.unmodifiableMap(converterMap);
   }
 
   private static Map<String, FieldValidator> initializeValidators() {
-      Map<String, FieldValidator> validatorMap = new HashMap<>();
-      validatorMap.put(ID, (FieldValidator::validateUuid));
-      validatorMap.put(TITLE, (value) -> FieldValidator.validateString(value, 1000));
-      validatorMap.put(DESCRIPTION, (value) -> FieldValidator.validateStringIfPresent(value, 20000));
-      validatorMap.put(THUMBNAIL, (value) -> FieldValidator.validateStringIfPresentAllowEmpty(value, 2000));
-      validatorMap.put(METADATA, FieldValidator::validateJsonIfPresent);
-      validatorMap.put(TAXONOMY, FieldValidator::validateJsonIfPresent);
-      validatorMap.put(VISIBLE_ON_PROFILE, FieldValidator::validateBooleanIfPresent);
-      validatorMap.put(TENANT, (FieldValidator::validateUuid));
-      validatorMap.put(TENANT_ROOT, (FieldValidator::validateUuid));
-      validatorMap.put(PRIMARY_LANGUAGE, FieldValidator::validateLanguageIfPresent);
-      return Collections.unmodifiableMap(validatorMap);
+    Map<String, FieldValidator> validatorMap = new HashMap<>();
+    validatorMap.put(ID, (FieldValidator::validateUuid));
+    validatorMap.put(TITLE, (value) -> FieldValidator.validateString(value, 1000));
+    validatorMap.put(DESCRIPTION,
+        (value) -> FieldValidator.validateStringIfPresentAllowEmpty(value, 20000));
+    validatorMap
+        .put(THUMBNAIL, (value) -> FieldValidator.validateStringIfPresentAllowEmpty(value, 2000));
+    validatorMap.put(METADATA, FieldValidator::validateJsonIfPresent);
+    validatorMap.put(TAXONOMY, FieldValidator::validateJsonIfPresent);
+    validatorMap.put(VISIBLE_ON_PROFILE, FieldValidator::validateBooleanIfPresent);
+    validatorMap.put(TENANT, (FieldValidator::validateUuid));
+    validatorMap.put(TENANT_ROOT, (FieldValidator::validateUuid));
+    validatorMap.put(PRIMARY_LANGUAGE, FieldValidator::validateLanguageIfPresent);
+    return Collections.unmodifiableMap(validatorMap);
   }
 
   public static FieldSelector createFieldSelector() {
-      return new FieldSelector() {
-          @Override
-          public Set<String> allowedFields() {
-              return Collections.unmodifiableSet(INSERTABLE_FIELDS);
-          }
+    return new FieldSelector() {
+      @Override
+      public Set<String> allowedFields() {
+        return Collections.unmodifiableSet(INSERTABLE_FIELDS);
+      }
 
-          @Override
-          public Set<String> mandatoryFields() {
-              return Collections.unmodifiableSet(MANDATORY_FIELDS);
-          }
-      };
+      @Override
+      public Set<String> mandatoryFields() {
+        return Collections.unmodifiableSet(MANDATORY_FIELDS);
+      }
+    };
   }
-  
+
   public static FieldSelector editFieldSelector() {
-      return new FieldSelector() {
-          @Override
-          public Set<String> allowedFields() {
-              return Collections.unmodifiableSet(UPDATABLE_FIELDS);
-          }
-      };
+    return new FieldSelector() {
+      @Override
+      public Set<String> allowedFields() {
+        return Collections.unmodifiableSet(UPDATABLE_FIELDS);
+      }
+    };
   }
-  
+
   public static ValidatorRegistry getValidatorRegistry() {
-      return new CourseValidatorRegistry();
+    return new CourseValidatorRegistry();
   }
 
   public static ConverterRegistry getConverterRegistry() {
-      return new CourseConverterRegistry();
+    return new CourseConverterRegistry();
   }
 
   private static class CourseValidatorRegistry implements ValidatorRegistry {
-      @Override
-      public FieldValidator lookupValidator(String fieldName) {
-          return validatorRegistry.get(fieldName);
-      }
+
+    @Override
+    public FieldValidator lookupValidator(String fieldName) {
+      return validatorRegistry.get(fieldName);
+    }
   }
 
   private static class CourseConverterRegistry implements ConverterRegistry {
-      @Override
-      public FieldConverter lookupConverter(String fieldName) {
-          return converterRegistry.get(fieldName);
-      }
+
+    @Override
+    public FieldConverter lookupConverter(String fieldName) {
+      return converterRegistry.get(fieldName);
+    }
   }
-  
+
   public void setModifierId(String modifierId) {
     setPGObject(MODIFIER_ID, UUID_TYPE, modifierId);
   }
