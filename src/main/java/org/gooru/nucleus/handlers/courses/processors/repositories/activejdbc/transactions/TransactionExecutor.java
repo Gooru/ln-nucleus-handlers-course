@@ -1,11 +1,14 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.transactions;
 
 import java.sql.SQLException;
+import java.util.List;
+
 import org.gooru.nucleus.handlers.courses.app.components.DataSourceRegistry;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.DBHandler;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.transactions.exceptionhandlers.ExceptionHandler;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.transactions.exceptionhandlers.ExceptionHandlerRegistry;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
-import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.Base;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +19,7 @@ import org.slf4j.LoggerFactory;
 public class TransactionExecutor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TransactionExecutor.class);
+  private static final List<ExceptionHandler> EXCEPTION_HANDLERS = ExceptionHandlerRegistry.getInstance().getHandlers() ;
 
   public MessageResponse executeTransaction(DBHandler handler) {
     // First validations without any DB
@@ -53,11 +57,14 @@ public class TransactionExecutor {
     } catch (Throwable e) {
       Base.rollbackTransaction();
       LOGGER.error("Caught exception, need to rollback and abort", e);
-      // Most probably we do not know what to do with this, so send
-      // internal error
-      return new ExecutionResult<>(
-          MessageResponseFactory.createInternalErrorResponse(e.getMessage()),
-          ExecutionResult.ExecutionStatus.FAILED);
+      ExecutionResult<MessageResponse> executionResponse = null;
+      for (ExceptionHandler exceptionHandler : EXCEPTION_HANDLERS) {
+        executionResponse = exceptionHandler.handleError(e);
+        if (executionResponse.result() != null) {
+          break;
+        }
+      }
+      return executionResponse;
     } finally {
       if (handler.handlerReadOnly()) {
         // restore the settings
