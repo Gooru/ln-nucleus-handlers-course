@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.gooru.nucleus.handlers.courses.app.components.AppConfiguration;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.converters.ConverterRegistry;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.converters.FieldConverter;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.validators.FieldSelector;
@@ -250,6 +251,15 @@ public class AJEntityCourse extends Model {
 
   public void setVersion(String version) {
     this.setString(VERSION, version);
+  }
+
+  public String getVersion() {
+    return this.getString(VERSION);
+  }
+
+  public boolean isPremium() {
+    return AppConfiguration.getInstance().getCourseVersionForPremiumContent()
+        .equals(this.getVersion());
   }
 
   // NOTE:

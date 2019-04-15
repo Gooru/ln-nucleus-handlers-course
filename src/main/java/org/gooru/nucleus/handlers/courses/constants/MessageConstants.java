@@ -58,6 +58,8 @@ public class MessageConstants {
   public static final String LESSON_ID = "lessonId";
   public static final String COLLECTION_ID = "collectionId";
   public static final String MILESTONE_ID = "milestoneId";
+  public static final String FW_CODE = "fwCode";
+
   public static final String TAXONOMY = "taxonomy";
   public static final String RESP_JSON_KEY_RESOURCES = "resources";
   public static final String RESP_JSON_KEY_COURSES = "courses";

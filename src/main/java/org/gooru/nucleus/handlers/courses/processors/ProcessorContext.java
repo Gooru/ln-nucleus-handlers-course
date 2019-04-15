@@ -19,6 +19,7 @@ public class ProcessorContext {
   private final String collectionId;
   private final TenantContext tenantContext;
   private final String milestoneId;
+  private final String fwCode;
 
   public ProcessorContext(String userId, JsonObject session, JsonObject request, String courseId,
       String unitId, String lessonId, String collectionId, MultiMap headers) {
@@ -37,6 +38,7 @@ public class ProcessorContext {
     this.collectionId = collectionId;
     this.tenantContext = new TenantContext(session);
     this.milestoneId = headers.get(MessageConstants.MILESTONE_ID);
+    this.fwCode = headers.get(MessageConstants.FW_CODE);
 
   }
 
@@ -83,6 +85,10 @@ public class ProcessorContext {
 
   public String milestoneId() {
     return milestoneId;
+  }
+
+  public String frameworkCode() {
+    return fwCode;
   }
 
   private static class TenantContext {
