@@ -2,14 +2,15 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.MessageResponseWrapperException;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.common.Validators;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityMilestone;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.MilestoneDao;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
@@ -22,17 +23,17 @@ import org.slf4j.LoggerFactory;
  * @author ashish.
  */
 
-class CourseFetchWithMilestonesHandler implements DBHandler {
+class FetchMilestoneHandler implements DBHandler {
 
-  private static final String MILESTONES = "milestones";
   private final ProcessorContext context;
+  private static final Logger LOGGER = LoggerFactory.getLogger(FetchMilestoneHandler.class);
   private AJEntityCourse course;
-  private static final Logger LOGGER = LoggerFactory
-      .getLogger(CourseFetchWithMilestonesHandler.class);
+  private MilestoneDao milestoneDao;
 
-  CourseFetchWithMilestonesHandler(ProcessorContext context) {
+  FetchMilestoneHandler(ProcessorContext context) {
     this.context = context;
   }
+
 
   @Override
   public ExecutionResult<MessageResponse> checkSanity() {
@@ -40,7 +41,7 @@ class CourseFetchWithMilestonesHandler implements DBHandler {
     try {
       Validators.validateCourseInContext(context);
       Validators.validateUserIdInContext(context);
-      Validators.validateFWInContext(context);
+      Validators.validateMilestoneInContext(context);
       LOGGER.debug("checkSanity() OK");
       return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
     } catch (MessageResponseWrapperException mrwe) {
@@ -50,45 +51,46 @@ class CourseFetchWithMilestonesHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    LOGGER.debug("validateRequest() OK");
+    try {
+      initializeCourse();
+      LOGGER.debug("Found course: '{}", context.courseId());
+      Validators.validateCourseIsPremium(course, context);
+      LOGGER.debug("Course: '{}' is premium", context.courseId());
+      validateAndInitializeMilestone();
+      return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(course);
+    } catch (MessageResponseWrapperException mrwe) {
+      return new ExecutionResult<>(mrwe.getMessageResponse(), ExecutionStatus.FAILED);
+    }
+  }
+
+  private void validateAndInitializeMilestone() {
+    milestoneDao = new MilestoneDao();
+    if (!milestoneDao.checkMilestoneExists(context.milestoneId())) {
+      throw new MessageResponseWrapperException(
+          MessageResponseFactory.createNotFoundResponse("Milestone does not exists"));
+    }
+  }
+
+  private void initializeCourse() {
     LazyList<AJEntityCourse> entityCourses =
         AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE, context.courseId(), false);
-    if (!entityCourses.isEmpty()) {
-      LOGGER.debug("Found Course: '{}'", context.courseId());
-      course = entityCourses.get(0);
-      if (course.isPremium()) {
-        return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(course);
-      } else {{
-        LOGGER.warn("Course: '{}' is not premium", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory
-            .createInvalidRequestResponse("Milestone API is available for navigator courses only"),
-            ExecutionStatus.FAILED);
-      }}
-    } else {
-      LOGGER.error("Course not found {}", context.courseId());
-      return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(),
-          ExecutionStatus.FAILED);
+    if (entityCourses.isEmpty()) {
+      LOGGER.error("course not found {}", context.courseId());
+      throw new MessageResponseWrapperException(MessageResponseFactory.createNotFoundResponse());
     }
+    course = entityCourses.get(0);
   }
 
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    JsonObject body = new JsonObject(
-        new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCourse.ALL_FIELDS)
-            .toJson(course));
-    LazyList<AJEntityMilestone> milestones = new MilestoneDao()
-        .fetchMilestonesForCourse(context.courseId());
-    LOGGER.debug("Number of milestones found {}", milestones.size());
-    JsonArray milestonesSummary;
-    if (milestones.size() > 0) {
-      milestonesSummary = new JsonArray(new JsonFormatterBuilder()
-          .buildSimpleJsonFormatter(false, MilestoneDao.MILESTONE_SUMMARY_FIELDS)
-          .toJson(milestones));
-    } else {
-      milestonesSummary = new JsonArray();
-    }
-    body.put(MILESTONES, milestonesSummary);
-    return new ExecutionResult<>(MessageResponseFactory.createGetResponse(body),
+    JsonArray lessonsInMilestone = milestoneDao
+        .fetchMilestoneBYIdForCourse(context.courseId(), context.milestoneId());
+    LOGGER.debug("Found '{}' lessons for milestone '{}'", lessonsInMilestone.size(),
+        context.milestoneId());
+    JsonObject result = new JsonObject().put(MessageConstants.COURSE_ID, context.courseId())
+        .put(MessageConstants.MILESTONE_ID, context.milestoneId())
+        .put(AJEntityLesson.LESSONS, lessonsInMilestone);
+    return new ExecutionResult<>(MessageResponseFactory.createGetResponse(result),
         ExecutionStatus.SUCCESSFUL);
   }
 
@@ -96,5 +98,4 @@ class CourseFetchWithMilestonesHandler implements DBHandler {
   public boolean handlerReadOnly() {
     return true;
   }
-
 }

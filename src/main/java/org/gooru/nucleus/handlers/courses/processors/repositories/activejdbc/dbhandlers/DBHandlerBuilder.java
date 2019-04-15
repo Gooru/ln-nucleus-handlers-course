@@ -114,6 +114,6 @@ public class DBHandlerBuilder {
   }
 
   public DBHandler buildMilestoneFetchHandler(ProcessorContext context) {
-    return new MilestoneFetchHandler(context);
+    return new FetchMilestoneHandler(context);
   }
 }
