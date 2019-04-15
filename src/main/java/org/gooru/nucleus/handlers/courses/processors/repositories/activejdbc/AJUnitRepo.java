@@ -6,11 +6,11 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbh
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.transactions.TransactionExecutor;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 
-public class AJUnitRepo implements UnitRepo {
+class AJUnitRepo implements UnitRepo {
 
   private final ProcessorContext context;
 
-  public AJUnitRepo(ProcessorContext context) {
+  AJUnitRepo(ProcessorContext context) {
     this.context = context;
   }
 

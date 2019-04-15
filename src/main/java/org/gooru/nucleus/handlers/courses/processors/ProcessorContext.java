@@ -2,6 +2,7 @@ package org.gooru.nucleus.handlers.courses.processors;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
+import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 
 /**
  * Created by ashish on 7/1/16.
@@ -17,10 +18,10 @@ public class ProcessorContext {
   private final String lessonId;
   private final String collectionId;
   private final TenantContext tenantContext;
+  private final String milestoneId;
 
   public ProcessorContext(String userId, JsonObject session, JsonObject request, String courseId,
-      String unitId,
-      String lessonId, String collectionId, MultiMap headers) {
+      String unitId, String lessonId, String collectionId, MultiMap headers) {
     if (session == null || userId == null || session.isEmpty() || headers == null || headers
         .isEmpty()) {
       throw new IllegalStateException(
@@ -35,6 +36,8 @@ public class ProcessorContext {
     this.lessonId = lessonId;
     this.collectionId = collectionId;
     this.tenantContext = new TenantContext(session);
+    this.milestoneId = headers.get(MessageConstants.MILESTONE_ID);
+
   }
 
   public String userId() {
@@ -76,6 +79,10 @@ public class ProcessorContext {
 
   public String tenantRoot() {
     return this.tenantContext.tenantRoot();
+  }
+
+  public String milestoneId() {
+    return milestoneId;
   }
 
   private static class TenantContext {
