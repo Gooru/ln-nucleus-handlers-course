@@ -7,5 +7,8 @@
   	"autoCommit" : false,
   	"jdbcUrl" : "jdbc:postgresql://localhost:5432/nucleus",
   	"maximumPoolSize" : 5
-  }
+  },
+	"app.configuration": {
+		"course.version.for.premium.content": "premium"
+	}
 }

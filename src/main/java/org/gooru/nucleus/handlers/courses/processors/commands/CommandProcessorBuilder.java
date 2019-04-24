@@ -174,6 +174,18 @@ public enum CommandProcessorBuilder {
     public Processor build(ProcessorContext context) {
       return new CollectionRemoveProcessor(context);
     }
+  },
+  COURSE_MS_GET(MessageConstants.MSG_OP_COURSE_MS_GET) {
+    @Override
+    public Processor build(ProcessorContext context) {
+      return new CourseMilestoneListProcessor(context);
+    }
+  },
+  COURSE_MS_MILESTONE_GET(MessageConstants.MSG_OP_COURSE_MS_MILESTONE_GET) {
+    @Override
+    public Processor build(ProcessorContext context) {
+      return new CourseMilestoneGetProcessor(context);
+    }
   };
 
   private String name;

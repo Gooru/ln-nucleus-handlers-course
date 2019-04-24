@@ -1,23 +1,32 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc;
 
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
-import org.gooru.nucleus.handlers.courses.processors.repositories.CourseCollaboratorRepo;
+import org.gooru.nucleus.handlers.courses.processors.repositories.MilestoneRepo;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.DBHandlerBuilder;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.transactions.TransactionExecutor;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 
-class AJCourseCollaboratorRepo implements CourseCollaboratorRepo {
+/**
+ * @author ashish.
+ */
+
+public class AJMilestoneRepo implements MilestoneRepo {
 
   private final ProcessorContext context;
 
-  AJCourseCollaboratorRepo(ProcessorContext context) {
+  AJMilestoneRepo(ProcessorContext context) {
     this.context = context;
   }
 
   @Override
-  public MessageResponse updateCollaborator() {
+  public MessageResponse fetchCourseWithMilestones() {
     return new TransactionExecutor()
-        .executeTransaction(new DBHandlerBuilder().buildUpdateCollaboratorHandler(context));
+        .executeTransaction(new DBHandlerBuilder().buildCourseFetchWithMilestonesHandler(context));
   }
 
+  @Override
+  public MessageResponse fetchMilestone() {
+    return new TransactionExecutor()
+        .executeTransaction(new DBHandlerBuilder().buildMilestoneFetchHandler(context));
+  }
 }
