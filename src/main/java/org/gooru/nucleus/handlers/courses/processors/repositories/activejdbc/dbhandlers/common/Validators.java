@@ -2,6 +2,9 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.MessageResponseWrapperException;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
+import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
+import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,4 +45,21 @@ public final class Validators {
     }
   }
 
+  public static void validateMilestoneInContext(ProcessorContext context) {
+    if (context.milestoneId() == null || context.milestoneId().isEmpty()) {
+      LOGGER.warn("Invalid user id to fetch course");
+      throw new MessageResponseWrapperException(
+          MessageResponseFactory.createInvalidRequestResponse("Invalid milestoneId"));
+    }
+  }
+
+  public static void validateCourseIsPremium(AJEntityCourse course, ProcessorContext context) {
+    if (!course.isPremium()) {
+      LOGGER.warn("Course: '{}' is not premium", context.courseId());
+      throw new MessageResponseWrapperException(MessageResponseFactory
+          .createInvalidRequestResponse(
+              "Milestone API is available for navigator courses only"));
+
+    }
+  }
 }
