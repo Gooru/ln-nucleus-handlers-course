@@ -3,8 +3,6 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.MessageResponseWrapperException;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
-import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
-import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +37,7 @@ public final class Validators {
 
   public static void validateFWInContext(ProcessorContext context) {
     if (context.frameworkCode() == null || context.frameworkCode().isEmpty()) {
-      LOGGER.warn("Invalid user id to fetch course");
+      LOGGER.warn("Invalid FW code to fetch course");
       throw new MessageResponseWrapperException(
           MessageResponseFactory.createInvalidRequestResponse("Invalid framework code"));
     }

@@ -58,12 +58,15 @@ class CourseFetchWithMilestonesHandler implements DBHandler {
       course = entityCourses.get(0);
       if (course.isPremium()) {
         return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(course);
-      } else {{
-        LOGGER.warn("Course: '{}' is not premium", context.courseId());
-        return new ExecutionResult<>(MessageResponseFactory
-            .createInvalidRequestResponse("Milestone API is available for navigator courses only"),
-            ExecutionStatus.FAILED);
-      }}
+      } else {
+        {
+          LOGGER.warn("Course: '{}' is not premium", context.courseId());
+          return new ExecutionResult<>(MessageResponseFactory
+              .createInvalidRequestResponse(
+                  "Milestone API is available for navigator courses only"),
+              ExecutionStatus.FAILED);
+        }
+      }
     } else {
       LOGGER.error("Course not found {}", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(),
@@ -77,7 +80,7 @@ class CourseFetchWithMilestonesHandler implements DBHandler {
         new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCourse.ALL_FIELDS)
             .toJson(course));
     LazyList<AJEntityMilestone> milestones = new MilestoneDao()
-        .fetchMilestonesForCourse(context.courseId());
+        .fetchMilestonesForCourse(context.courseId(), context.frameworkCode());
     LOGGER.debug("Number of milestones found {}", milestones.size());
     JsonArray milestonesSummary;
     if (milestones.size() > 0) {
