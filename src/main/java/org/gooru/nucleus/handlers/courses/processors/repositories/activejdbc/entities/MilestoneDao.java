@@ -8,12 +8,16 @@ import java.util.List;
 import java.util.Map;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author ashish.
  */
 
 public class MilestoneDao {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(MilestoneDao.class);
 
   private static final String MILESTONE_LIST_FOR_COURSE =
       "select distinct mlp.course_id, mlp.milestone_id, mlp.grade_id, mlp.grade_name, "
@@ -24,7 +28,7 @@ public class MilestoneDao {
       "select mlp.grade_id, mlp.grade_name, mlp.grade_seq, "
           + " mlp.fw_code, mlp.tx_subject_code, mlp.unit_id, u.title unit_title, u.sequence_id unit_sequence, "
           + " mlp.lesson_id, l.title lesson_title, l.sequence_id lesson_sequence, mlp.tx_domain_id, "
-          + " mlp.tx_domain_code, mlp.tx_domain_seq, mlp.tx_comp_code, mlp.tx_comp_name, mlp.tx_comp_student_desc, mlp.tx_comp_seq "
+          + " mlp.tx_domain_code, mlp.tx_domain_name, mlp.tx_domain_seq, mlp.tx_comp_code, mlp.tx_comp_name, mlp.tx_comp_student_desc, mlp.tx_comp_seq "
           + " from milestone_lesson_map mlp inner join lesson l on l.lesson_id = mlp.lesson_id and l.course_id = mlp.course_id "
           + " inner join unit u on u.unit_id = mlp.unit_id and u.course_id = mlp.course_id "
           + " where l.is_deleted = false and u.is_deleted = false and mlp.course_id = ?::uuid and mlp.milestone_id = ?"
@@ -47,8 +51,7 @@ public class MilestoneDao {
       String resultString = new ObjectMapper().writeValueAsString(result);
       return new JsonArray(resultString);
     } catch (JsonProcessingException e) {
-      // TODO: Fix this
-      e.printStackTrace();
+      LOGGER.warn("Not able to serialize values as JSON");
       throw new RuntimeException(e);
     }
   }
