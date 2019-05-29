@@ -264,11 +264,14 @@ public class MoveCollectionToLessonHandler implements DBHandler {
 
     if (collectionToUpdate.save()) {
       LOGGER.info("collection is moved to course");
-      AJEntityContent.update(
-          "course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, modifier_id = ?::uuid",
-          "collection_id = ?::uuid", context.courseId(), context.unitId(), context.lessonId(),
-          context.userId(),
-          collectionToUpdate.getId());
+      if (isCollectionOrAssessment()) { 
+        AJEntityContent.update(
+            "course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, modifier_id = ?::uuid",
+            "collection_id = ?::uuid", context.courseId(), context.unitId(), context.lessonId(),
+            context.userId(),
+            collectionToUpdate.getId());
+      }
+      
       AJEntityRubric.update(
           "course_id = ?::uuid, unit_id = ?::uuid, lesson_id = ?::uuid, modifier_id = ?::uuid",
           "collection_id = ?::uuid", context.courseId(), context.unitId(), context.lessonId(),
@@ -348,6 +351,11 @@ public class MoveCollectionToLessonHandler implements DBHandler {
     }
 
     return output;
+  }
+  
+  private boolean isCollectionOrAssessment() {
+    String format = collectionToUpdate.getString(AJEntityCollection.FORMAT);
+    return (format == AJEntityCollection.COLLECTION || format == AJEntityCollection.ASSESSMENT);
   }
 
   private JsonObject getModelErrors() {
