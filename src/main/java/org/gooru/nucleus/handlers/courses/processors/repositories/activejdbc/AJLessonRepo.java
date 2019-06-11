@@ -6,11 +6,11 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbh
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.transactions.TransactionExecutor;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponse;
 
-public class AJLessonRepo implements LessonRepo {
+class AJLessonRepo implements LessonRepo {
 
   private final ProcessorContext context;
 
-  public AJLessonRepo(ProcessorContext context) {
+  AJLessonRepo(ProcessorContext context) {
     this.context = context;
   }
 

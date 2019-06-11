@@ -109,4 +109,11 @@ public class DBHandlerBuilder {
     return new FetchCollectionsByCourse(context);
   }
 
+  public DBHandler buildCourseFetchWithMilestonesHandler(ProcessorContext context) {
+    return new CourseFetchWithMilestonesHandler(context);
+  }
+
+  public DBHandler buildMilestoneFetchHandler(ProcessorContext context) {
+    return new FetchMilestoneHandler(context);
+  }
 }
