@@ -103,8 +103,10 @@ public class UpdateCollaboratorHandler implements DBHandler {
     courseUpdateCollab = new AJEntityCourse();
     courseUpdateCollab.setCourseId(context.courseId());
     courseUpdateCollab.setModifierId(context.userId());
-    courseUpdateCollab
-        .setCollaborator(context.request().getJsonArray(AJEntityCourse.COLLABORATOR).toString());
+    JsonArray collaborators =
+        context.request().getJsonArray(AJEntityCourse.COLLABORATOR) != null ? context.request()
+            .getJsonArray(AJEntityCourse.COLLABORATOR) : new JsonArray();
+    courseUpdateCollab.setCollaborator(collaborators.toString());
 
     if (courseUpdateCollab.hasErrors()) {
       LOGGER.warn("updating course collaborator has errors");
@@ -144,10 +146,9 @@ public class UpdateCollaboratorHandler implements DBHandler {
     JsonObject input = context.request();
     JsonObject output = new JsonObject();
     input.fieldNames().stream().filter(
-        key -> AJEntityCourse.COLLABORATOR_FIELD.contains(key) && (input.getValue(key) == null
-            || input
-            .getValue(key).toString().isEmpty()))
-        .forEach(key -> output.put(key, "Field should not be empty or null"));
+        key -> AJEntityCourse.COLLABORATOR_FIELD.contains(key) &&
+            (input.getValue(key) != null && input.getValue(key).toString().isEmpty()))
+        .forEach(key -> output.put(key, "Field should not be empty"));
     return output.isEmpty() ? null : output;
   }
 
@@ -166,7 +167,9 @@ public class UpdateCollaboratorHandler implements DBHandler {
     currentCollaborators =
         currentCollaboratorsAsString != null && !currentCollaboratorsAsString.isEmpty() ?
             new JsonArray(currentCollaboratorsAsString) : new JsonArray();
-    JsonArray newCollaborators = this.context.request().getJsonArray(AJEntityCourse.COLLABORATOR);
+    JsonArray newCollaborators =
+        this.context.request().getJsonArray(AJEntityCourse.COLLABORATOR) != null ? this.context
+            .request().getJsonArray(AJEntityCourse.COLLABORATOR) : new JsonArray();
     if (currentCollaborators.isEmpty() && !newCollaborators.isEmpty()) {
       // Adding all
       result.put(COLLABORATORS_ADDED, newCollaborators.copy());
