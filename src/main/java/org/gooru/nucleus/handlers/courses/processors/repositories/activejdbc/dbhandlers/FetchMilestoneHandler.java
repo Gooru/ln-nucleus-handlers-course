@@ -2,14 +2,12 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.gooru.nucleus.handlers.courses.constants.MessageConstants;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.MessageResponseWrapperException;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.common.Validators;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
-import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityMilestone;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.MilestoneDao;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.courses.processors.responses.ExecutionResult.ExecutionStatus;
@@ -24,6 +22,9 @@ import org.slf4j.LoggerFactory;
  */
 
 class FetchMilestoneHandler implements DBHandler {
+
+  private static final String RESPONSE_KEY_COURSE_ID = "course_id";
+  private static final String RESPONSE_KEY_MILESTONE_ID = "milestone_id";
 
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchMilestoneHandler.class);
@@ -87,8 +88,8 @@ class FetchMilestoneHandler implements DBHandler {
         .fetchMilestoneBYIdForCourse(context.courseId(), context.milestoneId());
     LOGGER.debug("Found '{}' lessons for milestone '{}'", lessonsInMilestone.size(),
         context.milestoneId());
-    JsonObject result = new JsonObject().put(MessageConstants.COURSE_ID, context.courseId())
-        .put(MessageConstants.MILESTONE_ID, context.milestoneId())
+    JsonObject result = new JsonObject().put(RESPONSE_KEY_COURSE_ID, context.courseId())
+        .put(RESPONSE_KEY_MILESTONE_ID, context.milestoneId())
         .put(AJEntityLesson.LESSONS, lessonsInMilestone);
     return new ExecutionResult<>(MessageResponseFactory.createGetResponse(result),
         ExecutionStatus.SUCCESSFUL);
