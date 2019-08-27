@@ -28,6 +28,9 @@ public class EventBuilderFactory {
   private static final String EVT_COLLECTION_MOVE = "event.collection.move";
   private static final String EVT_COLLECTION_REMOVE = "event.collection.remove";
 
+  private static final String EVT_LESSON_PLAN_CREATE = "event.lesson.plan.create";
+  private static final String EVT_LESSON_PLAN_UPDATE = "event.lesson.plan.update";
+  
   private static final String EVENT_NAME = "event.name";
   private static final String EVENT_BODY = "event.body";
   private static final String ID = "id";
@@ -141,5 +144,15 @@ public class EventBuilderFactory {
         .put(EVENT_BODY, new JsonObject()
             .put(ID, collectionId).put(COURSE_ID, courseId).put(UNIT_ID, unitId)
             .put(LESSON_ID, lessonId));
+  }
+  
+  public static EventBuilder getCreateLessonPlanEventBuilder(String lessonPlanId) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_PLAN_CREATE).put(EVENT_BODY,
+        new JsonObject().put(ID, lessonPlanId));
+  }
+  
+  public static EventBuilder getUpdateLessonPlanEventBuilder(String lessonPlanId) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_PLAN_UPDATE).put(EVENT_BODY,
+        new JsonObject().put(ID, lessonPlanId));
   }
 }

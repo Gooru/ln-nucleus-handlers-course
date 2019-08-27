@@ -17,6 +17,7 @@ public class ProcessorContext {
   private final String unitId;
   private final String lessonId;
   private final String collectionId;
+  private final String lessonPlanId;
   private final TenantContext tenantContext;
   private final String milestoneId;
   private final String fwCode;
@@ -39,6 +40,7 @@ public class ProcessorContext {
     this.tenantContext = new TenantContext(session);
     this.milestoneId = headers.get(MessageConstants.MILESTONE_ID);
     this.fwCode = headers.get(MessageConstants.FW_CODE);
+    this.lessonPlanId = headers.get(MessageConstants.LESSON_PLAN_ID);
 
   }
 
@@ -67,7 +69,6 @@ public class ProcessorContext {
   }
 
   public String lessonId() {
-
     return this.lessonId;
   }
 
@@ -85,6 +86,10 @@ public class ProcessorContext {
 
   public String milestoneId() {
     return milestoneId;
+  }
+  
+  public String lessonPlanId() {
+    return this.lessonPlanId;
   }
 
   public String frameworkCode() {
