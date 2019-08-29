@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +20,8 @@ import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class FetchUnitHandler implements DBHandler {
 
@@ -36,18 +36,14 @@ public class FetchUnitHandler implements DBHandler {
   public ExecutionResult<MessageResponse> checkSanity() {
     if (context.courseId() == null || context.courseId().isEmpty()) {
       LOGGER.warn("invalid course id to fetch unit");
-      return new ExecutionResult<>(
-          MessageResponseFactory
-              .createInvalidRequestResponse("Invalid course id provided to fetch unit"),
-          ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(
+          "Invalid course id provided to fetch unit"), ExecutionStatus.FAILED);
     }
 
     if (context.unitId() == null || context.unitId().isEmpty()) {
       LOGGER.warn("invalid unit id to fetch unit");
-      return new ExecutionResult<>(
-          MessageResponseFactory
-              .createInvalidRequestResponse("Invalid unit id provided to fetch unit"),
-          ExecutionStatus.FAILED);
+      return new ExecutionResult<>(MessageResponseFactory.createInvalidRequestResponse(
+          "Invalid unit id provided to fetch unit"), ExecutionStatus.FAILED);
     }
 
     if (context.userId() == null || context.userId().isEmpty()) {
@@ -62,19 +58,16 @@ public class FetchUnitHandler implements DBHandler {
 
   @Override
   public ExecutionResult<MessageResponse> validateRequest() {
-    LazyList<AJEntityCourse> courses =
-        AJEntityCourse
-            .findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
+    LazyList<AJEntityCourse> courses = AJEntityCourse
+        .findBySQL(AJEntityCourse.SELECT_COURSE_TO_VALIDATE, context.courseId(), false);
     if (courses.isEmpty()) {
       LOGGER.warn("course {} not found to fetch unit, aborting", context.courseId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(),
           ExecutionStatus.FAILED);
     }
 
-    LazyList<AJEntityUnit> ajEntityUnit =
-        AJEntityUnit
-            .findBySQL(AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(),
-                false);
+    LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(
+        AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
     if (ajEntityUnit.isEmpty()) {
       LOGGER.warn("Unit {} not found, aborting", context.unitId());
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(),
@@ -84,88 +77,99 @@ public class FetchUnitHandler implements DBHandler {
     return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(courses.get(0));
   }
 
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
-    LazyList<AJEntityUnit> ajEntityUnits =
-        AJEntityUnit
-            .findBySQL(AJEntityUnit.SELECT_UNIT, context.courseId(), context.unitId(), false);
+    LazyList<AJEntityUnit> ajEntityUnits = AJEntityUnit.findBySQL(AJEntityUnit.SELECT_UNIT,
+        context.courseId(), context.unitId(), false);
     JsonObject resultBody;
     if (!ajEntityUnits.isEmpty()) {
       LOGGER.info("unit {} found, packing into JSON", context.unitId());
-      resultBody = new JsonObject(
-          new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityUnit.ALL_FIELDS)
-              .toJson(ajEntityUnits.get(0)));
+      resultBody = new JsonObject(new JsonFormatterBuilder()
+          .buildSimpleJsonFormatter(false, AJEntityUnit.ALL_FIELDS).toJson(ajEntityUnits.get(0)));
 
-      LazyList<AJEntityLesson> lessons = AJEntityLesson
-          .findBySQL(AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), context.courseId(),
-              false);
+      LazyList<AJEntityLesson> lessons = AJEntityLesson.findBySQL(
+          AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), context.courseId(), false);
       LOGGER.debug("number of lessons found for unit {} : {}", context.unitId(), lessons.size());
       if (lessons.size() > 0) {
         List<String> lessonIds = new ArrayList<>();
-        lessons
-            .forEach(lesson -> lessonIds.add(lesson.getString(AJEntityLesson.LESSON_ID)));
+        lessons.forEach(lesson -> lessonIds.add(lesson.getString(AJEntityLesson.LESSON_ID)));
 
-        List<Map> collectionCount = Base
-            .findAll(AJEntityCollection.SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON,
-                DbHelperUtil.toPostgresArrayString(lessonIds), context.unitId(),
-                context.courseId());
+        List<Map> lessonPlansMeta = Base.findAll(AJEntityLesson.SELECT_LESSON_PLAN_META_BY_LESSON,
+            DbHelperUtil.toPostgresArrayString(lessonIds), context.unitId(), context.courseId());
+        Map<String, Map<Object, Object>> lessonPlanMetaByLesson = new HashMap<>();
+        if (lessonPlansMeta != null && !lessonPlansMeta.isEmpty()) {
+          LOGGER.debug("lesson plan count: {}", lessonPlansMeta.size());
+          lessonPlansMeta.forEach(map -> {
+            Map<Object, Object> lessonPlanMetaMap = new HashMap<>();
+            map.keySet().forEach(key -> {
+              if (!key.toString().equalsIgnoreCase(AJEntityCollection.LESSON_ID)) {
+                lessonPlanMetaMap.put(key, map.get(key));
+              }
+            });
+            lessonPlanMetaByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(),
+                lessonPlanMetaMap);
+          });
+        }
+        List<Map> collectionCount = Base.findAll(
+            AJEntityCollection.SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON,
+            DbHelperUtil.toPostgresArrayString(lessonIds), context.unitId(), context.courseId());
         LOGGER.debug("collection count: {}", collectionCount.size());
         Map<String, Integer> collectionCountByLesson = new HashMap<>();
         collectionCount.stream().filter(
             map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                .toString()
-                .equalsIgnoreCase(AJEntityCollection.FORMAT_COLLECTION))
-            .forEach(map -> collectionCountByLesson
-                .put(map.get(AJEntityCollection.LESSON_ID).toString(),
+                .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_COLLECTION))
+            .forEach(
+                map -> collectionCountByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(),
                     Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
-        
+
         Map<String, Integer> extCollectionCountByLesson = new HashMap<>();
         collectionCount.stream().filter(
             map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                .toString()
-                .equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_COLLECTION))
-            .forEach(map -> extCollectionCountByLesson
-                .put(map.get(AJEntityCollection.LESSON_ID).toString(),
-                    Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
+                .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_COLLECTION))
+            .forEach(map -> extCollectionCountByLesson.put(
+                map.get(AJEntityCollection.LESSON_ID).toString(),
+                Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
 
         Map<String, Integer> assessmentCountByLesson = new HashMap<>();
         collectionCount.stream().filter(
             map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                .toString()
-                .equalsIgnoreCase(AJEntityCollection.FORMAT_ASSESSMENT))
-            .forEach(map -> assessmentCountByLesson
-                .put(map.get(AJEntityCollection.LESSON_ID).toString(),
+                .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_ASSESSMENT))
+            .forEach(
+                map -> assessmentCountByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(),
                     Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
 
         Map<String, Integer> extAssessmentCountByLesson = new HashMap<>();
         collectionCount.stream().filter(
             map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                .toString()
-                .equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_ASSESSMENT))
-            .forEach(map -> extAssessmentCountByLesson
-                .put(map.get(AJEntityCollection.LESSON_ID).toString(),
-                    Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
+                .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_ASSESSMENT))
+            .forEach(map -> extAssessmentCountByLesson.put(
+                map.get(AJEntityCollection.LESSON_ID).toString(),
+                Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
 
         JsonArray lessonSummaryArray = new JsonArray();
         lessons.forEach(lesson -> {
-          JsonObject lessonSummary = new JsonObject(
-              new JsonFormatterBuilder()
-                  .buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS)
-                  .toJson(lesson));
+          JsonObject lessonSummary = new JsonObject(new JsonFormatterBuilder()
+              .buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS)
+              .toJson(lesson));
           String lessonId = lesson.get(AJEntityCollection.ID).toString();
           Integer collectionCnt = collectionCountByLesson.get(lessonId);
           Integer extCollectionCnt = extCollectionCountByLesson.get(lessonId);
           Integer assessmentCnt = assessmentCountByLesson.get(lessonId);
           Integer extAssessmentCnt = extAssessmentCountByLesson.get(lessonId);
-          lessonSummary
-              .put(AJEntityCollection.COLLECTION_COUNT, collectionCnt != null ? collectionCnt : 0);
-          lessonSummary
-              .put(AJEntityCollection.EXT_COLLECTION_COUNT, extCollectionCnt != null ? extCollectionCnt : 0);
-          lessonSummary
-              .put(AJEntityCollection.ASSESSMENT_COUNT, assessmentCnt != null ? assessmentCnt : 0);
+          Map<Object, Object> lessonPlanSummary = lessonPlanMetaByLesson.get(lessonId);
+          lessonSummary.put(AJEntityCollection.COLLECTION_COUNT,
+              collectionCnt != null ? collectionCnt : 0);
+          lessonSummary.put(AJEntityCollection.EXT_COLLECTION_COUNT,
+              extCollectionCnt != null ? extCollectionCnt : 0);
+          lessonSummary.put(AJEntityCollection.ASSESSMENT_COUNT,
+              assessmentCnt != null ? assessmentCnt : 0);
           lessonSummary.put(AJEntityCollection.EXT_ASSESSMENT_COUNT,
               extAssessmentCnt != null ? extAssessmentCnt : 0);
+          if (lessonPlanSummary != null) {
+            lessonPlanSummary.keySet()
+                .forEach(key -> lessonSummary.put(key.toString(), lessonPlanSummary.get(key)));
+          }
           lessonSummaryArray.add(lessonSummary);
         });
         resultBody.put(AJEntityLesson.LESSON_SUMMARY, lessonSummaryArray);

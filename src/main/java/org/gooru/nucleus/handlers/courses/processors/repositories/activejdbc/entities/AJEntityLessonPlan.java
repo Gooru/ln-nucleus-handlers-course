@@ -28,12 +28,13 @@ public class AJEntityLessonPlan extends Model {
   public static final String PRIOR_KNOWLEDGE = "prior_knowledge";
   public static final String ANTICIPATED_STRUGGLES = "anticipated_struggles";
   public static final String REFERENCE_LINKS = "reference_links";
-  public static final String PACING_GUIDE_IN_DAYS = "pacing_guide_in_days";
+  public static final String PACING_GUIDE_IN_HRS = "pacing_guide_in_hrs";
   public static final String START_WEEK = "start_week";
   public static final String SESSIONS = "sessions";
   public static final String CONTENTS = "contents";
   public static final String CONTENT_FORMAT = "content_format";
   public static final String CONTENT_ID = "content_id";
+  public static final String LESSON_PLAN_ID = "id";
   private static final Set<String> ALLOWED_CONTENT_FORMATS =
       new HashSet<>(Arrays.asList("assessment", "collection", "assessment-external",
           "collection-external", "offline-activity", "question", "resource"));
@@ -74,7 +75,7 @@ public class AJEntityLessonPlan extends Model {
     validatorMap.put(PRIOR_KNOWLEDGE, FieldValidator::validateJsonArrayIfPresent);
     validatorMap.put(ANTICIPATED_STRUGGLES, FieldValidator::validateJsonArrayIfPresent);
     validatorMap.put(REFERENCE_LINKS, FieldValidator::validateJsonArrayIfPresent);
-    validatorMap.put(PACING_GUIDE_IN_DAYS, FieldValidator::validateIntegerIfPresent);
+    validatorMap.put(PACING_GUIDE_IN_HRS, FieldValidator::validateIntegerIfPresent);
     validatorMap.put(START_WEEK,
         (value) -> FieldValidator.validateIntegerWithRangeIfPresent(value, 0, 53));
     validatorMap.put(SESSIONS, FieldValidator::validateJsonArrayIfPresent);
@@ -144,7 +145,7 @@ public class AJEntityLessonPlan extends Model {
   }
 
   public int getPacingGuideInDays() {
-    return this.getInteger(PACING_GUIDE_IN_DAYS);
+    return this.getInteger(PACING_GUIDE_IN_HRS);
   }
 
   public int getStartWeek() {

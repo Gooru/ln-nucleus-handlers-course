@@ -44,14 +44,14 @@ public final class LessonPlanDao {
   private static final Set<String> EDITABLE_FIELDS = new HashSet<>(
       Arrays.asList(AJEntityLessonPlan.DESCRIPTION, AJEntityLessonPlan.GUIDING_QUESTIONS,
           AJEntityLessonPlan.PRIOR_KNOWLEDGE, AJEntityLessonPlan.ANTICIPATED_STRUGGLES,
-          AJEntityLessonPlan.REFERENCE_LINKS, AJEntityLessonPlan.PACING_GUIDE_IN_DAYS,
+          AJEntityLessonPlan.REFERENCE_LINKS, AJEntityLessonPlan.PACING_GUIDE_IN_HRS,
           AJEntityLessonPlan.START_WEEK, AJEntityLessonPlan.SESSIONS));
 
   private static final Set<String> CREATABLE_FIELDS =
       new HashSet<>(Arrays.asList(AJEntityLessonPlan.DESCRIPTION,
           AJEntityLessonPlan.GUIDING_QUESTIONS, AJEntityLessonPlan.PRIOR_KNOWLEDGE,
           AJEntityLessonPlan.ANTICIPATED_STRUGGLES, AJEntityLessonPlan.REFERENCE_LINKS,
-          AJEntityLessonPlan.PACING_GUIDE_IN_DAYS, AJEntityLessonPlan.START_WEEK));
+          AJEntityLessonPlan.PACING_GUIDE_IN_HRS, AJEntityLessonPlan.START_WEEK));
 
   private static final Set<String> MANDATORY_FIELDS =
       new HashSet<>(Arrays.asList(AJEntityLessonPlan.DESCRIPTION));
@@ -69,11 +69,11 @@ public final class LessonPlanDao {
   private static final Set<String> MANDATORY_SESSION_CONTENT_FIELDS = new HashSet<>(
       Arrays.asList(AJEntityLessonPlan.CONTENT_ID, AJEntityLessonPlan.CONTENT_FORMAT));
 
-  private static final List<String> RESPONSE_FIELDS =
-      Arrays.asList(AJEntityLessonPlan.DESCRIPTION, AJEntityLessonPlan.GUIDING_QUESTIONS,
-          AJEntityLessonPlan.PRIOR_KNOWLEDGE, AJEntityLessonPlan.ANTICIPATED_STRUGGLES,
-          AJEntityLessonPlan.REFERENCE_LINKS, AJEntityLessonPlan.PACING_GUIDE_IN_DAYS,
-          AJEntityLessonPlan.START_WEEK, AJEntityLessonPlan.SESSIONS);
+  private static final List<String> RESPONSE_FIELDS = Arrays.asList(AJEntityLessonPlan.DESCRIPTION,
+      AJEntityLessonPlan.GUIDING_QUESTIONS, AJEntityLessonPlan.PRIOR_KNOWLEDGE,
+      AJEntityLessonPlan.ANTICIPATED_STRUGGLES, AJEntityLessonPlan.REFERENCE_LINKS,
+      AJEntityLessonPlan.PACING_GUIDE_IN_HRS, AJEntityLessonPlan.START_WEEK,
+      AJEntityLessonPlan.SESSIONS, AJEntityLessonPlan.LESSON_PLAN_ID);
   public static final String OFFLINE_ACTIVITY = "offline-activity";
   private static final Set<String> CONTENT_TYPES =
       new HashSet<>(Arrays.asList("question", "resource"));
@@ -90,7 +90,7 @@ public final class LessonPlanDao {
 
   private static final String FETCH_LESSON_PLAN =
       "SELECT id, lesson_id, unit_id, course_id, description, guiding_questions, prior_knowledge, anticipated_struggles, reference_links, "
-          + "pacing_guide_in_days, start_week, sessions FROM lesson_plan WHERE  course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid";
+          + "pacing_guide_in_hrs, start_week, sessions FROM lesson_plan WHERE  course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid";
 
   private static final String FETCH_COLLECTIONS =
       "select id AS content_id, course_id, unit_id, lesson_id, title, thumbnail, format as content_format, subformat as content_subformat FROM collection WHERE"
@@ -373,17 +373,14 @@ public final class LessonPlanDao {
   private static void mapContentWithIdRef(List<Map> contents,
       Map<String, Map<Object, Object>> contentsMap) {
     if (contents != null) {
-      contents.stream().forEach(content -> {
+      contents.forEach(content -> {
         Map<Object, Object> contentMap = new HashMap<>();
         content.keySet().forEach(key -> {
-          if (key != AJEntityLessonPlan.CONTENT_ID) {
+          if (!key.toString().equalsIgnoreCase(AJEntityLessonPlan.CONTENT_ID)) {
             contentMap.put(key, content.get(key));
           }
         });
         String id = content.get(AJEntityLessonPlan.CONTENT_ID).toString();
-        if (contentsMap.get(id) != null) {
-          contentMap.putAll(contentsMap.get(id));
-        }
         contentsMap.put(id, contentMap);
       });
     }
