@@ -1,6 +1,7 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.formatter;
 
-import io.vertx.core.impl.StringEscapeUtils;
+import java.sql.Array;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.javalite.common.Convert;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.vertx.core.impl.StringEscapeUtils;
 
 /**
  * Created by ashish on 20/1/16. Simple Json formatter is not aware of any parent child relationship
@@ -89,6 +91,7 @@ class SimpleJsonFormatter implements JsonFormatter {
       String name = names[i];
       sb.append('"').append(name).append("\":");
       Object v = model.get(name);
+
       if (v == null) {
         sb.append("null");
       } else if (v instanceof Number || v instanceof Boolean) {
@@ -97,15 +100,16 @@ class SimpleJsonFormatter implements JsonFormatter {
         sb.append('"').append(Convert.toIsoString((Date) v)).append('"');
       } else if (v instanceof PGobject && ((PGobject) v).getType().equalsIgnoreCase(JSONB_TYPE)) {
         sb.append(Convert.toString(v));
+      } else if (v instanceof Array) {
+        transformSqlArray(sb, v, name);
       } else if (v instanceof String) {
         sb.append('"');
         try {
           sb.append(StringEscapeUtils.escapeJava(String.valueOf(v)));
         } catch (Exception e) {
-          LOGGER
-              .warn(
-                  "Failed to parse value of field '{}', will use default string without conversion ",
-                  name);
+          LOGGER.warn(
+              "Failed to parse value of field '{}', will use default string without conversion ",
+              name);
           sb.append(Convert.toString(v));
         }
         sb.append('"');
@@ -119,6 +123,29 @@ class SimpleJsonFormatter implements JsonFormatter {
       sb.append('\n').append(indent);
     }
     sb.append('}');
+  }
+
+  private static void transformSqlArray(StringBuilder sb, Object v, String name) {
+    sb.append('[');
+    try {
+      Object[] objArray = (Object[]) ((Array) v).getArray();
+      for (int index = 0; index < objArray.length; index++) {
+        Object val = objArray[index];
+        if (index > 0) {
+          sb.append(',');
+        }
+        if (val instanceof String) {
+          sb.append('"').append(val).append('"');
+        } else {
+          sb.append(val);
+        }
+      }
+    } catch (SQLException e) {
+      LOGGER.warn(
+          "Failed to parse value of field '{}', will use default string without conversion ", name);
+      sb.append(Convert.toString(v));
+    }
+    sb.append(']');
   }
 
   private static String[] lowerCased(Collection<String> collection) {

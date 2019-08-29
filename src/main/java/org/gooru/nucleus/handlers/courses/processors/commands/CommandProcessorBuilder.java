@@ -186,6 +186,24 @@ public enum CommandProcessorBuilder {
     public Processor build(ProcessorContext context) {
       return new CourseMilestoneGetProcessor(context);
     }
+  },
+  LESSON_PLAN_CREATE(MessageConstants.MSG_OP_LESSON_PLAN_CREATE) {
+    @Override
+    public Processor build(ProcessorContext context) {
+      return new LessonPlanCreateProcessor(context);
+    }
+  },
+  LESSON_PLAN_UPDATE(MessageConstants.MSG_OP_LESSON_PLAN_UPDATE) {
+    @Override
+    public Processor build(ProcessorContext context) {
+      return new LessonPlanUpdateProcessor(context);
+    }
+  },
+  LESSON_PLAN_DELETE(MessageConstants.MSG_OP_LESSON_PLAN_DELETE) {
+    @Override
+    public Processor build(ProcessorContext context) {
+      return new LessonPlanDeleteProcessor(context);
+    }
   };
 
   private String name;
