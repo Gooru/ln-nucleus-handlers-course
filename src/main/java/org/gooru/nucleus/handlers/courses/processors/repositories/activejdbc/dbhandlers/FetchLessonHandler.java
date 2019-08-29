@@ -125,6 +125,7 @@ public class FetchLessonHandler implements DBHandler {
         List<Map> collectionContentCount =
             Base.findAll(AJEntityContent.SELECT_CONTENT_COUNT_BY_COLLECTION, collectionArrayString,
                 context.courseId(), context.unitId(), context.lessonId());
+        
         Map<String, Integer> resourceCountMap = new HashMap<>();
         collectionContentCount.stream()
             .filter(map -> map.get(AJEntityContent.CONTENT_FORMAT) != null

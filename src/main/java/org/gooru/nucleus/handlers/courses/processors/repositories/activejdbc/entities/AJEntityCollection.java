@@ -39,8 +39,6 @@ public class AJEntityCollection extends Model {
   public static final String ASSESSMENTS_EXTERNAL = "assessments-external";
   public static final String COLLECTIONS = "collections";
   public static final String COLLECTIONS_EXTERNAL = "collections-external";
-  public static final String COLLECTION = "collection";
-  public static final String ASSESSMENT = "assessment";
 
   public static final List<String> COLLECTION_SUMMARY_FIELDS =
       Arrays.asList(ID, TITLE, FORMAT, SEQUENCE_ID, THUMBNAIL, URL, SUBFORMAT);
