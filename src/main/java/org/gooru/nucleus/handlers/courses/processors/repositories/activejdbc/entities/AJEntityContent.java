@@ -21,7 +21,7 @@ public class AJEntityContent extends Model {
   public static final String RESOURCE_COUNT = "resource_count";
   public static final String QUESTION_COUNT = "question_count";
   public static final String OE_QUESTION_COUNT = "oe_question_count";
-  public static final String OA_TASK_COUNT = "task_count";
+  
 
   public static final String SELECT_CONTENT_COUNT_BY_COLLECTION =
       "SELECT count(id) as content_count, content_format, collection_id FROM content WHERE"

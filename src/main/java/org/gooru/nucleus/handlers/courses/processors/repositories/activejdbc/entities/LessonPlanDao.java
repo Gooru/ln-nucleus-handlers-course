@@ -376,9 +376,7 @@ public final class LessonPlanDao {
       contents.forEach(content -> {
         Map<Object, Object> contentMap = new HashMap<>();
         content.keySet().forEach(key -> {
-          if (!key.toString().equalsIgnoreCase(AJEntityLessonPlan.CONTENT_ID)) {
-            contentMap.put(key, content.get(key));
-          }
+          contentMap.put(key, content.get(key));
         });
         String id = content.get(AJEntityLessonPlan.CONTENT_ID).toString();
         contentsMap.put(id, contentMap);
@@ -404,9 +402,9 @@ public final class LessonPlanDao {
             Map<Object, Object> collectionMap = collectionsMap.get(contentId);
             if (contentFormat.equalsIgnoreCase(OFFLINE_ACTIVITY)) {
               Map<Object, Object> offlineActivityCountMap = oaCountMap.get(contentId);
-              collectionMap.put(AJEntityContent.OA_TASK_COUNT,
+              collectionMap.put(AJEntityCollection.OA_TASK_COUNT,
                   offlineActivityCountMap != null
-                      ? offlineActivityCountMap.get(AJEntityContent.OA_TASK_COUNT)
+                      ? offlineActivityCountMap.get(AJEntityCollection.OA_TASK_COUNT)
                       : 0);
             } else if (COLLECTION_CONTENT_TYPES.contains(contentFormat)) {
               String resourceCountId =

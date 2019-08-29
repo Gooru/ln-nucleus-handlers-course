@@ -96,6 +96,7 @@ public class FetchLessonHandler implements DBHandler {
     return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(courses.get(0));
   }
 
+  @SuppressWarnings("rawtypes")
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     JsonObject resultBody;
@@ -118,14 +119,29 @@ public class FetchLessonHandler implements DBHandler {
           collectionSummary.size());
       if (collectionSummary.size() > 0) {
         List<String> collectionIds = new ArrayList<>();
-        collectionSummary
-            .forEach(collection -> collectionIds.add(collection.getString(AJEntityCollection.ID)));
+        List<String> oaIds = new ArrayList<>();
+        collectionSummary.forEach(collection -> {
+          String collectionId = collection.getString(AJEntityCollection.ID);
+          if (collection.getString(AJEntityCollection.FORMAT)
+              .equalsIgnoreCase(AJEntityCollection.OFFLINE_ACTIVITY)) {
+            oaIds.add(collectionId);
+          }
+          collectionIds.add(collectionId);
+        });
+        Map<String, Integer> oaCountMap = new HashMap<>();
+        if (!oaIds.isEmpty()) {
+          String oaArrayString = DbHelperUtil.toPostgresArrayString(oaIds);
+          List<Map> oaCount =
+              Base.findAll(AJEntityCollection.FETCH_TASK_COUNT_BY_OA, oaArrayString);
+          oaCount.forEach(map -> oaCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
+              Integer.valueOf(map.get(AJEntityCollection.OA_TASK_COUNT).toString())));
+        }
 
         String collectionArrayString = DbHelperUtil.toPostgresArrayString(collectionIds);
         List<Map> collectionContentCount =
             Base.findAll(AJEntityContent.SELECT_CONTENT_COUNT_BY_COLLECTION, collectionArrayString,
                 context.courseId(), context.unitId(), context.lessonId());
-        
+
         Map<String, Integer> resourceCountMap = new HashMap<>();
         collectionContentCount.stream()
             .filter(map -> map.get(AJEntityContent.CONTENT_FORMAT) != null
@@ -155,13 +171,15 @@ public class FetchLessonHandler implements DBHandler {
           Integer resourceCount = resourceCountMap.get(collectionId);
           Integer questionCount = questionCountMap.get(collectionId);
           Integer oeQuestionCount = oeQuestionCountMap.get(collectionId);
+          Integer taskCount = oaCountMap.get(collectionId);
           collectionSummaryArray.add(new JsonObject(new JsonFormatterBuilder()
               .buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS)
               .toJson(collection))
                   .put(AJEntityContent.RESOURCE_COUNT, resourceCount != null ? resourceCount : 0)
                   .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0)
                   .put(AJEntityContent.OE_QUESTION_COUNT,
-                      oeQuestionCount != null ? oeQuestionCount : 0));
+                      oeQuestionCount != null ? oeQuestionCount : 0)
+                  .put(AJEntityCollection.OA_TASK_COUNT, taskCount != null ? taskCount : 0));
         });
 
         resultBody.put(AJEntityCollection.COLLECTION_SUMMARY, collectionSummaryArray);
