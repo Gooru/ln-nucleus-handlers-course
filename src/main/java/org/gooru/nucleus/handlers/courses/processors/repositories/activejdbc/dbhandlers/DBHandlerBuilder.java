@@ -1,6 +1,9 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.lessonplan.create.CreateLessonPlanHandler;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.lessonplan.delete.DeleteLessonPlanHandler;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.lessonplan.update.UpdateLessonPlanHandler;
 
 /**
  * Created by ashish on 11/1/16.
@@ -115,5 +118,17 @@ public class DBHandlerBuilder {
 
   public DBHandler buildMilestoneFetchHandler(ProcessorContext context) {
     return new FetchMilestoneHandler(context);
+  }
+
+  public DBHandler buildCreateLessonPlanHandler(ProcessorContext context) {
+    return new CreateLessonPlanHandler(context);
+  }
+
+  public DBHandler buildUpdateLessonPlanHandler(ProcessorContext context) {
+    return new UpdateLessonPlanHandler(context);
+  }
+
+  public DBHandler buildDeleteLessonPlanHandler(ProcessorContext context) {
+    return new DeleteLessonPlanHandler(context);
   }
 }

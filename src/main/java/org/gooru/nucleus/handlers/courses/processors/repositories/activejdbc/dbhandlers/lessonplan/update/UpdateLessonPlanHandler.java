@@ -31,6 +31,7 @@ public class UpdateLessonPlanHandler implements DBHandler {
       Validators.validateCourseInContext(context);
       Validators.validateUnitInContext(context);
       Validators.validateLessonInContext(context);
+      Validators.validateLessonPlanInContext(context);
       Validators.validatePayloadNotEmpty(context.request());
       Validators.validateWithDefaultPayloadValidator(context.request(),
           LessonPlanDao.editFieldSelector(), LessonPlanDao.getValidatorRegistry());

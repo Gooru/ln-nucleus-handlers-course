@@ -1,10 +1,12 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.lessonplan.create;
 
+import java.util.ResourceBundle;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.MessageResponseWrapperException;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.LessonPlanDao;
 import org.gooru.nucleus.handlers.courses.processors.responses.MessageResponseFactory;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ public final class LessonPlanCreateCommand {
   private AJEntityCourse course;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateLessonPlanHandler.class);
+  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
 
   LessonPlanCreateCommand(ProcessorContext context) {
     this.context = context;
@@ -52,7 +55,14 @@ public final class LessonPlanCreateCommand {
       LOGGER.warn("Lesson {} not found, aborting", context.lessonId());
       throw new MessageResponseWrapperException(MessageResponseFactory.createNotFoundResponse());
     }
+
+    if (LessonPlanDao.checkLessonPlanExists(context.courseId(), context.unitId(),
+        context.lessonId())) {
+      LOGGER.warn("Lesson Plan already exists with this {} lesson, aborting", context.lessonId());
+      throw new MessageResponseWrapperException(MessageResponseFactory.createInvalidRequestResponse(RESOURCE_BUNDLE.getString("lesson.plan.already.exists")));
+    }
   }
+
 
   public AJEntityCourse getCourse() {
     return this.course;

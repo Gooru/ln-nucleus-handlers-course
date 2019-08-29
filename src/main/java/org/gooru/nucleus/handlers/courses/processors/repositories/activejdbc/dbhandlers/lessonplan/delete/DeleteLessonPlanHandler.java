@@ -31,6 +31,7 @@ public class DeleteLessonPlanHandler implements DBHandler {
       Validators.validateCourseInContext(context);
       Validators.validateUnitInContext(context);
       Validators.validateLessonInContext(context);
+      Validators.validateLessonPlanInContext(context);
     } catch (MessageResponseWrapperException mrwe) {
       return new ExecutionResult<>(mrwe.getMessageResponse(),
           ExecutionResult.ExecutionStatus.FAILED);
@@ -54,10 +55,10 @@ public class DeleteLessonPlanHandler implements DBHandler {
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     try {
-      LessonPlanDao.updateLessonPlan(command);
+      LessonPlanDao.deleteLessonPlan(command);
       return new ExecutionResult<>(
           MessageResponseFactory.createNoContentResponse(
-              EventBuilderFactory.getUpdateLessonPlanEventBuilder(context.lessonPlanId())),
+              EventBuilderFactory.getDeleteLessonPlanEventBuilder(context.lessonPlanId())),
           ExecutionResult.ExecutionStatus.SUCCESSFUL);
 
     } catch (MessageResponseWrapperException e) {

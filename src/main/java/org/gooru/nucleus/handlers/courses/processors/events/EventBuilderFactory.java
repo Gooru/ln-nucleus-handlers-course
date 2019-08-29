@@ -30,7 +30,8 @@ public class EventBuilderFactory {
 
   private static final String EVT_LESSON_PLAN_CREATE = "event.lesson.plan.create";
   private static final String EVT_LESSON_PLAN_UPDATE = "event.lesson.plan.update";
-  
+  private static final String EVT_LESSON_PLAN_DELETE = "event.lesson.plan.delete";
+
   private static final String EVENT_NAME = "event.name";
   private static final String EVENT_BODY = "event.body";
   private static final String ID = "id";
@@ -73,20 +74,18 @@ public class EventBuilderFactory {
   }
 
   public static EventBuilder getMoveCollectionEventBuilder(String courseId, String unitId,
-      String lessonId,
-      String collectionId, JsonObject source) {
+      String lessonId, String collectionId, JsonObject source) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_MOVE).put(EVENT_BODY,
-        new JsonObject()
-            .put(TARGET, new JsonObject().put(COURSE_ID, courseId).put(UNIT_ID, unitId)
-                .put(LESSON_ID, lessonId))
+        new JsonObject().put(TARGET,
+            new JsonObject().put(COURSE_ID, courseId).put(UNIT_ID, unitId).put(LESSON_ID, lessonId))
             .put(SOURCE, source).put(ID, collectionId));
   }
 
   public static EventBuilder getMoveLessonEventBuilder(String courseId, String unitId,
       String lessonId, JsonObject source) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_MOVE).put(EVENT_BODY, new JsonObject()
-        .put(TARGET, new JsonObject().put(COURSE_ID, courseId).put(UNIT_ID, unitId))
-        .put(SOURCE, source).put(ID, lessonId));
+    return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_MOVE).put(EVENT_BODY,
+        new JsonObject().put(TARGET, new JsonObject().put(COURSE_ID, courseId).put(UNIT_ID, unitId))
+            .put(SOURCE, source).put(ID, lessonId));
   }
 
   public static EventBuilder getMoveUnitEventBuilder(String courseId, String unitId,
@@ -138,21 +137,24 @@ public class EventBuilderFactory {
   }
 
   public static EventBuilder getRemoveCollectionFromLessonEventBuilder(String courseId,
-      String unitId,
-      String lessonId, String collectionId) {
-    return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_REMOVE)
-        .put(EVENT_BODY, new JsonObject()
-            .put(ID, collectionId).put(COURSE_ID, courseId).put(UNIT_ID, unitId)
+      String unitId, String lessonId, String collectionId) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_COLLECTION_REMOVE).put(EVENT_BODY,
+        new JsonObject().put(ID, collectionId).put(COURSE_ID, courseId).put(UNIT_ID, unitId)
             .put(LESSON_ID, lessonId));
   }
-  
+
   public static EventBuilder getCreateLessonPlanEventBuilder(String lessonPlanId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_PLAN_CREATE).put(EVENT_BODY,
         new JsonObject().put(ID, lessonPlanId));
   }
-  
+
   public static EventBuilder getUpdateLessonPlanEventBuilder(String lessonPlanId) {
     return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_PLAN_UPDATE).put(EVENT_BODY,
+        new JsonObject().put(ID, lessonPlanId));
+  }
+
+  public static EventBuilder getDeleteLessonPlanEventBuilder(String lessonPlanId) {
+    return () -> new JsonObject().put(EVENT_NAME, EVT_LESSON_PLAN_DELETE).put(EVENT_BODY,
         new JsonObject().put(ID, lessonPlanId));
   }
 }

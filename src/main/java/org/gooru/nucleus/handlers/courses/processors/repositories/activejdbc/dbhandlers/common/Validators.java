@@ -87,7 +87,6 @@ public final class Validators {
       FieldSelector fieldSelector, ValidatorRegistry validatorRegistry) {
     JsonObject errors = new DefaultPayloadValidator()
         .validatePayload(request, fieldSelector, validatorRegistry);
-    System.out.println(errors);
     if (errors != null && !errors.isEmpty()) {
       LOGGER.warn("Validation errors for request");
       throw new MessageResponseWrapperException(

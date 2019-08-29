@@ -34,37 +34,40 @@ public final class LessonPlanUpdateCommand {
   }
 
   private void validate() {
-    JsonArray sessionsData = requestPayload().getJsonArray(AJEntityLessonPlan.SESSIONS);
-    JsonArray sessionErrorList = new JsonArray();
-    sessionsData.forEach(session -> {
-      JsonObject sessionData = (JsonObject) session;
-      JsonObject errors = new SessionPayloadValidator().validatePayload(sessionData,
-          LessonPlanDao.createSessionFieldSelector(), LessonPlanDao.getSessionValidatorRegistry());
-      JsonArray contentErrorList = new JsonArray();
-      JsonArray contents = sessionData.getJsonArray(AJEntityLessonPlan.CONTENTS, null);
-      if (contents != null && !contents.isEmpty()) {
-        contents.forEach(content -> {
-          JsonObject contentData = (JsonObject) content;
-          JsonObject contentErrors = new SessionContentPayloadValidator().validatePayload(
-              contentData, LessonPlanDao.createSessionContentFieldSelector(),
-              LessonPlanDao.getSessionContentValidatorRegistry());
-          if (contentErrors != null) {
-            contentErrorList.add(contentErrors);
+    JsonArray sessionsData = requestPayload().getJsonArray(AJEntityLessonPlan.SESSIONS, null);
+    if (sessionsData != null) {
+      JsonArray sessionErrorList = new JsonArray();
+      sessionsData.forEach(session -> {
+        JsonObject sessionData = (JsonObject) session;
+        JsonObject errors = new SessionPayloadValidator().validatePayload(sessionData,
+            LessonPlanDao.createSessionFieldSelector(),
+            LessonPlanDao.getSessionValidatorRegistry());
+        JsonArray contentErrorList = new JsonArray();
+        JsonArray contents = sessionData.getJsonArray(AJEntityLessonPlan.CONTENTS, null);
+        if (contents != null && !contents.isEmpty()) {
+          contents.forEach(content -> {
+            JsonObject contentData = (JsonObject) content;
+            JsonObject contentErrors = new SessionContentPayloadValidator().validatePayload(
+                contentData, LessonPlanDao.createSessionContentFieldSelector(),
+                LessonPlanDao.getSessionContentValidatorRegistry());
+            if (contentErrors != null) {
+              contentErrorList.add(contentErrors);
+            }
+          });
+          if (!contentErrorList.isEmpty()) {
+            errors = errors != null ? errors : new JsonObject();
+            errors.put(AJEntityLessonPlan.CONTENTS, contentErrorList);
           }
-        });
-        if (!contentErrorList.isEmpty()) {
-          errors = errors != null ? errors : new JsonObject();
-          errors.put(AJEntityLessonPlan.CONTENTS, contentErrorList);
+          if (errors != null) {
+            sessionErrorList.add(errors);
+          }
         }
-        if (errors != null) {
-          sessionErrorList.add(errors);
-        }
+      });
+      if (!sessionErrorList.isEmpty()) {
+        LOGGER.warn("Validation errors for request");
+        throw new MessageResponseWrapperException(MessageResponseFactory
+            .createValidationErrorResponse(new JsonObject().put("errors", sessionErrorList)));
       }
-    });
-    if (!sessionErrorList.isEmpty()) {
-      LOGGER.warn("Validation errors for request");
-      throw new MessageResponseWrapperException(MessageResponseFactory
-          .createValidationErrorResponse(new JsonObject().put("errors", sessionErrorList)));
     }
   }
 
@@ -94,9 +97,9 @@ public final class LessonPlanUpdateCommand {
       throw new MessageResponseWrapperException(MessageResponseFactory.createNotFoundResponse());
     }
 
-    LazyList<AJEntityLessonPlan> ajEntityLessonPlan = AJEntityLesson.findBySQL(
+    LazyList<AJEntityLessonPlan> ajEntityLessonPlan = AJEntityLessonPlan.findBySQL(
         LessonPlanDao.SELECT_LESSON_PLAN_TO_VALIDATE, context.lessonPlanId(), context.lessonId(),
-        context.unitId(), context.courseId(), false);
+        context.unitId(), context.courseId());
     if (ajEntityLessonPlan.isEmpty()) {
       LOGGER.warn("Lesson Plan {} not found, aborting", context.lessonPlanId());
       throw new MessageResponseWrapperException(MessageResponseFactory.createNotFoundResponse());

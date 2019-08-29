@@ -38,6 +38,7 @@ public class AJEntityLessonPlan extends Model {
       new HashSet<>(Arrays.asList("assessment", "collection", "assessment-external",
           "collection-external", "offline-activity", "question", "resource"));
 
+
   static final Map<String, FieldValidator> validatorRegistry;
   static final Map<String, FieldValidator> validatorSessionRegistry;
   static final Map<String, FieldValidator> validatorSessionContentRegistry;
@@ -52,9 +53,16 @@ public class AJEntityLessonPlan extends Model {
 
   private static Map<String, FieldConverter> initializeConverters() {
     Map<String, FieldConverter> converterMap = new HashMap<>();
-    converterMap.put(PRIOR_KNOWLEDGE, (FieldConverter::convertFieldToJson));
-    converterMap.put(ANTICIPATED_STRUGGLES, (FieldConverter::convertFieldToJson));
-    converterMap.put(REFERENCE_LINKS, (FieldConverter::convertFieldToJson));
+    converterMap.put(PRIOR_KNOWLEDGE, (FieldConverter::convertFieldJsonArrayToTextArray));
+    converterMap.put(ANTICIPATED_STRUGGLES, (FieldConverter::convertFieldJsonArrayToTextArray));
+    converterMap.put(REFERENCE_LINKS, (FieldConverter::convertFieldJsonArrayToTextArray));
+    converterMap.put(SESSIONS, (FieldConverter::convertFieldToJson));
+    converterMap.put(COURSE_ID,
+        (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+    converterMap.put(UNIT_ID,
+        (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
+    converterMap.put(LESSON_ID,
+        (fieldValue -> FieldConverter.convertFieldToUuid((String) fieldValue)));
     return Collections.unmodifiableMap(converterMap);
   }
 

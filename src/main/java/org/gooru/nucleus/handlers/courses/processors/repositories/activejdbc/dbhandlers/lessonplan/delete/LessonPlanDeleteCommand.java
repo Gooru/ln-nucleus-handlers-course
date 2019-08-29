@@ -56,9 +56,9 @@ public final class LessonPlanDeleteCommand {
       throw new MessageResponseWrapperException(MessageResponseFactory.createNotFoundResponse());
     }
 
-    LazyList<AJEntityLessonPlan> ajEntityLessonPlan = AJEntityLesson.findBySQL(
+    LazyList<AJEntityLessonPlan> ajEntityLessonPlan = AJEntityLessonPlan.findBySQL(
         LessonPlanDao.SELECT_LESSON_PLAN_TO_VALIDATE, context.lessonPlanId(), context.lessonId(),
-        context.unitId(), context.courseId(), false);
+        context.unitId(), context.courseId());
     if (ajEntityLessonPlan.isEmpty()) {
       LOGGER.warn("Lesson Plan {} not found, aborting", context.lessonPlanId());
       throw new MessageResponseWrapperException(MessageResponseFactory.createNotFoundResponse());

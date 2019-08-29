@@ -3,6 +3,7 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.CourseCollaboratorRepo;
 import org.gooru.nucleus.handlers.courses.processors.repositories.CourseRepo;
+import org.gooru.nucleus.handlers.courses.processors.repositories.LessonPlanRepo;
 import org.gooru.nucleus.handlers.courses.processors.repositories.LessonRepo;
 import org.gooru.nucleus.handlers.courses.processors.repositories.MilestoneRepo;
 import org.gooru.nucleus.handlers.courses.processors.repositories.UnitRepo;
@@ -27,5 +28,9 @@ public class AJRepoBuilder {
 
   public MilestoneRepo buildMilestoneRepo(ProcessorContext context) {
     return new AJMilestoneRepo(context);
+  }
+  
+  public LessonPlanRepo buildLessonPlanRepo(ProcessorContext context) {
+    return new AJLessonPlanRepo(context);
   }
 }

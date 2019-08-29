@@ -98,6 +98,7 @@ public final class DbHelperUtil {
 
   }
 
+  
   public static String toPostgresArrayString(Collection<String> input) {
     int approxSize = ((input.size() + 1) * 36); // Length of UUID is around 36 chars
     Iterator<String> it = input.iterator();

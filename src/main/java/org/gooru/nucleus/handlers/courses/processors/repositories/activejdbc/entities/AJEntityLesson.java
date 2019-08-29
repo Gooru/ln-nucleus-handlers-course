@@ -51,6 +51,7 @@ public class AJEntityLesson extends Model {
   public static final String ID = "id";
   public static final String AGGREGATED_TAXONOMY = "aggregated_taxonomy";
   public static final String AGGREGATED_GUT_CODES = "aggregated_gut_codes";
+  public static final String LESSON_PLAN = "lesson_plan";
 
   public static final String LESSON_SUMMARY = "lesson_summary";
   public static final String LESSON_COUNT = "lesson_count";
