@@ -96,7 +96,6 @@ public class FetchLessonHandler implements DBHandler {
     return AuthorizerBuilder.buildTenantAuthorizer(this.context).authorize(courses.get(0));
   }
 
-  @SuppressWarnings("rawtypes")
   @Override
   public ExecutionResult<MessageResponse> executeRequest() {
     JsonObject resultBody;
@@ -166,7 +165,7 @@ public class FetchLessonHandler implements DBHandler {
               .put(AJEntityContent.RESOURCE_COUNT, resourceCount != null ? resourceCount : 0)
               .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0)
               .put(AJEntityContent.OE_QUESTION_COUNT, oeQuestionCount != null ? oeQuestionCount : 0)
-              .put(AJEntityCollection.OA_TASK_COUNT, taskCount != null ? taskCount : 0));
+              .put(AJEntityContent.OA_TASK_COUNT, taskCount != null ? taskCount : 0));
     });
 
     resultBody.put(AJEntityCollection.COLLECTION_SUMMARY, collectionSummaryArray);
@@ -178,7 +177,7 @@ public class FetchLessonHandler implements DBHandler {
       String oaArrayString = DbHelperUtil.toPostgresArrayString(oaIds);
       List<Map> oaCount = Base.findAll(AJEntityContent.FETCH_TASK_COUNT_BY_OA, oaArrayString);
       oaCount.forEach(map -> oaCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
-          Integer.valueOf(map.get(AJEntityCollection.OA_TASK_COUNT).toString())));
+          Integer.valueOf(map.get(AJEntityContent.OA_TASK_COUNT).toString())));
     }
     return oaCountMap;
   }

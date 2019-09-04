@@ -137,7 +137,7 @@ public class FetchUnitHandler implements DBHandler {
           assessmentCnt != null ? assessmentCnt : 0);
       lessonSummary.put(AJEntityCollection.EXT_ASSESSMENT_COUNT,
           extAssessmentCnt != null ? extAssessmentCnt : 0);
-      lessonSummary.put(AJEntityCollection.FORMAT_OA, oaCnt != null ? oaCnt : 0);
+      lessonSummary.put(AJEntityCollection.OA_COUNT, oaCnt != null ? oaCnt : 0);
 
       if (lessonPlanSummary != null) {
         lessonPlanSummary.keySet()

@@ -35,8 +35,7 @@ public class AJEntityCollection extends Model {
   public static final String ASSESSMENT_COUNT = "assessment_count";
   public static final String EXT_ASSESSMENT_COUNT = "external_assessment_count";
   public static final String EXT_COLLECTION_COUNT = "external_collection_count";
-  public static final String OA_COUNT = "external_assessment_count";
-  public static final String OA_TASK_COUNT = "task_count";
+  public static final String OA_COUNT = "oa_count";
   public static final String ASSESSMENTS = "assessments";
   public static final String ASSESSMENTS_EXTERNAL = "assessments-external";
   public static final String COLLECTIONS = "collections";

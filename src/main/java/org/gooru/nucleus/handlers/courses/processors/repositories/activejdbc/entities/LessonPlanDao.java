@@ -358,7 +358,7 @@ public final class LessonPlanDao {
           String contentId = content.getString(AJEntityLessonPlan.CONTENT_ID);
           if (COLLECTION_TYPES.contains(contentFormat)) {
             collectionIds.add(contentId);
-            if (contentFormat.equalsIgnoreCase(OFFLINE_ACTIVITY)) {
+            if (isOA(contentFormat)) {
               oaIds.add(contentId);
             }
           } else if (CONTENT_TYPES.contains(contentFormat)) {
@@ -400,11 +400,11 @@ public final class LessonPlanDao {
           String contentId = content.getString(AJEntityLessonPlan.CONTENT_ID);
           if (COLLECTION_TYPES.contains(contentFormat)) {
             Map<Object, Object> collectionMap = collectionsMap.get(contentId);
-            if (contentFormat.equalsIgnoreCase(OFFLINE_ACTIVITY)) {
+            if (isOA(contentFormat)) {
               Map<Object, Object> offlineActivityCountMap = oaCountMap.get(contentId);
-              collectionMap.put(AJEntityCollection.OA_TASK_COUNT,
+              collectionMap.put(AJEntityContent.OA_TASK_COUNT,
                   offlineActivityCountMap != null
-                      ? offlineActivityCountMap.get(AJEntityCollection.OA_TASK_COUNT)
+                      ? offlineActivityCountMap.get(AJEntityContent.OA_TASK_COUNT)
                       : 0);
             } else if (COLLECTION_CONTENT_TYPES.contains(contentFormat)) {
               String resourceCountId =
@@ -445,6 +445,10 @@ public final class LessonPlanDao {
       }
     });
 
+  }
+  
+  private static boolean isOA(String contentFormat) { 
+    return contentFormat != null && contentFormat.equalsIgnoreCase(OFFLINE_ACTIVITY);
   }
 
 }
