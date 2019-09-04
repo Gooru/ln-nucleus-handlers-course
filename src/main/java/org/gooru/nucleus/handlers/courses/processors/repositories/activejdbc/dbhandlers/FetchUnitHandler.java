@@ -8,6 +8,7 @@ import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCollection;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityContent;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityLesson;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityUnit;
@@ -92,87 +93,8 @@ public class FetchUnitHandler implements DBHandler {
           AJEntityLesson.SELECT_LESSON_SUMMARY, context.unitId(), context.courseId(), false);
       LOGGER.debug("number of lessons found for unit {} : {}", context.unitId(), lessons.size());
       if (lessons.size() > 0) {
-        List<String> lessonIds = new ArrayList<>();
-        lessons.forEach(lesson -> lessonIds.add(lesson.getString(AJEntityLesson.LESSON_ID)));
+        this.createLessonSummary(lessons, resultBody);
 
-        List<Map> lessonPlansMeta = Base.findAll(AJEntityLesson.SELECT_LESSON_PLAN_META_BY_LESSON,
-            DbHelperUtil.toPostgresArrayString(lessonIds), context.unitId(), context.courseId());
-        Map<String, Map<Object, Object>> lessonPlanMetaByLesson = new HashMap<>();
-        if (lessonPlansMeta != null && !lessonPlansMeta.isEmpty()) {
-          LOGGER.debug("lesson plan count: {}", lessonPlansMeta.size());
-          lessonPlansMeta.forEach(map -> {
-            Map<Object, Object> lessonPlanMetaMap = new HashMap<>();
-            map.keySet().forEach(key -> {
-              if (!key.toString().equalsIgnoreCase(AJEntityCollection.LESSON_ID)) {
-                lessonPlanMetaMap.put(key, map.get(key));
-              }
-            });
-            lessonPlanMetaByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(),
-                lessonPlanMetaMap);
-          });
-        }
-        List<Map> collectionCount = Base.findAll(
-            AJEntityCollection.SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON,
-            DbHelperUtil.toPostgresArrayString(lessonIds), context.unitId(), context.courseId());
-        LOGGER.debug("collection count: {}", collectionCount.size());
-        Map<String, Integer> collectionCountByLesson = new HashMap<>();
-        collectionCount.stream().filter(
-            map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_COLLECTION))
-            .forEach(
-                map -> collectionCountByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(),
-                    Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
-
-        Map<String, Integer> extCollectionCountByLesson = new HashMap<>();
-        collectionCount.stream().filter(
-            map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_COLLECTION))
-            .forEach(map -> extCollectionCountByLesson.put(
-                map.get(AJEntityCollection.LESSON_ID).toString(),
-                Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
-
-        Map<String, Integer> assessmentCountByLesson = new HashMap<>();
-        collectionCount.stream().filter(
-            map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_ASSESSMENT))
-            .forEach(
-                map -> assessmentCountByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(),
-                    Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
-
-        Map<String, Integer> extAssessmentCountByLesson = new HashMap<>();
-        collectionCount.stream().filter(
-            map -> map.get(AJEntityCollection.FORMAT) != null && map.get(AJEntityCollection.FORMAT)
-                .toString().equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_ASSESSMENT))
-            .forEach(map -> extAssessmentCountByLesson.put(
-                map.get(AJEntityCollection.LESSON_ID).toString(),
-                Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString())));
-
-        JsonArray lessonSummaryArray = new JsonArray();
-        lessons.forEach(lesson -> {
-          JsonObject lessonSummary = new JsonObject(new JsonFormatterBuilder()
-              .buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS)
-              .toJson(lesson));
-          String lessonId = lesson.get(AJEntityCollection.ID).toString();
-          Integer collectionCnt = collectionCountByLesson.get(lessonId);
-          Integer extCollectionCnt = extCollectionCountByLesson.get(lessonId);
-          Integer assessmentCnt = assessmentCountByLesson.get(lessonId);
-          Integer extAssessmentCnt = extAssessmentCountByLesson.get(lessonId);
-          Map<Object, Object> lessonPlanSummary = lessonPlanMetaByLesson.get(lessonId);
-          lessonSummary.put(AJEntityCollection.COLLECTION_COUNT,
-              collectionCnt != null ? collectionCnt : 0);
-          lessonSummary.put(AJEntityCollection.EXT_COLLECTION_COUNT,
-              extCollectionCnt != null ? extCollectionCnt : 0);
-          lessonSummary.put(AJEntityCollection.ASSESSMENT_COUNT,
-              assessmentCnt != null ? assessmentCnt : 0);
-          lessonSummary.put(AJEntityCollection.EXT_ASSESSMENT_COUNT,
-              extAssessmentCnt != null ? extAssessmentCnt : 0);
-          if (lessonPlanSummary != null) {
-            lessonPlanSummary.keySet()
-                .forEach(key -> lessonSummary.put(key.toString(), lessonPlanSummary.get(key)));
-          }
-          lessonSummaryArray.add(lessonSummary);
-        });
-        resultBody.put(AJEntityLesson.LESSON_SUMMARY, lessonSummaryArray);
       }
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody),
           ExecutionStatus.SUCCESSFUL);
@@ -181,6 +103,129 @@ public class FetchUnitHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(),
           ExecutionStatus.FAILED);
     }
+  }
+
+  private void createLessonSummary(LazyList<AJEntityLesson> lessons, JsonObject resultBody) {
+    JsonArray lessonSummaryArray = new JsonArray();
+    List<String> lessonIds = this.getLessonIdsFromLessonList(lessons);
+    Map<String, Map<Object, Object>> lessonPlanByLesson = new HashMap<>();
+    getLessonPlan(lessonIds, lessonPlanByLesson);
+    List<Map> collectionCount = getCollectionCount(lessonIds);
+    Map<String, Integer> collectionCountByLesson = new HashMap<>();
+    Map<String, Integer> extCollectionCountByLesson = new HashMap<>();
+    Map<String, Integer> assessmentCountByLesson = new HashMap<>();
+    Map<String, Integer> extAssessmentCountByLesson = new HashMap<>();
+    Map<String, Integer> oaCountByLesson = new HashMap<>();
+    this.collectionTypeCountMapper(collectionCount, collectionCountByLesson,
+        extCollectionCountByLesson, assessmentCountByLesson, extAssessmentCountByLesson,
+        oaCountByLesson);
+    lessons.forEach(lesson -> {
+      JsonObject lessonSummary = new JsonObject(new JsonFormatterBuilder()
+          .buildSimpleJsonFormatter(false, AJEntityLesson.LESSON_SUMMARY_FIELDS).toJson(lesson));
+      String lessonId = lesson.get(AJEntityCollection.ID).toString();
+      Integer collectionCnt = collectionCountByLesson.get(lessonId);
+      Integer extCollectionCnt = extCollectionCountByLesson.get(lessonId);
+      Integer assessmentCnt = assessmentCountByLesson.get(lessonId);
+      Integer extAssessmentCnt = extAssessmentCountByLesson.get(lessonId);
+      Integer oaCnt = oaCountByLesson.get(lessonId);
+      Map<Object, Object> lessonPlanSummary = lessonPlanByLesson.get(lessonId);
+      lessonSummary.put(AJEntityCollection.COLLECTION_COUNT,
+          collectionCnt != null ? collectionCnt : 0);
+      lessonSummary.put(AJEntityCollection.EXT_COLLECTION_COUNT,
+          extCollectionCnt != null ? extCollectionCnt : 0);
+      lessonSummary.put(AJEntityCollection.ASSESSMENT_COUNT,
+          assessmentCnt != null ? assessmentCnt : 0);
+      lessonSummary.put(AJEntityCollection.EXT_ASSESSMENT_COUNT,
+          extAssessmentCnt != null ? extAssessmentCnt : 0);
+      lessonSummary.put(AJEntityCollection.FORMAT_OA, oaCnt != null ? oaCnt : 0);
+
+      if (lessonPlanSummary != null) {
+        lessonPlanSummary.keySet()
+            .forEach(key -> lessonSummary.put(key.toString(), lessonPlanSummary.get(key)));
+      }
+      lessonSummaryArray.add(lessonSummary);
+    });
+    resultBody.put(AJEntityLesson.LESSON_SUMMARY, lessonSummaryArray);
+  }
+
+  private void collectionTypeCountMapper(List<Map> collectionCount,
+      Map<String, Integer> collectionCountByLesson, Map<String, Integer> extCollectionCountByLesson,
+      Map<String, Integer> assessmentCountByLesson, Map<String, Integer> extAssessmentCountByLesson,
+      Map<String, Integer> oaCountByLesson) {
+    collectionCount.forEach(map -> {
+      String collectionFormat = map.get(AJEntityCollection.FORMAT).toString();
+      String lessonId = map.get(AJEntityCollection.LESSON_ID).toString();
+      Integer count = Integer.valueOf(map.get(AJEntityCollection.COLLECTION_COUNT).toString());
+      if (isCollection(collectionFormat)) {
+        collectionCountByLesson.put(lessonId, count);
+      } else if (isExternalCollection(collectionFormat)) {
+        extCollectionCountByLesson.put(lessonId, count);
+      } else if (isAssessment(collectionFormat)) {
+        assessmentCountByLesson.put(lessonId, count);
+      } else if (isExternalAssessment(collectionFormat)) {
+        extAssessmentCountByLesson.put(lessonId, count);
+      } else if (isOA(collectionFormat)) {
+        oaCountByLesson.put(lessonId, count);
+      }
+    });
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private void getLessonPlan(List<String> lessonIds,
+      Map<String, Map<Object, Object>> lessonPlanByLesson) {
+    List<Map> lessonPlans = Base.findAll(AJEntityLesson.SELECT_LESSON_PLAN_BY_LESSON,
+        DbHelperUtil.toPostgresArrayString(lessonIds), context.unitId(), context.courseId());
+    if (lessonPlans != null && !lessonPlans.isEmpty()) {
+      LOGGER.debug("lesson plan count: {}", lessonPlans.size());
+      lessonPlans.forEach(map -> {
+        Map<Object, Object> lessonPlanMap = new HashMap<>();
+        map.keySet().forEach(key -> {
+          if (!key.toString().equalsIgnoreCase(AJEntityCollection.LESSON_ID)) {
+            lessonPlanMap.put(key, map.get(key));
+          }
+        });
+        lessonPlanByLesson.put(map.get(AJEntityCollection.LESSON_ID).toString(), lessonPlanMap);
+      });
+    }
+  }
+
+  private List<String> getLessonIdsFromLessonList(List<AJEntityLesson> lessons) {
+    List<String> lessonIds = new ArrayList<>();
+    lessons.forEach(lesson -> lessonIds.add(lesson.getString(AJEntityLesson.LESSON_ID)));
+    return lessonIds;
+  }
+
+  private List<Map> getCollectionCount(List<String> lessonIds) {
+    List<Map> collectionCount =
+        Base.findAll(AJEntityCollection.SELECT_COLLECTION_ASSESSMET_COUNT_BY_LESSON,
+            DbHelperUtil.toPostgresArrayString(lessonIds), context.unitId(), context.courseId());
+    LOGGER.debug("collection count: {}", collectionCount.size());
+    return collectionCount;
+  }
+
+  private boolean isExternalCollection(String collectionFormat) {
+    return (collectionFormat != null
+        && collectionFormat.equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_COLLECTION));
+  }
+
+  private boolean isCollection(String collectionFormat) {
+    return (collectionFormat != null
+        && collectionFormat.equalsIgnoreCase(AJEntityCollection.FORMAT_COLLECTION));
+  }
+
+  private boolean isAssessment(String collectionFormat) {
+    return (collectionFormat != null
+        && collectionFormat.equalsIgnoreCase(AJEntityCollection.FORMAT_ASSESSMENT));
+  }
+
+  private boolean isExternalAssessment(String collectionFormat) {
+    return (collectionFormat != null
+        && collectionFormat.equalsIgnoreCase(AJEntityCollection.FORMAT_EXT_ASSESSMENT));
+  }
+
+  private boolean isOA(String collectionFormat) {
+    return (collectionFormat != null
+        && collectionFormat.equalsIgnoreCase(AJEntityCollection.FORMAT_OA));
   }
 
   @Override
