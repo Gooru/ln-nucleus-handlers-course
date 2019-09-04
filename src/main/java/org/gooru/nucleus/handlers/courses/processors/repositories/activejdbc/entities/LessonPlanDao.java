@@ -358,7 +358,7 @@ public final class LessonPlanDao {
           String contentId = content.getString(AJEntityLessonPlan.CONTENT_ID);
           if (COLLECTION_TYPES.contains(contentFormat)) {
             collectionIds.add(contentId);
-            if (contentFormat.equalsIgnoreCase(OFFLINE_ACTIVITY)) {
+            if (isOA(contentFormat)) {
               oaIds.add(contentId);
             }
           } else if (CONTENT_TYPES.contains(contentFormat)) {
@@ -376,9 +376,7 @@ public final class LessonPlanDao {
       contents.forEach(content -> {
         Map<Object, Object> contentMap = new HashMap<>();
         content.keySet().forEach(key -> {
-          if (!key.toString().equalsIgnoreCase(AJEntityLessonPlan.CONTENT_ID)) {
-            contentMap.put(key, content.get(key));
-          }
+          contentMap.put(key, content.get(key));
         });
         String id = content.get(AJEntityLessonPlan.CONTENT_ID).toString();
         contentsMap.put(id, contentMap);
@@ -402,7 +400,7 @@ public final class LessonPlanDao {
           String contentId = content.getString(AJEntityLessonPlan.CONTENT_ID);
           if (COLLECTION_TYPES.contains(contentFormat)) {
             Map<Object, Object> collectionMap = collectionsMap.get(contentId);
-            if (contentFormat.equalsIgnoreCase(OFFLINE_ACTIVITY)) {
+            if (isOA(contentFormat)) {
               Map<Object, Object> offlineActivityCountMap = oaCountMap.get(contentId);
               collectionMap.put(AJEntityContent.OA_TASK_COUNT,
                   offlineActivityCountMap != null
@@ -447,6 +445,10 @@ public final class LessonPlanDao {
       }
     });
 
+  }
+  
+  private static boolean isOA(String contentFormat) { 
+    return contentFormat != null && contentFormat.equalsIgnoreCase(OFFLINE_ACTIVITY);
   }
 
 }

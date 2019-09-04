@@ -35,10 +35,12 @@ public class AJEntityCollection extends Model {
   public static final String ASSESSMENT_COUNT = "assessment_count";
   public static final String EXT_ASSESSMENT_COUNT = "external_assessment_count";
   public static final String EXT_COLLECTION_COUNT = "external_collection_count";
+  public static final String OA_COUNT = "oa_count";
   public static final String ASSESSMENTS = "assessments";
   public static final String ASSESSMENTS_EXTERNAL = "assessments-external";
   public static final String COLLECTIONS = "collections";
   public static final String COLLECTIONS_EXTERNAL = "collections-external";
+  public static final String OFFLINE_ACTIVITY = "offline-activity";
 
   public static final List<String> COLLECTION_SUMMARY_FIELDS =
       Arrays.asList(ID, TITLE, FORMAT, SEQUENCE_ID, THUMBNAIL, URL, SUBFORMAT);
@@ -83,10 +85,8 @@ public class AJEntityCollection extends Model {
   public static final String UPDATE_COLLECTION_REMOVE_CUL =
       "course_id = null, unit_id = null, lesson_id = null";
   public static final String UPDATE_COLLECTION_REMOVE_CUL_WHERE = "id = ?::uuid";
-  
-  private static final String FETCH_TASK_COUNT_BY_OA =
-      "SELECT count(id) as task_count, oa_id AS content_id FROM oa_tasks WHERE oa_id = ANY(?::uuid[]) GROUP BY oa_id";
 
+  
   public static final String UUID_TYPE = "uuid";
   public static final String JSONB_TYPE = "jsonb";
 
@@ -101,6 +101,7 @@ public class AJEntityCollection extends Model {
   public static final String FORMAT_ASSESSMENT = "assessment";
   public static final String FORMAT_EXT_ASSESSMENT = "assessment-external";
   public static final String FORMAT_EXT_COLLECTION = "collection-external";
+  public static final String FORMAT_OA = "offline-activity";
 
   public void setCourseId(String courseId) {
     setPGObject(COURSE_ID, UUID_TYPE, courseId);
@@ -134,4 +135,9 @@ public class AJEntityCollection extends Model {
       this.errors().put(field, value);
     }
   }
+
+  public boolean isOfflineActivity() {
+    return this.getString(FORMAT).equalsIgnoreCase(OFFLINE_ACTIVITY);
+  }
+
 }

@@ -22,6 +22,7 @@ public class AJEntityContent extends Model {
   public static final String QUESTION_COUNT = "question_count";
   public static final String OE_QUESTION_COUNT = "oe_question_count";
   public static final String OA_TASK_COUNT = "task_count";
+  
 
   public static final String SELECT_CONTENT_COUNT_BY_COLLECTION =
       "SELECT count(id) as content_count, content_format, collection_id FROM content WHERE"
@@ -40,6 +41,10 @@ public class AJEntityContent extends Model {
   public static final String SELECT_RESOURCES_BY_COURSE =
       "SELECT id, title, content_subformat FROM content WHERE course_id = ?::uuid AND"
           + " content_format = 'resource'::content_format_type AND is_deleted = false AND taxonomy ?? ?";
+  
+  public static final String FETCH_TASK_COUNT_BY_OA =
+      "SELECT count(id) as task_count, oa_id AS collection_id FROM oa_tasks WHERE oa_id = ANY(?::uuid[]) GROUP BY oa_id";
+
 
   public static final List<String> RESOURCES_BY_COURSE_FIELDS = Arrays
       .asList(ID, TITLE, CONTENT_SUBFORMAT);

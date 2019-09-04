@@ -113,58 +113,10 @@ public class FetchLessonHandler implements DBHandler {
       LazyList<AJEntityCollection> collectionSummary =
           AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY,
               context.lessonId(), context.unitId(), context.courseId(), false);
-
       LOGGER.debug("number of collections found for lesson {} : {}", context.lessonId(),
           collectionSummary.size());
       if (collectionSummary.size() > 0) {
-        List<String> collectionIds = new ArrayList<>();
-        collectionSummary
-            .forEach(collection -> collectionIds.add(collection.getString(AJEntityCollection.ID)));
-
-        String collectionArrayString = DbHelperUtil.toPostgresArrayString(collectionIds);
-        List<Map> collectionContentCount =
-            Base.findAll(AJEntityContent.SELECT_CONTENT_COUNT_BY_COLLECTION, collectionArrayString,
-                context.courseId(), context.unitId(), context.lessonId());
-        
-        Map<String, Integer> resourceCountMap = new HashMap<>();
-        collectionContentCount.stream()
-            .filter(map -> map.get(AJEntityContent.CONTENT_FORMAT) != null
-                && map.get(AJEntityContent.CONTENT_FORMAT).toString()
-                    .equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_RESOURCE))
-            .forEach(map -> resourceCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
-                Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString())));
-
-        Map<String, Integer> questionCountMap = new HashMap<>();
-        collectionContentCount.stream()
-            .filter(map -> map.get(AJEntityContent.CONTENT_FORMAT) != null
-                && map.get(AJEntityContent.CONTENT_FORMAT).toString()
-                    .equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_QUESTION))
-            .forEach(map -> questionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
-                Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString())));
-
-        List<Map> oeQuestionCountFromDB = Base.findAll(AJEntityContent.SELECT_OE_QUESTION_COUNT,
-            collectionArrayString, context.courseId(), context.unitId(), context.lessonId());
-        Map<String, Integer> oeQuestionCountMap = new HashMap<>();
-        oeQuestionCountFromDB.forEach(
-            map -> oeQuestionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
-                Integer.valueOf(map.get(AJEntityContent.OE_QUESTION_COUNT).toString())));
-
-        JsonArray collectionSummaryArray = new JsonArray();
-        collectionSummary.forEach(collection -> {
-          String collectionId = collection.getString(AJEntityCollection.ID);
-          Integer resourceCount = resourceCountMap.get(collectionId);
-          Integer questionCount = questionCountMap.get(collectionId);
-          Integer oeQuestionCount = oeQuestionCountMap.get(collectionId);
-          collectionSummaryArray.add(new JsonObject(new JsonFormatterBuilder()
-              .buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS)
-              .toJson(collection))
-                  .put(AJEntityContent.RESOURCE_COUNT, resourceCount != null ? resourceCount : 0)
-                  .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0)
-                  .put(AJEntityContent.OE_QUESTION_COUNT,
-                      oeQuestionCount != null ? oeQuestionCount : 0));
-        });
-
-        resultBody.put(AJEntityCollection.COLLECTION_SUMMARY, collectionSummaryArray);
+        this.createCollectionSummary(collectionSummary, resultBody);
       }
 
       return new ExecutionResult<>(MessageResponseFactory.createGetResponse(resultBody),
@@ -174,6 +126,104 @@ public class FetchLessonHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(),
           ExecutionStatus.FAILED);
     }
+  }
+
+  private void findOAsInCollectionList(LazyList<AJEntityCollection> collectionSummary,
+      List<String> collectionIds, List<String> oaIds) {
+    collectionSummary.forEach(collection -> {
+      String collectionId = collection.getString(AJEntityCollection.ID);
+      if (collection.isOfflineActivity()) {
+        oaIds.add(collectionId);
+      }
+      collectionIds.add(collectionId);
+    });
+  }
+
+  private void createCollectionSummary(LazyList<AJEntityCollection> collectionSummary,
+      JsonObject resultBody) {
+    List<String> collectionIds = new ArrayList<>();
+    List<String> oaIds = new ArrayList<>();
+    findOAsInCollectionList(collectionSummary, collectionIds, oaIds);
+    List<Map> collectionContentCount = getCollectionContentCount(collectionIds);
+    Map<String, Integer> oaCountMap = this.getOACount(oaIds);
+    Map<String, Integer> resourceCountMap = new HashMap<>();
+    Map<String, Integer> questionCountMap = new HashMap<>();
+    this.getCollectionResourceAndQuestionCount(collectionContentCount, resourceCountMap,
+        questionCountMap);
+    Map<String, Integer> oeQuestionCountMap = new HashMap<>();
+    this.getCollectionOEQuestionCount(collectionIds, oeQuestionCountMap);
+    JsonArray collectionSummaryArray = new JsonArray();
+    collectionSummary.forEach(collection -> {
+      String collectionId = collection.getString(AJEntityCollection.ID);
+      Integer resourceCount = resourceCountMap.get(collectionId);
+      Integer questionCount = questionCountMap.get(collectionId);
+      Integer oeQuestionCount = oeQuestionCountMap.get(collectionId);
+      Integer taskCount = oaCountMap.get(collectionId);
+      collectionSummaryArray.add(new JsonObject(new JsonFormatterBuilder()
+          .buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_SUMMARY_FIELDS)
+          .toJson(collection))
+              .put(AJEntityContent.RESOURCE_COUNT, resourceCount != null ? resourceCount : 0)
+              .put(AJEntityContent.QUESTION_COUNT, questionCount != null ? questionCount : 0)
+              .put(AJEntityContent.OE_QUESTION_COUNT, oeQuestionCount != null ? oeQuestionCount : 0)
+              .put(AJEntityContent.OA_TASK_COUNT, taskCount != null ? taskCount : 0));
+    });
+
+    resultBody.put(AJEntityCollection.COLLECTION_SUMMARY, collectionSummaryArray);
+  }
+
+  private Map<String, Integer> getOACount(List<String> oaIds) {
+    Map<String, Integer> oaCountMap = new HashMap<>();
+    if (!oaIds.isEmpty()) {
+      String oaArrayString = DbHelperUtil.toPostgresArrayString(oaIds);
+      List<Map> oaCount = Base.findAll(AJEntityContent.FETCH_TASK_COUNT_BY_OA, oaArrayString);
+      oaCount.forEach(map -> oaCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
+          Integer.valueOf(map.get(AJEntityContent.OA_TASK_COUNT).toString())));
+    }
+    return oaCountMap;
+  }
+
+  private List<Map> getCollectionContentCount(List<String> collectionIds) {
+    String collectionArrayString = DbHelperUtil.toPostgresArrayString(collectionIds);
+    List<Map> collectionContentCount =
+        Base.findAll(AJEntityContent.SELECT_CONTENT_COUNT_BY_COLLECTION, collectionArrayString,
+            context.courseId(), context.unitId(), context.lessonId());
+    return collectionContentCount;
+
+  }
+
+  private void getCollectionResourceAndQuestionCount(List<Map> collectionContentCount,
+      Map<String, Integer> resourceCountMap, Map<String, Integer> questionCountMap) {
+
+    collectionContentCount.forEach(map -> {
+      String contentFormat = map.get(AJEntityContent.CONTENT_FORMAT).toString();
+      if (isResourceContent(contentFormat)) {
+        resourceCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
+            Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString()));
+      } else if (isQuestionContent(contentFormat)) {
+        questionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
+            Integer.valueOf(map.get(AJEntityContent.CONTENT_COUNT).toString()));
+      }
+    });
+  }
+
+  private void getCollectionOEQuestionCount(List<String> collectionIds,
+      Map<String, Integer> oeQuestionCountMap) {
+    String collectionArrayString = DbHelperUtil.toPostgresArrayString(collectionIds);
+    List<Map> oeQuestionCountFromDB = Base.findAll(AJEntityContent.SELECT_OE_QUESTION_COUNT,
+        collectionArrayString, context.courseId(), context.unitId(), context.lessonId());
+    oeQuestionCountFromDB
+        .forEach(map -> oeQuestionCountMap.put(map.get(AJEntityContent.COLLECTION_ID).toString(),
+            Integer.valueOf(map.get(AJEntityContent.OE_QUESTION_COUNT).toString())));
+  }
+
+  private boolean isResourceContent(String contentFormat) {
+    return (contentFormat != null
+        && contentFormat.equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_RESOURCE));
+  }
+
+  private boolean isQuestionContent(String contentFormat) {
+    return (contentFormat != null
+        && contentFormat.equalsIgnoreCase(AJEntityContent.CONTENT_FORMAT_QUESTION));
   }
 
   @Override
