@@ -3,9 +3,14 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.en
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbutils.DbHelperUtil;
 import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
@@ -23,6 +28,15 @@ public class MilestoneDao {
       "select distinct mlp.course_id, mlp.milestone_id, mlp.grade_id, mlp.grade_name, "
           + " mlp.grade_seq, mlp.fw_code, mlp.tx_subject_code from milestone_lesson_map mlp inner join lesson l on l.lesson_id = mlp.lesson_id "
           + " and l.course_id = mlp.course_id where l.is_deleted = false and mlp.course_id = ?::uuid and fw_code = ? order by grade_seq asc";
+
+  private static final String MILESTONE_LIST_FOR_COURSE_EXCLUDING_SPECIFIED_LESSONS =
+      "select distinct mlp.course_id, mlp.milestone_id, mlp.grade_id, mlp.grade_name, "
+          + " mlp.grade_seq, mlp.fw_code, mlp.tx_subject_code from milestone_lesson_map mlp inner join lesson l on l.lesson_id = mlp.lesson_id "
+          + " and l.course_id = mlp.course_id where l.is_deleted = false and mlp.course_id = ?::uuid and fw_code = ? "
+          + " and l.lesson_id != all (?::uuid[]) order by grade_seq asc";
+
+  private static final String FETCH_USER_RESCOPED_CONTENT = "select skipped_content from user_rescoped_content where user_id = ?::uuid and "
+      + " course_id = ?::uuid and class_id = ?::uuid ";
 
   private static final String MILESTONE_FETCH_FOR_COURSE =
       "select mlp.grade_id, mlp.grade_name, mlp.grade_seq, "
@@ -62,6 +76,42 @@ public class MilestoneDao {
       return Boolean.valueOf(String.valueOf(objExists));
     }
     return false;
+  }
+
+  public LazyList<AJEntityMilestone> fetchMilestonesForCourseConsideringRescope(String userId,
+      String courseId, String classId, String frameworkCode) {
+    List<String> rescopedLessons = fetchRescopedLessons(userId, courseId, classId);
+    if (rescopedLessons.isEmpty()) {
+      return fetchMilestonesForCourse(courseId, frameworkCode);
+    } else {
+      return AJEntityMilestone
+          .findBySQL(MILESTONE_LIST_FOR_COURSE_EXCLUDING_SPECIFIED_LESSONS, courseId, frameworkCode,
+              DbHelperUtil.toPostgresArrayString(rescopedLessons));
+    }
+  }
+
+  private List<String> fetchRescopedLessons(String userId, String courseId, String classId) {
+    Object userRescopedContent = Base
+        .firstCell(FETCH_USER_RESCOPED_CONTENT, userId, courseId, classId);
+    if (userRescopedContent != null) {
+      JsonObject rescopedContents = new JsonObject(userRescopedContent.toString());
+      if (!rescopedContents.isEmpty()) {
+        JsonArray lessons = rescopedContents.getJsonArray("lessons");
+        if (lessons != null && !lessons.isEmpty()) {
+          List<String> lessonsList = new ArrayList<>(lessons.size());
+          for (Object lesson : lessons) {
+            lessonsList.add(lesson.toString());
+          }
+          return lessonsList;
+        } else {
+          return Collections.emptyList();
+        }
+      } else {
+        return Collections.emptyList();
+      }
+    } else {
+      return Collections.emptyList();
+    }
   }
 
 }
