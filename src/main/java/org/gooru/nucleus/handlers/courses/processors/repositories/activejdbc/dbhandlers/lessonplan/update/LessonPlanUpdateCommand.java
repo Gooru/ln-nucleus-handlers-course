@@ -37,7 +37,7 @@ public final class LessonPlanUpdateCommand {
 
   private void validate() {
     JsonArray sessionsData = requestPayload().getJsonArray(AJEntityLessonPlan.SESSIONS, null);
-    if (requestPayload().containsKey(AJEntityLessonPlan.SESSIONS) && sessionsData == null) { 
+    if (requestPayload().containsKey(AJEntityLessonPlan.SESSIONS) && (sessionsData == null || sessionsData.isEmpty())) { 
       throw new MessageResponseWrapperException(MessageResponseFactory
           .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("lesson.plan.session.empty")));
     }
@@ -64,9 +64,9 @@ public final class LessonPlanUpdateCommand {
             errors = errors != null ? errors : new JsonObject();
             errors.put(AJEntityLessonPlan.CONTENTS, contentErrorList);
           }
-          if (errors != null) {
-            sessionErrorList.add(errors);
-          }
+        }
+        if (errors != null) {
+          sessionErrorList.add(errors);
         }
       });
       if (!sessionErrorList.isEmpty()) {
