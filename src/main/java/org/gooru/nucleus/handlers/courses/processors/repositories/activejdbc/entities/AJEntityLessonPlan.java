@@ -12,7 +12,6 @@ import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.val
 import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.IdName;
 import org.javalite.activejdbc.annotations.Table;
-import io.vertx.core.json.JsonObject;
 
 @Table("lesson_plan")
 @IdName("id")
@@ -54,8 +53,8 @@ public class AJEntityLessonPlan extends Model {
 
   private static Map<String, FieldConverter> initializeConverters() {
     Map<String, FieldConverter> converterMap = new HashMap<>();
-    converterMap.put(PRIOR_KNOWLEDGE, (FieldConverter::convertFieldJsonArrayToTextArray));
-    converterMap.put(ANTICIPATED_STRUGGLES, (FieldConverter::convertFieldJsonArrayToTextArray));
+    converterMap.put(PRIOR_KNOWLEDGE, (FieldConverter::convertFieldToJson));
+    converterMap.put(ANTICIPATED_STRUGGLES, (FieldConverter::convertFieldToJson));
     converterMap.put(REFERENCE_LINKS, (FieldConverter::convertFieldJsonArrayToTextArray));
     converterMap.put(SESSIONS, (FieldConverter::convertFieldToJson));
     converterMap.put(COURSE_ID,
@@ -124,37 +123,6 @@ public class AJEntityLessonPlan extends Model {
     setFieldUsingConverter(LESSON_ID, lessonId);
   }
 
-  public String getDescription() {
-    return this.getString(DESCRIPTION);
-  }
-
-  public String getGuidingQuestions() {
-    return this.getString(GUIDING_QUESTIONS);
-  }
-
-  public String[] getPriorKnowledge() {
-    return (String[]) this.get(PRIOR_KNOWLEDGE);
-  }
-
-  public String[] getAnticipatedStruggles() {
-    return (String[]) this.get(ANTICIPATED_STRUGGLES);
-  }
-
-  public String[] getReferenceLinks() {
-    return (String[]) this.get(REFERENCE_LINKS);
-  }
-
-  public int getPacingGuideInDays() {
-    return this.getInteger(PACING_GUIDE_IN_HRS);
-  }
-
-  public int getStartWeek() {
-    return this.getInteger(START_WEEK);
-  }
-
-  public JsonObject getSession() {
-    return (JsonObject) this.get(SESSIONS);
-  }
 
   private void setFieldUsingConverter(String fieldName, Object fieldValue) {
     FieldConverter fc = converterRegistry.get(fieldName);
@@ -164,7 +132,5 @@ public class AJEntityLessonPlan extends Model {
       this.set(fieldName, fieldValue);
     }
   }
-
-
 
 }
