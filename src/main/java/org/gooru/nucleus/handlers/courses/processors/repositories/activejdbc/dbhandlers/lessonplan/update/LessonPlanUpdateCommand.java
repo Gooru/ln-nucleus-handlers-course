@@ -1,5 +1,6 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.lessonplan.update;
 
+import java.util.ResourceBundle;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.MessageResponseWrapperException;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
@@ -22,6 +23,7 @@ public final class LessonPlanUpdateCommand {
   private AJEntityLessonPlan lessonPlan;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UpdateLessonPlanHandler.class);
+  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
 
   LessonPlanUpdateCommand(ProcessorContext context) {
     this.context = context;
@@ -35,6 +37,10 @@ public final class LessonPlanUpdateCommand {
 
   private void validate() {
     JsonArray sessionsData = requestPayload().getJsonArray(AJEntityLessonPlan.SESSIONS, null);
+    if (requestPayload().containsKey(AJEntityLessonPlan.SESSIONS) && sessionsData == null) { 
+      throw new MessageResponseWrapperException(MessageResponseFactory
+          .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("lesson.plan.session.empty")));
+    }
     if (sessionsData != null) {
       JsonArray sessionErrorList = new JsonArray();
       sessionsData.forEach(session -> {
