@@ -83,8 +83,8 @@ public final class LessonPlanUpdateCommand {
     }
   }
 
-  private void validateSessionContentPayLoad(JsonObject sessionsData, JsonArray contents) {
-    if (sessionsData.containsKey(AJEntityLessonPlan.CONTENTS)
+  private void validateSessionContentPayLoad(JsonObject sessionData, JsonArray contents) {
+    if (sessionData.containsKey(AJEntityLessonPlan.CONTENTS)
         && (contents == null || contents.isEmpty())) {
       throw new MessageResponseWrapperException(MessageResponseFactory
           .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("lesson.plan.session.contents.empty")));
