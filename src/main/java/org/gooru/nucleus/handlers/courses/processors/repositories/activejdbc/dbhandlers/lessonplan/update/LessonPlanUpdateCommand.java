@@ -37,10 +37,7 @@ public final class LessonPlanUpdateCommand {
 
   private void validate() {
     JsonArray sessionsData = requestPayload().getJsonArray(AJEntityLessonPlan.SESSIONS, null);
-    if (requestPayload().containsKey(AJEntityLessonPlan.SESSIONS) && (sessionsData == null || sessionsData.isEmpty())) { 
-      throw new MessageResponseWrapperException(MessageResponseFactory
-          .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("lesson.plan.session.empty")));
-    }
+    this.validateSessionsPayload(sessionsData);
     if (sessionsData != null) {
       JsonArray sessionErrorList = new JsonArray();
       sessionsData.forEach(session -> {
@@ -50,6 +47,7 @@ public final class LessonPlanUpdateCommand {
             LessonPlanDao.getSessionValidatorRegistry());
         JsonArray contentErrorList = new JsonArray();
         JsonArray contents = sessionData.getJsonArray(AJEntityLessonPlan.CONTENTS, null);
+        this.validateSessionContentPayLoad(sessionData, contents);
         if (contents != null && !contents.isEmpty()) {
           contents.forEach(content -> {
             JsonObject contentData = (JsonObject) content;
@@ -60,10 +58,10 @@ public final class LessonPlanUpdateCommand {
               contentErrorList.add(contentErrors);
             }
           });
-          if (!contentErrorList.isEmpty()) {
-            errors = errors != null ? errors : new JsonObject();
-            errors.put(AJEntityLessonPlan.CONTENTS, contentErrorList);
-          }
+        }
+        if (!contentErrorList.isEmpty()) {
+          errors = errors != null ? errors : new JsonObject();
+          errors.put(AJEntityLessonPlan.CONTENTS, contentErrorList);
         }
         if (errors != null) {
           sessionErrorList.add(errors);
@@ -74,6 +72,22 @@ public final class LessonPlanUpdateCommand {
         throw new MessageResponseWrapperException(MessageResponseFactory
             .createValidationErrorResponse(new JsonObject().put("errors", sessionErrorList)));
       }
+    }
+  }
+
+  private void validateSessionsPayload(JsonArray sessionsData) {
+    if (requestPayload().containsKey(AJEntityLessonPlan.SESSIONS)
+        && (sessionsData == null || sessionsData.isEmpty())) {
+      throw new MessageResponseWrapperException(MessageResponseFactory
+          .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("lesson.plan.sessions.empty")));
+    }
+  }
+
+  private void validateSessionContentPayLoad(JsonObject sessionsData, JsonArray contents) {
+    if (sessionsData.containsKey(AJEntityLessonPlan.CONTENTS)
+        && (contents == null || contents.isEmpty())) {
+      throw new MessageResponseWrapperException(MessageResponseFactory
+          .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("lesson.plan.session.contents.empty")));
     }
   }
 
@@ -103,9 +117,9 @@ public final class LessonPlanUpdateCommand {
       throw new MessageResponseWrapperException(MessageResponseFactory.createNotFoundResponse());
     }
 
-    LazyList<AJEntityLessonPlan> ajEntityLessonPlan = AJEntityLessonPlan.findBySQL(
-        LessonPlanDao.SELECT_LESSON_PLAN_TO_VALIDATE, context.lessonPlanId(), context.lessonId(),
-        context.unitId(), context.courseId());
+    LazyList<AJEntityLessonPlan> ajEntityLessonPlan =
+        AJEntityLessonPlan.findBySQL(LessonPlanDao.SELECT_LESSON_PLAN_TO_VALIDATE,
+            context.lessonPlanId(), context.lessonId(), context.unitId(), context.courseId());
     if (ajEntityLessonPlan.isEmpty()) {
       LOGGER.warn("Lesson Plan {} not found, aborting", context.lessonPlanId());
       throw new MessageResponseWrapperException(MessageResponseFactory.createNotFoundResponse());
