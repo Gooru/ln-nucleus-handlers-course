@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.MessageResponseWrapperException;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.converters.ConverterRegistry;
@@ -35,6 +36,7 @@ import io.vertx.core.json.JsonObject;
 public final class LessonPlanDao {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(LessonPlanDao.class);
+  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("messages");
 
 
   private LessonPlanDao() {
@@ -58,7 +60,8 @@ public final class LessonPlanDao {
 
   private static final Set<String> CREATABLE_SESSION_FIELDS =
       new HashSet<>(Arrays.asList(AJEntityLessonPlan.TITLE, AJEntityLessonPlan.DESCRIPTION,
-          AJEntityLessonPlan.DURATION, AJEntityLessonPlan.CONTENTS));
+          AJEntityLessonPlan.DURATION, AJEntityLessonPlan.TEACHER_CONTENTS,
+          AJEntityLessonPlan.STUDENT_CONTENTS));
 
   private static final Set<String> CREATABLE_SESSION_CONTENT_FIELDS = new HashSet<>(
       Arrays.asList(AJEntityLessonPlan.CONTENT_ID, AJEntityLessonPlan.CONTENT_FORMAT));
@@ -171,8 +174,12 @@ public final class LessonPlanDao {
     return new LessonPlanSessionValidationRegistry();
   }
 
-  public static ValidatorRegistry getSessionContentValidatorRegistry() {
-    return new LessonPlanSessionContentValidationRegistry();
+  public static ValidatorRegistry getSessionTeacherContentValidatorRegistry() {
+    return new LessonPlanSessionTeacherContentValidationRegistry();
+  }
+
+  public static ValidatorRegistry getSessionStudentContentValidatorRegistry() {
+    return new LessonPlanSessionStudentContentValidationRegistry();
   }
 
   public static ConverterRegistry getConverterRegistry() {
@@ -195,11 +202,21 @@ public final class LessonPlanDao {
     }
   }
 
-  private static class LessonPlanSessionContentValidationRegistry implements ValidatorRegistry {
+  private static class LessonPlanSessionTeacherContentValidationRegistry
+      implements ValidatorRegistry {
 
     @Override
     public FieldValidator lookupValidator(String fieldName) {
-      return AJEntityLessonPlan.validatorSessionContentRegistry.get(fieldName);
+      return AJEntityLessonPlan.validatorSessionTeacherContentRegistry.get(fieldName);
+    }
+  }
+
+  private static class LessonPlanSessionStudentContentValidationRegistry
+      implements ValidatorRegistry {
+
+    @Override
+    public FieldValidator lookupValidator(String fieldName) {
+      return AJEntityLessonPlan.validatorSessionStudentContentRegistry.get(fieldName);
     }
   }
 
@@ -234,6 +251,15 @@ public final class LessonPlanDao {
     }
     updateCourseUpdatedAt(command.getCourse());
     return lessonPlan.getId().toString();
+  }
+
+  public static void validateCourseIsPremium(AJEntityCourse course, String courseId) {
+    if (!course.isPremium()) {
+      LOGGER.warn("Course: '{}' is not premium", courseId);
+      throw new MessageResponseWrapperException(MessageResponseFactory.createInvalidRequestResponse(
+          RESOURCE_BUNDLE.getString("lesson.plan.only.for.navigator.course")));
+
+    }
   }
 
   public static void updateLessonPlan(LessonPlanUpdateCommand command) {
@@ -350,7 +376,7 @@ public final class LessonPlanDao {
       List<String> oaIds, List<String> contentIds) {
     sessions.forEach(sessionData -> {
       JsonObject session = (JsonObject) sessionData;
-      JsonArray contents = session.getJsonArray(AJEntityLessonPlan.CONTENTS, null);
+      JsonArray contents = session.getJsonArray(AJEntityLessonPlan.TEACHER_CONTENTS, null);
       if (contents != null && !contents.isEmpty()) {
         contents.forEach(contentData -> {
           JsonObject content = (JsonObject) contentData;
@@ -391,7 +417,7 @@ public final class LessonPlanDao {
       Map<String, Map<Object, Object>> collectionsOECountMap) {
     sessions.forEach(sessionData -> {
       JsonObject session = (JsonObject) sessionData;
-      JsonArray contents = session.getJsonArray(AJEntityLessonPlan.CONTENTS, null);
+      JsonArray contents = session.getJsonArray(AJEntityLessonPlan.TEACHER_CONTENTS, null);
       if (contents != null && !contents.isEmpty()) {
         JsonArray contentSummary = new JsonArray();
         contents.forEach(contentData -> {
@@ -441,13 +467,13 @@ public final class LessonPlanDao {
             }
           }
         });
-        session.put(AJEntityLessonPlan.CONTENTS, contentSummary);
+        session.put(AJEntityLessonPlan.TEACHER_CONTENTS, contentSummary);
       }
     });
 
   }
-  
-  private static boolean isOA(String contentFormat) { 
+
+  private static boolean isOA(String contentFormat) {
     return contentFormat != null && contentFormat.equalsIgnoreCase(OFFLINE_ACTIVITY);
   }
 

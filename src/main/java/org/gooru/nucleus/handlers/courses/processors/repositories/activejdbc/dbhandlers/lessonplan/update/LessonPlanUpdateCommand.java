@@ -45,23 +45,23 @@ public final class LessonPlanUpdateCommand {
         JsonObject errors = new SessionPayloadValidator().validatePayload(sessionData,
             LessonPlanDao.createSessionFieldSelector(),
             LessonPlanDao.getSessionValidatorRegistry());
-        JsonArray contentErrorList = new JsonArray();
-        JsonArray contents = sessionData.getJsonArray(AJEntityLessonPlan.CONTENTS, null);
-        this.validateSessionContentPayLoad(sessionData, contents);
-        if (contents != null && !contents.isEmpty()) {
-          contents.forEach(content -> {
-            JsonObject contentData = (JsonObject) content;
-            JsonObject contentErrors = new SessionContentPayloadValidator().validatePayload(
-                contentData, LessonPlanDao.createSessionContentFieldSelector(),
-                LessonPlanDao.getSessionContentValidatorRegistry());
-            if (contentErrors != null) {
-              contentErrorList.add(contentErrors);
-            }
-          });
+        JsonArray teacherContents =
+            sessionData.getJsonArray(AJEntityLessonPlan.TEACHER_CONTENTS, null);
+        JsonArray teacherContentErrors =
+            this.validateSessionTeacherContentPayLoad(sessionData, teacherContents);
+        JsonArray studentContents =
+            sessionData.getJsonArray(AJEntityLessonPlan.STUDENT_CONTENTS, null);
+        JsonArray studentContentErrors =
+            this.validateSessionStudentContentPayLoad(sessionData, studentContents);
+        if (errors == null
+            && (!teacherContentErrors.isEmpty() || !studentContentErrors.isEmpty())) {
+          errors = new JsonObject();
         }
-        if (!contentErrorList.isEmpty()) {
-          errors = errors != null ? errors : new JsonObject();
-          errors.put(AJEntityLessonPlan.CONTENTS, contentErrorList);
+        if (!teacherContentErrors.isEmpty()) {
+          errors.put(AJEntityLessonPlan.TEACHER_CONTENTS, teacherContentErrors);
+        }
+        if (!studentContentErrors.isEmpty()) {
+          errors.put(AJEntityLessonPlan.STUDENT_CONTENTS, studentContentErrors);
         }
         if (errors != null) {
           sessionErrorList.add(errors);
@@ -83,12 +83,48 @@ public final class LessonPlanUpdateCommand {
     }
   }
 
-  private void validateSessionContentPayLoad(JsonObject sessionData, JsonArray contents) {
-    if (sessionData.containsKey(AJEntityLessonPlan.CONTENTS)
-        && (contents == null || contents.isEmpty())) {
-      throw new MessageResponseWrapperException(MessageResponseFactory
-          .createInvalidRequestResponse(RESOURCE_BUNDLE.getString("lesson.plan.session.contents.empty")));
+  private JsonArray validateSessionTeacherContentPayLoad(JsonObject sessionData,
+      JsonArray teacherContents) {
+    JsonArray teacherContentErrors = new JsonArray();
+    if (sessionData.containsKey(AJEntityLessonPlan.TEACHER_CONTENTS)
+        && (teacherContents == null || teacherContents.isEmpty())) {
+      throw new MessageResponseWrapperException(MessageResponseFactory.createInvalidRequestResponse(
+          RESOURCE_BUNDLE.getString("lesson.plan.session.teacher.contents.empty")));
     }
+    if (teacherContents != null && !teacherContents.isEmpty()) {
+      teacherContents.forEach(content -> {
+        JsonObject contentData = (JsonObject) content;
+        JsonObject contentErrors = new SessionContentPayloadValidator().validatePayload(contentData,
+            LessonPlanDao.createSessionContentFieldSelector(),
+            LessonPlanDao.getSessionTeacherContentValidatorRegistry());
+        if (contentErrors != null) {
+          teacherContentErrors.add(contentErrors);
+        }
+      });
+    }
+    return teacherContentErrors;
+  }
+
+  private JsonArray validateSessionStudentContentPayLoad(JsonObject sessionData,
+      JsonArray studentContents) {
+    JsonArray studentContentErrors = new JsonArray();
+    if (sessionData.containsKey(AJEntityLessonPlan.STUDENT_CONTENTS)
+        && (studentContents == null || studentContents.isEmpty())) {
+      throw new MessageResponseWrapperException(MessageResponseFactory.createInvalidRequestResponse(
+          RESOURCE_BUNDLE.getString("lesson.plan.session.student.contents.empty")));
+    }
+    if (studentContents != null && !studentContents.isEmpty()) {
+      studentContents.forEach(content -> {
+        JsonObject contentData = (JsonObject) content;
+        JsonObject contentErrors = new SessionContentPayloadValidator().validatePayload(contentData,
+            LessonPlanDao.createSessionContentFieldSelector(),
+            LessonPlanDao.getSessionStudentContentValidatorRegistry());
+        if (contentErrors != null) {
+          studentContentErrors.add(contentErrors);
+        }
+      });
+    }
+    return studentContentErrors;
   }
 
 
@@ -101,6 +137,7 @@ public final class LessonPlanUpdateCommand {
       throw new MessageResponseWrapperException(MessageResponseFactory.createForbiddenResponse());
     }
     this.course = ajEntityCourse.get(0);
+    LessonPlanDao.validateCourseIsPremium(course, context.courseId());
 
     LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(
         AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
