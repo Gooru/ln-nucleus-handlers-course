@@ -63,7 +63,7 @@ public final class LessonPlanUpdateCommand {
         if (!studentContentErrors.isEmpty()) {
           errors.put(AJEntityLessonPlan.STUDENT_CONTENTS, studentContentErrors);
         }
-        if (errors != null) {
+        if (errors != null && !errors.isEmpty()) {
           sessionErrorList.add(errors);
         }
       });
