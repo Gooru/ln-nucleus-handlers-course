@@ -38,7 +38,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"description\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources. End-of-session quiz to check understanding.\",\n  \"guiding_questions\": \"What is a percent?How do you calculate a percent from a fraction? How do you calculate a percent of a quantity? How do you use the concepts of percents in your everyday life?: LP4\",\n  \"prior_knowledge\": null,\n  \"pacing_guide_in_hrs\": 20,\n  \"anticipated_struggles\": [\n    \"K12.MA-N-OP-08\"\n  ],\n  \"reference_links\": [\n    \"https://math.tutorvista.com/number-system/numbers-and-operations.html\"\n  ]\n}"
+					"raw": "{\n  \"description\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources. End-of-session quiz to check understanding.\",\n  \"guiding_questions\": \"What is a percent?How do you calculate a percent from a fraction? How do you calculate a percent of a quantity? How do you use the concepts of percents in your everyday life?: LP4\",\n  \"prior_knowledge\": null,\n  \"pacing_guide_in_hrs\": 20,\n  \"anticipated_struggles\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources.\",\n  \"reference_links\": [\n    \"https://math.tutorvista.com/number-system/numbers-and-operations.html\"\n  ]\n}"
 				},
 				"url": {
 					"raw": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf/lesson-plans",
@@ -77,10 +77,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"description\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources. End-of-session quiz to check understanding.\",\n  \"guiding_questions\": \"What is a percent?How do you calculate a percent from a fraction? How do you calculate a percent of a quantity? How do you use the concepts of percents in your everyday life?: LP4\",\n  \"prior_knowledge\": null,\n  \"pacing_guide_in_hrs\": 20,\n  \"anticipated_struggles\": [\n    \"K12.MA-N-OP-08\"\n  ],\n  \"reference_links\": [\n    \"https://math.tutorvista.com/number-system/numbers-and-operations.html\"\n  ],\n  \"sessions\": [{\n    \"title\": \"session\",\n    \"contents\": [{\n      \"content_id\" : \"bcd6c655-ec82-4849-bf3d-c94842a817f5\",\n      \"content_format\": \"question\"\n    }, {\n      \"content_id\" : \"5edcf28a-2a8d-4d8d-9974-692b33d21c67\",\n      \"content_format\": \"resource\"\n    },  {\n      \"content_id\": \"cd467806-31a2-4d18-ab35-d0a0e3e01561\",\n      \"content_format\": \"collection\"\n    }]\n  },\n  {\n    \"title\": \"session 2\",\n    \"contents\": [{\n      \"content_id\" : \"add63c29-439d-42f7-a832-cdb9591dcae2\",\n      \"content_format\": \"assessment\"\n    }, \n    {\n     \"content_id\": \"090e5233-0a3a-4a18-8224-c4563f2e23cf\",\n     \"content_format\": \"collection\"\n    }, {\n      \"content_id\": \"dc702290-b4ce-410d-b326-5bc0ae1b6a5c\",\n      \"content_format\": \"offline-activity\"\n    }]\n  }]\n}"
+					"raw": "{\n  \"description\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources. End-of-session quiz to check understanding.\",\n  \"guiding_questions\": \"What is a percent?How do you calculate a percent from a fraction? How do you calculate a percent of a quantity? How do you use the concepts of percents in your everyday life?: LP4\",\n  \"prior_knowledge\": null,\n  \"pacing_guide_in_hrs\": 20,\n  \"anticipated_struggles\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources.\",\n  \"reference_links\": [\n    \"https://math.tutorvista.com/number-system/numbers-and-operations.html\"\n  ],\n  \"sessions\": [{\n    \"title\": \"session\",\n    \"teacher_contents\": [{\n      \"content_id\" : \"bcd6c655-ec82-4849-bf3d-c94842a817f5\",\n      \"content_format\": \"question\"\n    }, {\n      \"content_id\" : \"5edcf28a-2a8d-4d8d-9974-692b33d21c67\",\n      \"content_format\": \"resource\"\n    },  {\n      \"content_id\": \"cd467806-31a2-4d18-ab35-d0a0e3e01561\",\n      \"content_format\": \"collection\"\n    }],\n    \"student_contents\": [ {\n      \"content_id\": \"cd467806-31a2-4d18-ab35-d0a0e3e01561\",\n      \"content_format\": \"collection\"\n    }]\n  },\n  {\n    \"title\": \"session 2\",\n    \"teacher_contents\": [{\n      \"content_id\" : \"add63c29-439d-42f7-a832-cdb9591dcae2\",\n      \"content_format\": \"assessment\"\n    }, \n    {\n     \"content_id\": \"090e5233-0a3a-4a18-8224-c4563f2e23cf\",\n     \"content_format\": \"collection\"\n    }, {\n      \"content_id\": \"dc702290-b4ce-410d-b326-5bc0ae1b6a5c\",\n      \"content_format\": \"offline-activity\"\n    }]\n  }]\n}"
 				},
 				"url": {
-					"raw": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf/lesson-plans/7",
+					"raw": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf/lesson-plans/5",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -97,7 +97,7 @@
 						"lessons",
 						"cfcf3dae-9e42-4956-8351-f37a89f75fcf",
 						"lesson-plans",
-						"7"
+						"5"
 					]
 				},
 				"description": "This API is used to update the lesson plan for specific lesson."
@@ -225,7 +225,7 @@
 	],
 	"variable": [
 		{
-			"id": "d6755b68-8d2b-46ca-996c-4ef60efc2f0e",
+			"id": "c7611a75-b2f4-4fc0-ac11-7d27e04edbf3",
 			"key": "access_token",
 			"value": "{{access_token}}",
 			"type": "string"
