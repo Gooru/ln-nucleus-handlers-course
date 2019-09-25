@@ -40,6 +40,7 @@ public final class LessonPlanCreateCommand {
       throw new MessageResponseWrapperException(MessageResponseFactory.createForbiddenResponse());
     }
     this.course = ajEntityCourse.get(0);
+    LessonPlanDao.validateCourseIsPremium(this.course, context.courseId());
 
     LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(
         AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);

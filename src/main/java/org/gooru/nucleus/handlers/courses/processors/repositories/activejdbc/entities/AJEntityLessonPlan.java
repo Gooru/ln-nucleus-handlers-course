@@ -30,31 +30,35 @@ public class AJEntityLessonPlan extends Model {
   public static final String PACING_GUIDE_IN_HRS = "pacing_guide_in_hrs";
   public static final String START_WEEK = "start_week";
   public static final String SESSIONS = "sessions";
-  public static final String CONTENTS = "contents";
+  public static final String TEACHER_CONTENTS = "teacher_contents";
+  public static final String STUDENT_CONTENTS = "student_contents";
   public static final String CONTENT_FORMAT = "content_format";
   public static final String CONTENT_ID = "content_id";
   public static final String LESSON_PLAN_ID = "id";
-  private static final Set<String> ALLOWED_CONTENT_FORMATS =
+  private static final Set<String> ALLOWED_TEACHER_CONTENT_FORMATS =
       new HashSet<>(Arrays.asList("assessment", "collection", "assessment-external",
           "collection-external", "offline-activity", "question", "resource"));
-
+  private static final Set<String> ALLOWED_STUDENT_CONTENT_FORMATS =
+      new HashSet<>(Arrays.asList("assessment", "collection", "assessment-external",
+          "collection-external", "offline-activity"));
 
   static final Map<String, FieldValidator> validatorRegistry;
   static final Map<String, FieldValidator> validatorSessionRegistry;
-  static final Map<String, FieldValidator> validatorSessionContentRegistry;
+  static final Map<String, FieldValidator> validatorSessionTeacherContentRegistry;
+  static final Map<String, FieldValidator> validatorSessionStudentContentRegistry;
   static final Map<String, FieldConverter> converterRegistry;
 
   static {
     validatorRegistry = initializeValidators();
     validatorSessionRegistry = initializeSessionValidators();
-    validatorSessionContentRegistry = initializeSessionContentValidators();
+    validatorSessionTeacherContentRegistry = initializeSessionTeacherContentValidators();
+    validatorSessionStudentContentRegistry = initializeSessionStudentContentValidators();
     converterRegistry = initializeConverters();
   }
 
   private static Map<String, FieldConverter> initializeConverters() {
     Map<String, FieldConverter> converterMap = new HashMap<>();
     converterMap.put(PRIOR_KNOWLEDGE, (FieldConverter::convertFieldToJson));
-    converterMap.put(ANTICIPATED_STRUGGLES, (FieldConverter::convertFieldToJson));
     converterMap.put(REFERENCE_LINKS, (FieldConverter::convertFieldJsonArrayToTextArray));
     converterMap.put(SESSIONS, (FieldConverter::convertFieldToJson));
     converterMap.put(COURSE_ID,
@@ -72,7 +76,8 @@ public class AJEntityLessonPlan extends Model {
     validatorMap.put(GUIDING_QUESTIONS,
         (value) -> FieldValidator.validateStringIfPresent(value, 50000));
     validatorMap.put(PRIOR_KNOWLEDGE, FieldValidator::validateJsonArrayIfPresent);
-    validatorMap.put(ANTICIPATED_STRUGGLES, FieldValidator::validateJsonArrayIfPresent);
+    validatorMap.put(ANTICIPATED_STRUGGLES,
+        (value) -> FieldValidator.validateStringIfPresent(value, 50000));
     validatorMap.put(REFERENCE_LINKS, FieldValidator::validateJsonArrayIfPresent);
     validatorMap.put(PACING_GUIDE_IN_HRS, FieldValidator::validateIntegerIfPresent);
     validatorMap.put(START_WEEK,
@@ -87,15 +92,24 @@ public class AJEntityLessonPlan extends Model {
     validatorMap.put(TITLE, (value) -> FieldValidator.validateString(value, 2000));
     validatorMap.put(DESCRIPTION, (value) -> FieldValidator.validateStringIfPresent(value, 50000));
     validatorMap.put(DURATION, FieldValidator::validateIntegerIfPresent);
-    validatorMap.put(CONTENTS, FieldValidator::validateJsonArrayIfPresent);
+    validatorMap.put(TEACHER_CONTENTS, FieldValidator::validateJsonArrayIfPresent);
+    validatorMap.put(STUDENT_CONTENTS, FieldValidator::validateJsonArrayIfPresent);
     return Collections.unmodifiableMap(validatorMap);
   }
 
-  private static Map<String, FieldValidator> initializeSessionContentValidators() {
+  private static Map<String, FieldValidator> initializeSessionTeacherContentValidators() {
     Map<String, FieldValidator> validatorMap = new HashMap<>();
     validatorMap.put(CONTENT_ID, FieldValidator::validateUuid);
     validatorMap.put(CONTENT_FORMAT,
-        (value) -> FieldValidator.validateStringAllowedValue(value, ALLOWED_CONTENT_FORMATS));
+        (value) -> FieldValidator.validateStringAllowedValue(value, ALLOWED_TEACHER_CONTENT_FORMATS));
+    return Collections.unmodifiableMap(validatorMap);
+  }
+  
+  private static Map<String, FieldValidator> initializeSessionStudentContentValidators() {
+    Map<String, FieldValidator> validatorMap = new HashMap<>();
+    validatorMap.put(CONTENT_ID, FieldValidator::validateUuid);
+    validatorMap.put(CONTENT_FORMAT,
+        (value) -> FieldValidator.validateStringAllowedValue(value, ALLOWED_STUDENT_CONTENT_FORMATS));
     return Collections.unmodifiableMap(validatorMap);
   }
 

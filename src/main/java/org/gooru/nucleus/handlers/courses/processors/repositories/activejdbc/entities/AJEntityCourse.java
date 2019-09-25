@@ -89,10 +89,10 @@ public class AJEntityCourse extends Model {
 
   public static final String SELECT_COLLABORATOR = "SELECT collaborator FROM course WHERE id = ?::uuid";
   public static final String SELECT_COURSE_TO_AUTHORIZE =
-      "SELECT id, owner_id, collaborator, tenant, tenant_root, taxonomy FROM course WHERE id = ?::uuid AND is_deleted = ? AND"
+      "SELECT id, owner_id, collaborator, tenant, tenant_root, taxonomy, version FROM course WHERE id = ?::uuid AND is_deleted = ? AND"
           + " (owner_id = ?::uuid OR collaborator ?? ?)";
   public static final String SELECT_COURSE_TO_VALIDATE =
-      "SELECT id, owner_id, publish_status, collaborator, tenant, tenant_root FROM course WHERE id = ?::uuid AND "
+      "SELECT id, owner_id, publish_status, collaborator, tenant, tenant_root, version FROM course WHERE id = ?::uuid AND "
           + "is_deleted = ?";
   public static final String SELECT_COURSE =
       "SELECT id, title, description, created_at, updated_at, owner_id, creator_id, modifier_id, "

@@ -1,7 +1,5 @@
 package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,11 +22,15 @@ import org.javalite.activejdbc.Base;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class FetchLessonHandler implements DBHandler {
 
   private final ProcessorContext context;
   private static final Logger LOGGER = LoggerFactory.getLogger(FetchLessonHandler.class);
+  
+  private AJEntityCourse course;
 
   public FetchLessonHandler(ProcessorContext context) {
     this.context = context;
@@ -74,6 +76,7 @@ public class FetchLessonHandler implements DBHandler {
       return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(),
           ExecutionStatus.FAILED);
     }
+    this.course = courses.get(0);
 
     LazyList<AJEntityUnit> ajEntityUnit = AJEntityUnit.findBySQL(
         AJEntityUnit.SELECT_UNIT_TO_VALIDATE, context.unitId(), context.courseId(), false);
@@ -107,8 +110,10 @@ public class FetchLessonHandler implements DBHandler {
           new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLesson.ALL_FIELDS)
               .toJson(ajEntityLesson.get(0)));
 
-      resultBody.put(AJEntityLesson.LESSON_PLAN,
-          LessonPlanDao.fetchLessonPlan(context.courseId(), context.unitId(), context.lessonId()));
+      if (course.isPremium()) {
+        resultBody.put(AJEntityLesson.LESSON_PLAN, LessonPlanDao.fetchLessonPlan(context.courseId(),
+            context.unitId(), context.lessonId()));
+      }
 
       LazyList<AJEntityCollection> collectionSummary =
           AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTION_SUMMARY,
