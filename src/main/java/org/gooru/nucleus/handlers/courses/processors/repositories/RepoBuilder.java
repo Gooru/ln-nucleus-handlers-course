@@ -24,4 +24,8 @@ public class RepoBuilder {
   public MilestoneRepo buildMilestoneRepo(ProcessorContext context) {
     return new AJRepoBuilder().buildMilestoneRepo(context);
   }
+
+  public LessonPlanRepo buildLessonPlanRepo(ProcessorContext context) {
+    return new AJRepoBuilder().buildLessonPlanRepo(context);
+  }
 }

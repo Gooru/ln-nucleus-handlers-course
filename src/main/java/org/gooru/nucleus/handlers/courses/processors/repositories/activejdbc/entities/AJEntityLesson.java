@@ -51,6 +51,7 @@ public class AJEntityLesson extends Model {
   public static final String ID = "id";
   public static final String AGGREGATED_TAXONOMY = "aggregated_taxonomy";
   public static final String AGGREGATED_GUT_CODES = "aggregated_gut_codes";
+  public static final String LESSON_PLAN = "lesson_plan";
 
   public static final String LESSON_SUMMARY = "lesson_summary";
   public static final String LESSON_COUNT = "lesson_count";
@@ -88,6 +89,10 @@ public class AJEntityLesson extends Model {
           + " GROUP BY unit_id";
   public static final String SELECT_LESSON_BY_COURSE =
       "SELECT lesson_id, unit_id, title, sequence_id FROM lesson WHERE course_id = ?::uuid AND is_deleted = false";
+  
+  public static final String SELECT_LESSON_PLAN_BY_LESSON =
+      "SELECT   jsonb_array_length(sessions) AS lp_session_count, pacing_guide_in_hrs as lp_pacing_guide_in_hrs, lesson_id  FROM lesson_plan WHERE lesson_id = ANY(?::uuid[]) AND unit_id = ?::uuid AND"
+          + " course_id = ?::uuid";
 
   public static final Set<String> INSERTABLE_FIELDS = new HashSet<>(Arrays
       .asList(TITLE, METADATA, TAXONOMY, CREATOR_SYSTEM, PRIMARY_LANGUAGE));

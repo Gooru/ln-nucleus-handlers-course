@@ -2,9 +2,11 @@ package org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.db
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.util.UUID;
 import org.gooru.nucleus.handlers.courses.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.courses.processors.exceptions.MessageResponseWrapperException;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbauth.AuthorizerBuilder;
+import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.common.RequestQueryParamReader;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.dbhandlers.common.Validators;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityCourse;
 import org.gooru.nucleus.handlers.courses.processors.repositories.activejdbc.entities.AJEntityMilestone;
@@ -29,6 +31,9 @@ class CourseFetchWithMilestonesHandler implements DBHandler {
   private AJEntityCourse course;
   private static final Logger LOGGER = LoggerFactory
       .getLogger(CourseFetchWithMilestonesHandler.class);
+  private UUID classId;
+  private UUID userIdForRescope;
+  private boolean needRescopedMilestoneLookup;
 
   CourseFetchWithMilestonesHandler(ProcessorContext context) {
     this.context = context;
@@ -41,6 +46,7 @@ class CourseFetchWithMilestonesHandler implements DBHandler {
       Validators.validateCourseInContext(context);
       Validators.validateUserIdInContext(context);
       Validators.validateFWInContext(context);
+      initializeRescopedMilestoneLookup();
       LOGGER.debug("checkSanity() OK");
       return new ExecutionResult<>(null, ExecutionStatus.CONTINUE_PROCESSING);
     } catch (MessageResponseWrapperException mrwe) {
@@ -79,8 +85,12 @@ class CourseFetchWithMilestonesHandler implements DBHandler {
     JsonObject body = new JsonObject(
         new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityCourse.ALL_FIELDS)
             .toJson(course));
-    LazyList<AJEntityMilestone> milestones = new MilestoneDao()
-        .fetchMilestonesForCourse(context.courseId(), context.frameworkCode());
+    LazyList<AJEntityMilestone> milestones;
+    if (needRescopedMilestoneLookup) {
+      milestones = fetchMilestonesForCourseConsideringRescopedLessons();
+    } else {
+      milestones = fetchMilestonesForCourseWithoutRescope();
+    }
     LOGGER.debug("Number of milestones found {}", milestones.size());
     JsonArray milestonesSummary;
     if (milestones.size() > 0) {
@@ -99,5 +109,33 @@ class CourseFetchWithMilestonesHandler implements DBHandler {
   public boolean handlerReadOnly() {
     return true;
   }
+
+  private LazyList<AJEntityMilestone> fetchMilestonesForCourseConsideringRescopedLessons() {
+    LOGGER.debug("Fetching course milestones with rescope. Course: '{}'");
+    return new MilestoneDao()
+        .fetchMilestonesForCourseConsideringRescope(userIdForRescope.toString(),
+            context.courseId(), classId.toString(), context.frameworkCode());
+  }
+
+  private LazyList<AJEntityMilestone> fetchMilestonesForCourseWithoutRescope() {
+    LOGGER.debug("Fetching course milestones without rescope. Course: '{}'");
+    return new MilestoneDao()
+        .fetchMilestonesForCourse(context.courseId(), context.frameworkCode());
+  }
+
+  private void initializeRescopedMilestoneLookup() {
+    classId = RequestQueryParamReader.readQueryParamAsUuid(context.request(), "class_id");
+    userIdForRescope = RequestQueryParamReader.readQueryParamAsUuid(context.request(), "user_id");
+    if ((classId != null && userIdForRescope == null) || (classId == null
+        && userIdForRescope != null)) {
+      LOGGER
+          .warn("Both class_id and user_id should be provided or both should absent. Course: '{}'",
+              context.courseId());
+      throw new MessageResponseWrapperException(MessageResponseFactory.createInvalidRequestResponse(
+          "Both class_id and user_id should be provided or both should absent"));
+    }
+    needRescopedMilestoneLookup = (classId != null && userIdForRescope != null);
+  }
+
 
 }

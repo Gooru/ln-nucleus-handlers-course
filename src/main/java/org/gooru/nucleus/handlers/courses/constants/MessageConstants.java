@@ -47,6 +47,9 @@ public class MessageConstants {
   public static final String MSG_OP_LESSON_REMOVE_COLLECTION = "lesson.remove.collection";
   public static final String MSG_OP_COURSE_MS_GET = "course.ms.get";
   public static final String MSG_OP_COURSE_MS_MILESTONE_GET = "course.ms.milestone.get";
+  public static final String MSG_OP_LESSON_PLAN_CREATE = "lesson.plan.create";
+  public static final String MSG_OP_LESSON_PLAN_UPDATE = "lesson.plan.update";
+  public static final String MSG_OP_LESSON_PLAN_DELETE = "lesson.plan.delete";
 
   // Containers for different responses
   public static final String RESP_CONTAINER_MBUS = "mb.container";
@@ -58,6 +61,7 @@ public class MessageConstants {
   public static final String LESSON_ID = "lessonId";
   public static final String COLLECTION_ID = "collectionId";
   public static final String MILESTONE_ID = "milestoneId";
+  public static final String LESSON_PLAN_ID = "lessonPlanId";
   public static final String FW_CODE = "fwCode";
 
   public static final String TAXONOMY = "taxonomy";
