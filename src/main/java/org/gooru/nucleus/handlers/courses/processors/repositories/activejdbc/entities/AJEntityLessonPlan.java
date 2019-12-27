@@ -27,7 +27,7 @@ public class AJEntityLessonPlan extends Model {
   public static final String PRIOR_KNOWLEDGE = "prior_knowledge";
   public static final String ANTICIPATED_STRUGGLES = "anticipated_struggles";
   public static final String REFERENCE_LINKS = "reference_links";
-  public static final String PACING_GUIDE_IN_HRS = "pacing_guide_in_hrs";
+  public static final String PACING_GUIDE_IN_SECS = "pacing_guide_in_secs";
   public static final String START_WEEK = "start_week";
   public static final String SESSIONS = "sessions";
   public static final String TEACHER_CONTENTS = "teacher_contents";
@@ -79,7 +79,7 @@ public class AJEntityLessonPlan extends Model {
     validatorMap.put(ANTICIPATED_STRUGGLES,
         (value) -> FieldValidator.validateStringIfPresent(value, 50000));
     validatorMap.put(REFERENCE_LINKS, FieldValidator::validateJsonArrayIfPresent);
-    validatorMap.put(PACING_GUIDE_IN_HRS, FieldValidator::validateIntegerIfPresent);
+    validatorMap.put(PACING_GUIDE_IN_SECS, FieldValidator::validateIntegerIfPresent);
     validatorMap.put(START_WEEK,
         (value) -> FieldValidator.validateIntegerWithRangeIfPresent(value, 0, 53));
     validatorMap.put(SESSIONS, FieldValidator::validateJsonArrayIfPresent);

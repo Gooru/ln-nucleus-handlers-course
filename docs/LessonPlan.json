@@ -1,64 +1,27 @@
 {
+	"variables": [],
 	"info": {
-		"_postman_id": "5ad5d894-6f5b-402f-a3d9-c247d50c56b1",
 		"name": "lessonPlan",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"_postman_id": "fc0995c0-98c0-82b8-2dd5-f10b98614d91",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
 	"item": [
 		{
 			"name": "CreateLessonPlan",
 			"request": {
-				"auth": {
-					"type": "apikey",
-					"apikey": [
-						{
-							"key": "key",
-							"value": "Token",
-							"type": "string"
-						},
-						{
-							"key": "value",
-							"value": "MjoxNTY3MDU2NzgyNTc4OjViOWU3OWY4LTYzZTQtNGM0Zi05NzY4LWI3ZGYzMzM0YjczNzo6YmE5NTZhOTctYWUxNS0xMWU1LWEzMDItZjhhOTYzMDY1OTc2",
-							"type": "string"
-						},
-						{
-							"key": "in",
-							"value": "header",
-							"type": "string"
-						}
-					]
-				},
+				"url": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf/lesson-plans",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Authorization",
 						"value": "Token MjoxNTY3MDU2NzgyNTc4OjViOWU3OWY4LTYzZTQtNGM0Zi05NzY4LWI3ZGYzMzM0YjczNzo6YmE5NTZhOTctYWUxNS0xMWU1LWEzMDItZjhhOTYzMDY1OTc2",
-						"type": "text"
+						"description": ""
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"description\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources. End-of-session quiz to check understanding.\",\n  \"guiding_questions\": \"What is a percent?How do you calculate a percent from a fraction? How do you calculate a percent of a quantity? How do you use the concepts of percents in your everyday life?: LP4\",\n  \"prior_knowledge\": null,\n  \"pacing_guide_in_hrs\": 20,\n  \"anticipated_struggles\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources.\",\n  \"reference_links\": [\n    \"https://math.tutorvista.com/number-system/numbers-and-operations.html\"\n  ]\n}"
-				},
-				"url": {
-					"raw": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf/lesson-plans",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"api",
-						"nucleus",
-						"v1",
-						"courses",
-						"c999d565-6009-4490-82f2-dbb702c13996",
-						"units",
-						"6f2addb4-42a4-44c0-a844-4f5e40089a8f",
-						"lessons",
-						"cfcf3dae-9e42-4956-8351-f37a89f75fcf",
-						"lesson-plans"
-					]
+					"raw": "{\n  \"description\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources. End-of-session quiz to check understanding.\",\n  \"guiding_questions\": \"What is a percent?How do you calculate a percent from a fraction? How do you calculate a percent of a quantity? How do you use the concepts of percents in your everyday life?: LP4\",\n  \"prior_knowledge\": null,\n  \"pacing_guide_in_secs\": 2000,\n  \"anticipated_struggles\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources.\",\n  \"reference_links\": [\n    \"https://math.tutorvista.com/number-system/numbers-and-operations.html\"\n  ]\n}"
 				},
 				"description": "This API is used to create the lesson plan for specific lesson."
 			},
@@ -67,38 +30,18 @@
 		{
 			"name": "UpdateLessonPlan",
 			"request": {
+				"url": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf/lesson-plans/6",
 				"method": "PUT",
 				"header": [
 					{
 						"key": "Authorization",
 						"value": "Token MjoxNTY3MDU2NzgyNTc4OjViOWU3OWY4LTYzZTQtNGM0Zi05NzY4LWI3ZGYzMzM0YjczNzo6YmE5NTZhOTctYWUxNS0xMWU1LWEzMDItZjhhOTYzMDY1OTc2",
-						"type": "text"
+						"description": ""
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"description\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources. End-of-session quiz to check understanding.\",\n  \"guiding_questions\": \"What is a percent?How do you calculate a percent from a fraction? How do you calculate a percent of a quantity? How do you use the concepts of percents in your everyday life?: LP4\",\n  \"prior_knowledge\": null,\n  \"pacing_guide_in_hrs\": 20,\n  \"anticipated_struggles\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources.\",\n  \"reference_links\": [\n    \"https://math.tutorvista.com/number-system/numbers-and-operations.html\"\n  ],\n  \"sessions\": [{\n    \"title\": \"session\",\n    \"teacher_contents\": [{\n      \"content_id\" : \"bcd6c655-ec82-4849-bf3d-c94842a817f5\",\n      \"content_format\": \"question\"\n    }, {\n      \"content_id\" : \"5edcf28a-2a8d-4d8d-9974-692b33d21c67\",\n      \"content_format\": \"resource\"\n    },  {\n      \"content_id\": \"cd467806-31a2-4d18-ab35-d0a0e3e01561\",\n      \"content_format\": \"collection\"\n    }],\n    \"student_contents\": [ {\n      \"content_id\": \"cd467806-31a2-4d18-ab35-d0a0e3e01561\",\n      \"content_format\": \"collection\"\n    }]\n  },\n  {\n    \"title\": \"session 2\",\n    \"teacher_contents\": [{\n      \"content_id\" : \"add63c29-439d-42f7-a832-cdb9591dcae2\",\n      \"content_format\": \"assessment\"\n    }, \n    {\n     \"content_id\": \"090e5233-0a3a-4a18-8224-c4563f2e23cf\",\n     \"content_format\": \"collection\"\n    }, {\n      \"content_id\": \"dc702290-b4ce-410d-b326-5bc0ae1b6a5c\",\n      \"content_format\": \"offline-activity\"\n    }]\n  }]\n}"
-				},
-				"url": {
-					"raw": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf/lesson-plans/5",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"api",
-						"nucleus",
-						"v1",
-						"courses",
-						"c999d565-6009-4490-82f2-dbb702c13996",
-						"units",
-						"6f2addb4-42a4-44c0-a844-4f5e40089a8f",
-						"lessons",
-						"cfcf3dae-9e42-4956-8351-f37a89f75fcf",
-						"lesson-plans",
-						"5"
-					]
+					"raw": "{\n  \"description\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources. End-of-session quiz to check understanding.\",\n  \"guiding_questions\": \"What is a percent?How do you calculate a percent from a fraction? How do you calculate a percent of a quantity? How do you use the concepts of percents in your everyday life?: LP4\",\n  \"prior_knowledge\": null,\n  \"pacing_guide_in_secs\": 1000,\n  \"anticipated_struggles\": \"Introduction of the lesson in the beginning - 10 mins. Quick recap of what was done in the previous session - 5 mins.Teaching an aspect of the lesson using activities from the course map or additional resources.\",\n  \"reference_links\": [\n    \"https://math.tutorvista.com/number-system/numbers-and-operations.html\"\n  ],\n  \"sessions\": [{\n    \"title\": \"session\",\n    \"teacher_contents\": [{\n      \"content_id\" : \"bcd6c655-ec82-4849-bf3d-c94842a817f5\",\n      \"content_format\": \"question\"\n    }, {\n      \"content_id\" : \"5edcf28a-2a8d-4d8d-9974-692b33d21c67\",\n      \"content_format\": \"resource\"\n    },  {\n      \"content_id\": \"cd467806-31a2-4d18-ab35-d0a0e3e01561\",\n      \"content_format\": \"collection\"\n    }],\n    \"student_contents\": [ {\n      \"content_id\": \"cd467806-31a2-4d18-ab35-d0a0e3e01561\",\n      \"content_format\": \"collection\"\n    }]\n  },\n  {\n    \"title\": \"session 2\",\n    \"teacher_contents\": [{\n      \"content_id\" : \"add63c29-439d-42f7-a832-cdb9591dcae2\",\n      \"content_format\": \"assessment\"\n    }, \n    {\n     \"content_id\": \"090e5233-0a3a-4a18-8224-c4563f2e23cf\",\n     \"content_format\": \"collection\"\n    }, {\n      \"content_id\": \"dc702290-b4ce-410d-b326-5bc0ae1b6a5c\",\n      \"content_format\": \"offline-activity\"\n    }]\n  }]\n}"
 				},
 				"description": "This API is used to update the lesson plan for specific lesson."
 			},
@@ -107,16 +50,8 @@
 		{
 			"name": "DeleteLessonPlan",
 			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Token MjoxNTY3MDU2NzgyNTc4OjViOWU3OWY4LTYzZTQtNGM0Zi05NzY4LWI3ZGYzMzM0YjczNzo6YmE5NTZhOTctYWUxNS0xMWU1LWEzMDItZjhhOTYzMDY1OTc2",
-						"type": "text"
-					}
-				],
 				"url": {
-					"raw": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf/lesson-plans/7",
+					"raw": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf/lesson-plans/7?=",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -140,7 +75,20 @@
 							"key": "",
 							"value": ""
 						}
-					]
+					],
+					"variable": []
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token MjoxNTY3MDU2NzgyNTc4OjViOWU3OWY4LTYzZTQtNGM0Zi05NzY4LWI3ZGYzMzM0YjczNzo6YmE5NTZhOTctYWUxNS0xMWU1LWEzMDItZjhhOTYzMDY1OTc2",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
 				},
 				"description": "This API is used to delete the lesson plan for specific lesson."
 			},
@@ -149,6 +97,7 @@
 		{
 			"name": "FetchLesson",
 			"request": {
+				"url": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf",
 				"method": "GET",
 				"header": [
 					{
@@ -157,78 +106,13 @@
 						"type": "text"
 					}
 				],
-				"url": {
-					"raw": "http://localhost:8080/api/nucleus/v1/courses/c999d565-6009-4490-82f2-dbb702c13996/units/6f2addb4-42a4-44c0-a844-4f5e40089a8f/lessons/cfcf3dae-9e42-4956-8351-f37a89f75fcf",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"api",
-						"nucleus",
-						"v1",
-						"courses",
-						"c999d565-6009-4490-82f2-dbb702c13996",
-						"units",
-						"6f2addb4-42a4-44c0-a844-4f5e40089a8f",
-						"lessons",
-						"cfcf3dae-9e42-4956-8351-f37a89f75fcf"
-					]
+				"body": {
+					"mode": "raw",
+					"raw": ""
 				},
 				"description": "This API is used to fetch the lesson with lesson plan details."
 			},
 			"response": []
-		}
-	],
-	"auth": {
-		"type": "apikey",
-		"apikey": [
-			{
-				"key": "value",
-				"value": "$access_token",
-				"type": "string"
-			},
-			{
-				"key": "in",
-				"value": "header",
-				"type": "string"
-			},
-			{
-				"key": "key",
-				"value": "Token",
-				"type": "string"
-			}
-		]
-	},
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"id": "4e01adf3-1b0a-4ee3-9f0a-100f5b6db04e",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"id": "37257827-da3f-4a11-8d8c-ebbfd0eb46e2",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	],
-	"variable": [
-		{
-			"id": "c7611a75-b2f4-4fc0-ac11-7d27e04edbf3",
-			"key": "access_token",
-			"value": "{{access_token}}",
-			"type": "string"
 		}
 	]
 }

@@ -46,14 +46,14 @@ public final class LessonPlanDao {
   private static final Set<String> EDITABLE_FIELDS = new HashSet<>(
       Arrays.asList(AJEntityLessonPlan.DESCRIPTION, AJEntityLessonPlan.GUIDING_QUESTIONS,
           AJEntityLessonPlan.PRIOR_KNOWLEDGE, AJEntityLessonPlan.ANTICIPATED_STRUGGLES,
-          AJEntityLessonPlan.REFERENCE_LINKS, AJEntityLessonPlan.PACING_GUIDE_IN_HRS,
+          AJEntityLessonPlan.REFERENCE_LINKS, AJEntityLessonPlan.PACING_GUIDE_IN_SECS,
           AJEntityLessonPlan.START_WEEK, AJEntityLessonPlan.SESSIONS));
 
   private static final Set<String> CREATABLE_FIELDS =
       new HashSet<>(Arrays.asList(AJEntityLessonPlan.DESCRIPTION,
           AJEntityLessonPlan.GUIDING_QUESTIONS, AJEntityLessonPlan.PRIOR_KNOWLEDGE,
           AJEntityLessonPlan.ANTICIPATED_STRUGGLES, AJEntityLessonPlan.REFERENCE_LINKS,
-          AJEntityLessonPlan.PACING_GUIDE_IN_HRS, AJEntityLessonPlan.START_WEEK));
+          AJEntityLessonPlan.PACING_GUIDE_IN_SECS, AJEntityLessonPlan.START_WEEK));
 
   private static final Set<String> MANDATORY_FIELDS =
       new HashSet<>(Arrays.asList(AJEntityLessonPlan.DESCRIPTION));
@@ -75,7 +75,7 @@ public final class LessonPlanDao {
   private static final List<String> RESPONSE_FIELDS = Arrays.asList(AJEntityLessonPlan.DESCRIPTION,
       AJEntityLessonPlan.GUIDING_QUESTIONS, AJEntityLessonPlan.PRIOR_KNOWLEDGE,
       AJEntityLessonPlan.ANTICIPATED_STRUGGLES, AJEntityLessonPlan.REFERENCE_LINKS,
-      AJEntityLessonPlan.PACING_GUIDE_IN_HRS, AJEntityLessonPlan.START_WEEK,
+      AJEntityLessonPlan.PACING_GUIDE_IN_SECS, AJEntityLessonPlan.START_WEEK,
       AJEntityLessonPlan.SESSIONS, AJEntityLessonPlan.LESSON_PLAN_ID);
   public static final String OFFLINE_ACTIVITY = "offline-activity";
   private static final Set<String> CONTENT_TYPES =
@@ -93,7 +93,7 @@ public final class LessonPlanDao {
 
   private static final String FETCH_LESSON_PLAN =
       "SELECT id, lesson_id, unit_id, course_id, description, guiding_questions, prior_knowledge, anticipated_struggles, reference_links, "
-          + "pacing_guide_in_hrs, start_week, sessions FROM lesson_plan WHERE  course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid";
+          + "pacing_guide_in_secs, start_week, sessions FROM lesson_plan WHERE  course_id = ?::uuid AND unit_id = ?::uuid AND lesson_id = ?::uuid";
 
   private static final String FETCH_COLLECTIONS =
       "select id AS content_id, course_id, unit_id, lesson_id, title, thumbnail, format as content_format, subformat as content_subformat FROM collection WHERE"
